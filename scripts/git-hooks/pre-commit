@@ -1,0 +1,13 @@
+#!/bin/sh
+# Git pre-commit hook to enforce tests pass before committing
+
+mvn -B test
+RESULT=$?
+
+if [ $RESULT -ne 0 ]; then
+  echo "\n[HOOK] Tests failed. Commit aborted."
+  exit 1
+fi
+
+echo "[HOOK] Tests passed. Proceeding with commit."
+exit 0
