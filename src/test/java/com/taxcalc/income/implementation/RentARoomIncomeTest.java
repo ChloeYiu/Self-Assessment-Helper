@@ -1,4 +1,4 @@
-package com.taxcalc.models;
+package com.taxcalc.income.implementation;
 
 import com.taxcalc.config.ExpenseType;
 import org.junit.Test;
@@ -11,7 +11,7 @@ public class RentARoomIncomeTest {
 
     @Test
     public void calculateTaxableAmount_usesAllowanceWhenItIsBetter() {
-        RentARoomIncome income = new RentARoomIncome(new BigDecimal("15000"), 2025, BigDecimal.ONE, "");
+        RentARoomIncome income = new RentARoomIncome(new BigDecimal("15000"), 2025, BigDecimal.ONE);
 
         BigDecimal taxableAmount = income.calculateTaxableAmount();
 
@@ -21,7 +21,7 @@ public class RentARoomIncomeTest {
 
     @Test
     public void calculateTaxableAmount_usesActualExpensesWhenTheyReduceTaxableAmountMore() {
-        RentARoomIncome income = new RentARoomIncome(new BigDecimal("15000"), 2025, new BigDecimal("1"), "");
+        RentARoomIncome income = new RentARoomIncome(new BigDecimal("15000"), 2025, BigDecimal.ONE);
         income.addExpense(ExpenseType.REPAIRS, new BigDecimal("9000"));
 
         BigDecimal taxableAmount = income.calculateTaxableAmount();
@@ -32,7 +32,7 @@ public class RentARoomIncomeTest {
 
     @Test
     public void calculateTaxableAmount_returnsZeroWhenAllowanceCoversAllProfit() {
-        RentARoomIncome income = new RentARoomIncome(new BigDecimal("5000"), 2025, BigDecimal.ONE, "");
+        RentARoomIncome income = new RentARoomIncome(new BigDecimal("5000"), 2025, BigDecimal.ONE);
 
         BigDecimal taxableAmount = income.calculateTaxableAmount();
 
@@ -42,7 +42,7 @@ public class RentARoomIncomeTest {
 
     @Test
     public void calculateTaxableAmount_appliesHouseholdAllocationToExpenses() {
-        RentARoomIncome income = new RentARoomIncome(new BigDecimal("15000"), 2025, new BigDecimal("0.5"), "shared property");
+        RentARoomIncome income = new RentARoomIncome(new BigDecimal("15000"), 2025, new BigDecimal("0.5"));
         income.addExpense(ExpenseType.REPAIRS, new BigDecimal("8000"));
 
         BigDecimal taxableAmount = income.calculateTaxableAmount();
@@ -53,7 +53,7 @@ public class RentARoomIncomeTest {
 
     @Test
     public void calculateTaxableAmountWithActualExpenses_appliesHouseholdAllocationPercentage() {
-        RentARoomIncome income = new RentARoomIncome(new BigDecimal("15000"), 2025, new BigDecimal("0.5"), "shared property");
+        RentARoomIncome income = new RentARoomIncome(new BigDecimal("15000"), 2025, new BigDecimal("0.5"));
         income.addExpense(ExpenseType.REPAIRS, new BigDecimal("8000"));
 
         BigDecimal actualExpenseMethodTaxable = income.calculateTaxableAmountWithActualExpenses();

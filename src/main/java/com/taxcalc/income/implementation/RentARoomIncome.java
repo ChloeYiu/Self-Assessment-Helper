@@ -1,6 +1,8 @@
-package com.taxcalc.models;
+package com.taxcalc.income.implementation;
 
 import com.taxcalc.config.ExpenseType;
+import com.taxcalc.income.Income;
+import com.taxcalc.income.IncomeType;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
@@ -12,26 +14,23 @@ import java.util.Map;
  * Expense categories are type-safe (ExpenseType enum)
  * Validation happens in code
  */
-public class RentARoomIncome implements IncomeSource {
+public class RentARoomIncome implements Income {
     
     public BigDecimal grossRent;
     public Map<ExpenseType, BigDecimal> expenses; // Type-safe categorized expenses
     public BigDecimal householdAllocationPercentage; // E.g., 0.5 = 50% if sharing with one other person
     public int taxYear;
-    public String notes;
+    private BigDecimal standardAllowance = BigDecimal.valueOf(7500);
     
     /**
      * Full constructor with all fields
      */
-    public RentARoomIncome(BigDecimal grossRent, int taxYear, BigDecimal householdAllocationPercentage, String notes) {
+    public RentARoomIncome(BigDecimal grossRent, int taxYear, BigDecimal householdAllocationPercentage) {
         this.grossRent = grossRent;
         this.expenses = new HashMap<>();
         this.householdAllocationPercentage = householdAllocationPercentage;
         this.taxYear = taxYear;
-        this.notes = notes;
     }
-    
-    // ========== PUBLIC API ==========
     
     /**
      * Add an expense for a specific category (type-safe)
@@ -55,34 +54,12 @@ public class RentARoomIncome implements IncomeSource {
         return taxYear;
     }
     
-    /**
-     * Calculate taxable profit using standard allowance (£7,500)
-     */
     @Override
     public BigDecimal calculateTaxableAmount() {
         BigDecimal allowanceMethod = calculateTaxableAmountWithAllowance();
         BigDecimal expensesMethod = calculateTaxableAmountWithActualExpenses();
         
         return allowanceMethod.min(expensesMethod); // Choose the method that gives lower taxable profit
-    }
-    
-    // ========== PRIVATE HELPERS ==========
-    
-    public BigDecimal calculateTaxableAmountWithAllowance() {
-        BigDecimal allowance = BigDecimal.valueOf(7500);
-        BigDecimal taxableProfit = grossRent.subtract(allowance);
-        return taxableProfit.max(BigDecimal.ZERO); // Cannot be negative
-    }
-    
-    public BigDecimal calculateTaxableAmountWithActualExpenses() {
-        BigDecimal total = BigDecimal.ZERO;
-        for (BigDecimal amount : expenses.values()) {
-            total = total.add(amount);
-        }
-
-        BigDecimal allocatedExpenses = total.multiply(householdAllocationPercentage);
-        BigDecimal taxableProfit = grossRent.subtract(allocatedExpenses);
-        return taxableProfit.max(BigDecimal.ZERO); // Cannot be negative
     }
 
     public RentARoomCalculationMethod getPreferredCalculationMethod() {
@@ -92,6 +69,21 @@ public class RentARoomIncome implements IncomeSource {
         return allowanceMethod.compareTo(expensesMethod) <= 0 ? 
             RentARoomCalculationMethod.ALLOWANCE : 
             RentARoomCalculationMethod.ACTUAL_EXPENSES;
+    }
+    
+    public BigDecimal calculateTaxableAmountWithAllowance() {
+        BigDecimal allowance = standardAllowance;
+        BigDecimal taxableProfit = grossRent.subtract(allowance);
+        return taxableProfit.max(BigDecimal.ZERO); // Cannot be negative
+    }
+    
+    public BigDecimal calculateTaxableAmountWithActualExpenses() {
+        BigDecimal total = expenses.values().stream()
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal allocatedExpenses = total.multiply(householdAllocationPercentage);
+        BigDecimal taxableProfit = grossRent.subtract(allocatedExpenses);
+        return taxableProfit.max(BigDecimal.ZERO); // Cannot be negative
     }
 }
 

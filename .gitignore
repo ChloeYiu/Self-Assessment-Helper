@@ -12,11 +12,7 @@ target/
 # OS
 .DS_Store
 Thumbs.db
-
 # Logs
-*.log
-
-# Maven
 *.iml
 
 # Notes

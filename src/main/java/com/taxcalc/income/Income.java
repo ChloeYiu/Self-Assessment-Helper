@@ -1,20 +1,11 @@
-package com.taxcalc.models;
+package com.taxcalc.income;
 
 import java.math.BigDecimal;
 
 /**
  * Base interface for all income sources
  */
-public interface IncomeSource {
-    
-    enum IncomeType {
-        RENT_A_ROOM,
-        FOREIGN,
-        SAVINGS_INTEREST,
-        ETF_DIVIDEND,
-        MANAGED_INVESTMENT
-    }
-    
+public interface Income {
     /**
      * Get the income type
      */
