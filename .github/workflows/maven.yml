@@ -8,7 +8,7 @@ on:
 
 jobs:
   test-on-push:
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && hashFiles('pom.xml') != ''
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -21,7 +21,7 @@ jobs:
         run: mvn -B test
 
   build-and-test-on-pr:
-    if: github.event_name == 'pull_request' && github.base_ref == 'main'
+    if: github.event_name == 'pull_request' && github.base_ref == 'main' && hashFiles('pom.xml') != ''
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
