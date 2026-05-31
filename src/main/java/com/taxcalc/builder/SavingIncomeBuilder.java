@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * Builder for assembling a SavingIncome object from various sources.
  */
-public class SavingIncomeBuilder {
+public class SavingIncomeBuilder implements IncomeBuilder<SavingIncome, Saving> {
     public SavingIncomeBuilder() {
         // pass
     }
