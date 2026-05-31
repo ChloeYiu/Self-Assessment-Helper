@@ -7,6 +7,7 @@ import org.junit.Test;
 import java.math.BigDecimal;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.*;
 
 public class TaxCalculatorTest {
 
@@ -22,8 +23,8 @@ public class TaxCalculatorTest {
     @Test
     public void calculateTaxByType_sumsTaxableAmountsForSameType() {
         TaxCalculator calculator = new TaxCalculator(2025);
-        calculator.addIncomeSources(IncomeType.SAVINGS, new FixedIncome(IncomeType.SAVINGS, "100"));
-        calculator.addIncomeSources(IncomeType.SAVINGS, new FixedIncome(IncomeType.SAVINGS, "250.50"));
+        calculator.addIncomeSources(IncomeType.SAVINGS, createIncomeMock(IncomeType.SAVINGS, "100"));
+        calculator.addIncomeSources(IncomeType.SAVINGS, createIncomeMock(IncomeType.SAVINGS, "250.50"));
 
         BigDecimal result = calculator.calculateTaxByType(IncomeType.SAVINGS);
 
@@ -33,8 +34,8 @@ public class TaxCalculatorTest {
     @Test
     public void calculateTaxByType_onlyUsesRequestedType() {
         TaxCalculator calculator = new TaxCalculator(2025);
-        calculator.addIncomeSources(IncomeType.SAVINGS, new FixedIncome(IncomeType.SAVINGS, "100"));
-        calculator.addIncomeSources(IncomeType.DIVIDENDS, new FixedIncome(IncomeType.DIVIDENDS, "400"));
+        calculator.addIncomeSources(IncomeType.SAVINGS, createIncomeMock(IncomeType.SAVINGS, "100"));
+        calculator.addIncomeSources(IncomeType.DIVIDENDS, createIncomeMock(IncomeType.DIVIDENDS, "400"));
 
         BigDecimal result = calculator.calculateTaxByType(IncomeType.SAVINGS);
 
@@ -44,7 +45,7 @@ public class TaxCalculatorTest {
     @Test(expected = IllegalArgumentException.class)
     public void addIncomeSources_throwsWhenIncomeTypeIsNull() {
         TaxCalculator calculator = new TaxCalculator(2025);
-        calculator.addIncomeSources(null, new FixedIncome(IncomeType.SAVINGS, "100"));
+        calculator.addIncomeSources(null, createIncomeMock(IncomeType.SAVINGS, "100"));
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -57,33 +58,12 @@ public class TaxCalculatorTest {
         assertEquals(0, new BigDecimal(expected).compareTo(actual));
     }
 
-    private static class FixedIncome implements Income {
-        private final IncomeType incomeType;
-        private final BigDecimal taxableAmount;
-
-        FixedIncome(IncomeType incomeType, String taxableAmount) {
-            this.incomeType = incomeType;
-            this.taxableAmount = new BigDecimal(taxableAmount);
-        }
-
-        @Override
-        public IncomeType getIncomeType() {
-            return incomeType;
-        }
-
-        @Override
-        public BigDecimal getGrossIncome() {
-            return taxableAmount;
-        }
-
-        @Override
-        public int getTaxYear() {
-            return 2025;
-        }
-
-        @Override
-        public BigDecimal calculateTaxableAmount() {
-            return taxableAmount;
-        }
+    private static Income createIncomeMock(IncomeType incomeType, String taxableAmount) {
+        Income income = mock(Income.class);
+        when(income.getIncomeType()).thenReturn(incomeType);
+        when(income.calculateTaxableAmount()).thenReturn(new BigDecimal(taxableAmount));
+        when(income.getGrossIncome()).thenReturn(new BigDecimal(taxableAmount));
+        when(income.getTaxYear()).thenReturn(2025);
+        return income;
     }
 }
