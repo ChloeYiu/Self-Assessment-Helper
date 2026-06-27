@@ -62,6 +62,18 @@ public class RentARoomIncomeTest {
         assertBigDecimalEquals("11000", actualExpenseMethodTaxable);
     }
 
+    @Test(expected = NullPointerException.class)
+    public void constructor_throwsWhenGrossRentIsNull() {
+        new RentARoomIncome(null, 2025, BigDecimal.ONE);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void addExpense_throwsWhenAmountIsNull() {
+        RentARoomIncome income = new RentARoomIncome(new BigDecimal("15000"), 2025, BigDecimal.ONE);
+
+        income.addExpense(ExpenseType.REPAIRS, null);
+    }
+
     private static void assertBigDecimalEquals(String expected, BigDecimal actual) {
         assertEquals(0, new BigDecimal(expected).compareTo(actual));
     }

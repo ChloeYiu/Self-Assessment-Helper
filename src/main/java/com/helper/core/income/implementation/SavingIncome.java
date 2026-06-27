@@ -6,8 +6,8 @@ import com.helper.core.income.implementation.savings.Saving;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Aggregate for storing multiple savings income sources.
@@ -47,9 +47,7 @@ public class SavingIncome implements Income {
     }
 
     public void addSavingIncome(Saving savingSource) {
-        if (savingSource != null) {
-            savingSources.add(savingSource);
-        }
+        savingSources.add(Objects.requireNonNull(savingSource, "savingSource"));
     }
 
     @Override

@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Models foreign savings income that may require FX conversion into GBP.
@@ -22,7 +23,7 @@ public class ForeignSaving implements Saving {
 
     public ForeignSaving(int taxYear, String currencyCode) {
         this.taxYear = taxYear;
-        this.currencyCode = currencyCode;
+        this.currencyCode = Objects.requireNonNull(currencyCode, "currencyCode");
         this.monthlyIncome = new EnumMap<>(TaxYearPeriod.class);
         this.monthlyRates = new EnumMap<>(TaxYearPeriod.class);
         this.yearlyRate = BigDecimal.ZERO;
@@ -50,15 +51,21 @@ public class ForeignSaving implements Saving {
     }
 
     public void setMonthlyIncome(TaxYearPeriod period, BigDecimal amount) {
-        monthlyIncome.put(period, amount);
+        monthlyIncome.put(
+            Objects.requireNonNull(period, "period"),
+            Objects.requireNonNull(amount, "amount")
+        );
     }
 
     public void setMonthlyRate(TaxYearPeriod period, BigDecimal rate) {
-        monthlyRates.put(period, rate);
+        monthlyRates.put(
+            Objects.requireNonNull(period, "period"),
+            Objects.requireNonNull(rate, "rate")
+        );
     }
 
     public void setYearlyRate(BigDecimal yearlyRate) {
-        this.yearlyRate = yearlyRate;
+        this.yearlyRate = Objects.requireNonNull(yearlyRate, "yearlyRate");
     }
 
     public BigDecimal calculateSavingAmountWithMonthlyRates() {
@@ -79,17 +86,15 @@ public class ForeignSaving implements Saving {
     }
 
     public BigDecimal calculateSavingAmountWithYearlyRate() {
-        if (yearlyRate == null) {
-            return BigDecimal.ZERO;
-        }
-
         BigDecimal totalIncome = monthlyIncome.values().stream()
             .reduce(BigDecimal.ZERO, BigDecimal::add);
         return convertToGbp(totalIncome, yearlyRate);
     }
 
     protected BigDecimal convertToGbp(BigDecimal amount, BigDecimal rate) {
-        return amount.multiply(rate).setScale(2, RoundingMode.HALF_UP);
+        return Objects.requireNonNull(amount, "amount")
+            .multiply(Objects.requireNonNull(rate, "rate"))
+            .setScale(2, RoundingMode.HALF_UP);
     }
 }
 
@@ -97,4 +102,3 @@ enum ForeignSavingsCalculationMethod {
     MONTHLY,
     YEARLY_AVERAGE
 }
-

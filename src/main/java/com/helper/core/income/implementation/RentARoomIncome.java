@@ -6,6 +6,7 @@ import com.helper.core.income.IncomeType;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Models income from Rent-a-Room scheme
@@ -26,9 +27,12 @@ public class RentARoomIncome implements Income {
      * Full constructor with all fields
      */
     public RentARoomIncome(BigDecimal grossRent, int taxYear, BigDecimal householdAllocationPercentage) {
-        this.grossRent = grossRent;
+        this.grossRent = Objects.requireNonNull(grossRent, "grossRent");
         this.expenses = new HashMap<>();
-        this.householdAllocationPercentage = householdAllocationPercentage;
+        this.householdAllocationPercentage = Objects.requireNonNull(
+            householdAllocationPercentage,
+            "householdAllocationPercentage"
+        );
         this.taxYear = taxYear;
     }
     
@@ -36,7 +40,10 @@ public class RentARoomIncome implements Income {
      * Add an expense for a specific category (type-safe)
      */
     public void addExpense(ExpenseType type, BigDecimal amount) {
-        expenses.put(type, amount);
+        expenses.put(
+            Objects.requireNonNull(type, "type"),
+            Objects.requireNonNull(amount, "amount")
+        );
     }
     
     @Override

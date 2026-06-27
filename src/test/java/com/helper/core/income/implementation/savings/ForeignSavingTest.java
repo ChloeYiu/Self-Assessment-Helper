@@ -65,6 +65,18 @@ public class ForeignSavingTest {
         assertBigDecimalEquals("1625.00", monthly);
     }
 
+    @Test(expected = NullPointerException.class)
+    public void constructor_throwsWhenCurrencyCodeIsNull() {
+        new ForeignSaving(2025, null);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void setMonthlyRate_throwsWhenRateIsNull() {
+        ForeignSaving income = new ForeignSaving(2025, "EUR");
+
+        income.setMonthlyRate(TaxYearPeriod.MAY, null);
+    }
+
     private static void assertBigDecimalEquals(String expected, BigDecimal actual) {
         assertEquals(0, new BigDecimal(expected).compareTo(actual));
     }

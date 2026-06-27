@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Objects;
 
 /**
  * Calculates Self Assessment helper values from income sources.
@@ -28,7 +29,10 @@ public class Calculator {
     }
 
     public BigDecimal calculateGrossIncomeByType(IncomeType incomeType) {
-        List<Income> sources = incomeSources.getOrDefault(incomeType, List.of());
+        List<Income> sources = incomeSources.getOrDefault(
+                Objects.requireNonNull(incomeType, "incomeType"),
+                List.of()
+        );
         return sources.stream()
                 .map(Income::getGrossIncome)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);

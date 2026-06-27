@@ -7,6 +7,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.YearMonth;
+import java.util.Objects;
 
 /**
  * FX extractor draft.
@@ -24,16 +25,20 @@ public class FxExtractor {
     }
 
     public FxExtractor(HttpClient httpClient) {
-        this.httpClient = httpClient;
+        this.httpClient = Objects.requireNonNull(httpClient, "httpClient");
     }
 
     public BigDecimal getMonthlyRate(String currencyCode, YearMonth month) throws IOException, InterruptedException {
+        Objects.requireNonNull(currencyCode, "currencyCode");
+        Objects.requireNonNull(month, "month");
         String csv = fetchCsv("monthly_csv_" + formatMonth(month) + ".csv");
         return extractMonthlyRate(csv, currencyCode, month);
     }
 
     public BigDecimal getYearlyAverageRate(String currencyCode, YearMonth month)
             throws IOException, InterruptedException {
+        Objects.requireNonNull(currencyCode, "currencyCode");
+        Objects.requireNonNull(month, "month");
         String csv = fetchCsv("average_csv_" + formatMonth(month) + ".csv");
         return extractYearlyAverageRate(csv, currencyCode, month);
     }
