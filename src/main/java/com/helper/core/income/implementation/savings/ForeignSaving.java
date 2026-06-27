@@ -26,28 +26,69 @@ public class ForeignSaving implements Saving {
         this.currencyCode = Objects.requireNonNull(currencyCode, "currencyCode");
         this.monthlyIncome = new EnumMap<>(TaxYearPeriod.class);
         this.monthlyRates = new EnumMap<>(TaxYearPeriod.class);
-        this.yearlyRate = BigDecimal.ZERO;
     }
 
     @Override
     public BigDecimal calculateSavingAmount() {
-        BigDecimal savingsWithMonthlyRates = calculateSavingAmountWithMonthlyRates();
-        BigDecimal savingsWithYearlyRate = calculateSavingAmountWithYearlyRate();
-        return savingsWithMonthlyRates.max(savingsWithYearlyRate);
+        if (monthlyIncome.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+
+        boolean canUseMonthlyRates = hasMonthlyRatesForAllIncome();
+        boolean canUseYearlyRate = yearlyRate != null;
+
+        if (canUseMonthlyRates && canUseYearlyRate) {
+            return calculateSavingAmountWithMonthlyRates()
+                .min(calculateSavingAmountWithYearlyRate());
+        }
+
+        if (canUseMonthlyRates) {
+            return calculateSavingAmountWithMonthlyRates();
+        }
+
+        if (canUseYearlyRate) {
+            return calculateSavingAmountWithYearlyRate();
+        }
+
+        throw new IllegalStateException("monthly rates or yearly rate must be provided");
+    }
+
+    private boolean hasMonthlyRatesForAllIncome() {
+        return monthlyIncome.keySet().stream()
+            .allMatch(monthlyRates::containsKey);
+    }
+
+    public ForeignSavingsCalculationMethod getCalculationMethod() {
+        if (monthlyIncome.isEmpty()) {
+            return ForeignSavingsCalculationMethod.MONTHLY;
+        }
+
+        boolean canUseMonthlyRates = hasMonthlyRatesForAllIncome();
+        boolean canUseYearlyRate = yearlyRate != null;
+
+        if (canUseMonthlyRates && canUseYearlyRate) {
+            BigDecimal savingsWithMonthlyRates = calculateSavingAmountWithMonthlyRates();
+            BigDecimal savingsWithYearlyRate = calculateSavingAmountWithYearlyRate();
+
+            return savingsWithMonthlyRates.compareTo(savingsWithYearlyRate) <= 0
+                ? ForeignSavingsCalculationMethod.MONTHLY
+                : ForeignSavingsCalculationMethod.YEARLY_AVERAGE;
+        }
+
+        if (canUseMonthlyRates) {
+            return ForeignSavingsCalculationMethod.MONTHLY;
+        }
+
+        if (canUseYearlyRate) {
+            return ForeignSavingsCalculationMethod.YEARLY_AVERAGE;
+        }
+
+        throw new IllegalStateException("monthly rates or yearly rate must be provided");
     }
 
     @Override
     public int getTaxYear() {
         return taxYear;
-    }
-
-    public ForeignSavingsCalculationMethod getCalculationMethod() {
-        BigDecimal savingsWithMonthlyRates = calculateSavingAmountWithMonthlyRates();
-        BigDecimal savingsWithYearlyRate = calculateSavingAmountWithYearlyRate();
-
-        return savingsWithMonthlyRates.compareTo(savingsWithYearlyRate) >= 0
-            ? ForeignSavingsCalculationMethod.MONTHLY
-            : ForeignSavingsCalculationMethod.YEARLY_AVERAGE;
     }
 
     public void setMonthlyIncome(TaxYearPeriod period, BigDecimal amount) {
@@ -77,7 +118,7 @@ public class ForeignSaving implements Saving {
         for (Map.Entry<TaxYearPeriod, BigDecimal> entry : monthlyIncome.entrySet()) {
             BigDecimal rate = monthlyRates.get(entry.getKey());
             if (rate == null) {
-                continue;
+                throw new IllegalStateException("monthly rate must be set for " + entry.getKey());
             }
             totalGbp = totalGbp.add(convertToGbp(entry.getValue(), rate));
         }
@@ -86,6 +127,10 @@ public class ForeignSaving implements Saving {
     }
 
     public BigDecimal calculateSavingAmountWithYearlyRate() {
+        if (yearlyRate == null) {
+            throw new IllegalStateException("yearlyRate must be set before yearly calculation");
+        }
+
         BigDecimal totalIncome = monthlyIncome.values().stream()
             .reduce(BigDecimal.ZERO, BigDecimal::add);
         return convertToGbp(totalIncome, yearlyRate);
