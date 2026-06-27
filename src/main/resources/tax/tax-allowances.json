@@ -1,0 +1,50 @@
+{
+  "taxYears": {
+    "2024-25": {
+      "allowances": {
+        "personal": 12570,
+        "savings": {
+          "basicRate": 1000,
+          "higherRate": 500,
+          "additionalRate": 0
+        },
+        "dividend": 500,
+        "capitalGains": 3000
+      },
+      "bands": {
+        "basicRateLimit": 50270,
+        "higherRateLimit": 125140
+      },
+      "rates": {
+        "incomeTax": {
+          "basic": 20,
+          "higher": 40,
+          "additional": 45
+        }
+      }
+    },
+    "2025-26": {
+      "allowances": {
+        "personal": 12570,
+        "savings": {
+          "basicRate": 1000,
+          "higherRate": 500,
+          "additionalRate": 0
+        },
+        "dividend": 500,
+        "capitalGains": 3000
+      },
+      "bands": {
+        "basicRateLimit": 50270,
+        "higherRateLimit": 125140
+      },
+      "rates": {
+        "incomeTax": {
+          "basic": 20,
+          "higher": 40,
+          "additional": 45
+        }
+      }
+    }
+  }
+}

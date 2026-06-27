@@ -25,6 +25,14 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- Mockito for unit test mocks -->
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>4.11.0</version>
+            <scope>test</scope>
+        </dependency>
+
         <!-- JSON processing for data import/export -->
         <dependency>
             <groupId>com.google.code.gson</groupId>

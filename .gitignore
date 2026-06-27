@@ -9,18 +9,10 @@
 target/
 *.class
 *.jar
-
-# Maven build output
-target/
-
 # OS
 .DS_Store
 Thumbs.db
-
 # Logs
-*.log
-
-# Maven
 *.iml
 
 # Notes
