@@ -1,6 +1,6 @@
-
 package com.helper.core.income.implementation.savings;
 
+import com.helper.core.config.CurrencyCode;
 import com.helper.core.config.TaxYearPeriod;
 
 import java.math.BigDecimal;
@@ -14,14 +14,14 @@ import java.util.Objects;
  */
 public class ForeignSaving implements Saving {
 
-    public String currencyCode;
+    public CurrencyCode currencyCode;
     public String country;
     public int taxYear;
     private final Map<TaxYearPeriod, BigDecimal> monthlyIncome;
     private final Map<TaxYearPeriod, BigDecimal> monthlyRates;
     private BigDecimal yearlyRate;
 
-    public ForeignSaving(int taxYear, String currencyCode) {
+    public ForeignSaving(int taxYear, CurrencyCode currencyCode) {
         this.taxYear = taxYear;
         this.currencyCode = Objects.requireNonNull(currencyCode, "currencyCode");
         this.monthlyIncome = new EnumMap<>(TaxYearPeriod.class);

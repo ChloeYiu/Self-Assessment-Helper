@@ -1,5 +1,7 @@
 package com.helper.core.support.fx;
 
+import com.helper.core.config.CurrencyCode;
+
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URI;
@@ -28,14 +30,14 @@ public class FxExtractor {
         this.httpClient = Objects.requireNonNull(httpClient, "httpClient");
     }
 
-    public BigDecimal getMonthlyRate(String currencyCode, YearMonth month) throws IOException, InterruptedException {
+    public BigDecimal getMonthlyRate(CurrencyCode currencyCode, YearMonth month) throws IOException, InterruptedException {
         Objects.requireNonNull(currencyCode, "currencyCode");
         Objects.requireNonNull(month, "month");
         String csv = fetchCsv("monthly_csv_" + formatMonth(month) + ".csv");
         return extractMonthlyRate(csv, currencyCode, month);
     }
 
-    public BigDecimal getYearlyAverageRate(String currencyCode, YearMonth month)
+    public BigDecimal getYearlyAverageRate(CurrencyCode currencyCode, YearMonth month)
             throws IOException, InterruptedException {
         Objects.requireNonNull(currencyCode, "currencyCode");
         Objects.requireNonNull(month, "month");
@@ -43,11 +45,11 @@ public class FxExtractor {
         return extractYearlyAverageRate(csv, currencyCode, month);
     }
 
-    private BigDecimal extractMonthlyRate(String csv, String currencyCode, YearMonth month) {
+    private BigDecimal extractMonthlyRate(String csv, CurrencyCode currencyCode, YearMonth month) {
         throw new UnsupportedOperationException();
     }
 
-    private BigDecimal extractYearlyAverageRate(String csv, String currencyCode, YearMonth month) {
+    private BigDecimal extractYearlyAverageRate(String csv, CurrencyCode currencyCode, YearMonth month) {
         throw new UnsupportedOperationException();
     }
 
