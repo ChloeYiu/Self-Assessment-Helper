@@ -1,23 +1,40 @@
 package com.helper.core.income.implementation.savings;
 
+import com.helper.core.config.TaxYearPeriod;
+
 import java.math.BigDecimal;
+import java.util.EnumMap;
+import java.util.Map;
+import java.util.Objects;
 
 /**
- * Template model for UK local savings income.
+ * Models UK savings income already denominated in GBP.
  */
 public class LocalSaving implements Saving {
 
-    public LocalSaving(int taxYear, String providerName, String accountType, BigDecimal grossInterest) {
-        throw new UnsupportedOperationException();
+    public int taxYear;
+    private final Map<TaxYearPeriod, BigDecimal> monthlyIncome;
+
+    public LocalSaving(int taxYear) {
+        this.taxYear = taxYear;
+        this.monthlyIncome = new EnumMap<>(TaxYearPeriod.class);
     }
 
     @Override
     public BigDecimal calculateSavingAmount() {
-        throw new UnsupportedOperationException();
+        return monthlyIncome.values().stream()
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     @Override
     public int getTaxYear() {
-        throw new UnsupportedOperationException();
+        return taxYear;
+    }
+
+    public void setMonthlyIncome(TaxYearPeriod period, BigDecimal amount) {
+        monthlyIncome.put(
+            Objects.requireNonNull(period, "period"),
+            Objects.requireNonNull(amount, "amount")
+        );
     }
 }
