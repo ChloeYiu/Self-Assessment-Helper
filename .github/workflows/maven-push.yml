@@ -1,11 +1,11 @@
-name: Maven CI
+name: Maven Push CI
 
 on:
-  pull_request:
-    branches: ["main"]
+  push:
+    branches: ["**"]
 
 jobs:
-  build-and-test-on-pr:
+  test-on-push:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -14,5 +14,5 @@ jobs:
         with:
           java-version: "11"
           distribution: "temurin"
-      - name: Build and test
-        run: mvn -B clean verify
+      - name: Run tests only
+        run: mvn -B test
