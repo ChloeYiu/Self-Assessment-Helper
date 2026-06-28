@@ -28,13 +28,13 @@ public class Calculator {
         incomeSources.computeIfAbsent(incomeType, k -> new ArrayList<>()).add(source);
     }
 
-    public BigDecimal calculateGrossIncomeByType(IncomeType incomeType) {
+    public BigDecimal calculateAdjustedIncomeByType(IncomeType incomeType) {
         List<Income> sources = incomeSources.getOrDefault(
                 Objects.requireNonNull(incomeType, "incomeType"),
                 List.of()
         );
         return sources.stream()
-                .map(Income::getGrossIncome)
+                .map(Income::getAdjustedIncome)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 

@@ -21,8 +21,9 @@ public class RentARoomIncome implements Income {
     public Map<ExpenseType, BigDecimal> expenses; // Type-safe categorized expenses
     public BigDecimal householdAllocationPercentage; // E.g., 0.5 = 50% if sharing with one other person
     public int taxYear;
-    private BigDecimal standardAllowance = BigDecimal.valueOf(7500);
-    
+    // TODO: Load this from AllowanceCalculator/tax-year allowance configuration instead of hardcoding it.
+    private final BigDecimal standardAllowance = BigDecimal.valueOf(7500);
+
     /**
      * Full constructor with all fields
      */
@@ -60,44 +61,33 @@ public class RentARoomIncome implements Income {
     public int getTaxYear() {
         return taxYear;
     }
-    
+
     @Override
-    public BigDecimal calculateTaxableAmount() {
-        BigDecimal allowanceMethod = calculateTaxableAmountWithAllowance();
-        BigDecimal expensesMethod = calculateTaxableAmountWithActualExpenses();
-        
-        return allowanceMethod.min(expensesMethod); // Choose the method that gives lower taxable profit
+    public BigDecimal getAdjustedIncome() {
+        BigDecimal allowanceMethod = getAdjustedIncomeWithAllowance();
+        BigDecimal expensesMethod = getAdjustedIncomeWithActualExpenses();
+
+        return allowanceMethod.min(expensesMethod);
     }
 
     public RentARoomCalculationMethod getPreferredCalculationMethod() {
-        BigDecimal allowanceMethod = calculateTaxableAmountWithAllowance();
-        BigDecimal expensesMethod = calculateTaxableAmountWithActualExpenses();
-        
-        return allowanceMethod.compareTo(expensesMethod) <= 0 ? 
-            RentARoomCalculationMethod.ALLOWANCE : 
-            RentARoomCalculationMethod.ACTUAL_EXPENSES;
+        BigDecimal allowanceMethod = getAdjustedIncomeWithAllowance();
+        BigDecimal expensesMethod = getAdjustedIncomeWithActualExpenses();
+
+        return allowanceMethod.compareTo(expensesMethod) <= 0
+                ? RentARoomCalculationMethod.ALLOWANCE
+                : RentARoomCalculationMethod.ACTUAL_EXPENSES;
     }
-    
-    public BigDecimal calculateTaxableAmountWithAllowance() {
-        BigDecimal allowance = standardAllowance;
-        BigDecimal taxableProfit = grossRent.subtract(allowance);
-        return taxableProfit.max(BigDecimal.ZERO); // Cannot be negative
+
+    public BigDecimal getAdjustedIncomeWithAllowance() {
+        return grossRent.subtract(standardAllowance).max(BigDecimal.ZERO);
     }
-    
-    public BigDecimal calculateTaxableAmountWithActualExpenses() {
+
+    public BigDecimal getAdjustedIncomeWithActualExpenses() {
         BigDecimal total = expenses.values().stream()
             .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal allocatedExpenses = total.multiply(householdAllocationPercentage);
-        BigDecimal taxableProfit = grossRent.subtract(allocatedExpenses);
-        return taxableProfit.max(BigDecimal.ZERO); // Cannot be negative
+        return grossRent.subtract(allocatedExpenses).max(BigDecimal.ZERO);
     }
-}
-
-/**
- * Indicates which Rent-a-Room taxable amount calculation is preferred.
- */
-enum RentARoomCalculationMethod {
-    ALLOWANCE,
-    ACTUAL_EXPENSES
 }

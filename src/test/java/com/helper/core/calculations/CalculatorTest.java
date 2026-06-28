@@ -12,34 +12,34 @@ import static org.mockito.Mockito.*;
 public class CalculatorTest {
 
     @Test
-    public void calculateGrossIncomeByType_returnsZeroWhenNoSourcesForType() {
+    public void calculateAdjustedIncomeByType_returnsZeroWhenNoSourcesForType() {
         Calculator calculator = new Calculator(2025);
 
-        BigDecimal result = calculator.calculateGrossIncomeByType(IncomeType.SAVINGS);
+        BigDecimal result = calculator.calculateAdjustedIncomeByType(IncomeType.SAVINGS);
 
         assertBigDecimalEquals("0", result);
     }
 
     @Test
-    public void calculateGrossIncomeByType_sumsGrossIncomeForSameType() {
+    public void calculateAdjustedIncomeByType_sumsAdjustedIncomeForSameType() {
         Calculator calculator = new Calculator(2025);
         calculator.addIncomeSources(IncomeType.SAVINGS, createIncomeMock(IncomeType.SAVINGS, "100", "80"));
         calculator.addIncomeSources(IncomeType.SAVINGS, createIncomeMock(IncomeType.SAVINGS, "250.50", "200"));
 
-        BigDecimal result = calculator.calculateGrossIncomeByType(IncomeType.SAVINGS);
+        BigDecimal result = calculator.calculateAdjustedIncomeByType(IncomeType.SAVINGS);
 
-        assertBigDecimalEquals("350.50", result);
+        assertBigDecimalEquals("280", result);
     }
 
     @Test
-    public void calculateGrossIncomeByType_onlyUsesRequestedType() {
+    public void calculateAdjustedIncomeByType_onlyUsesRequestedType() {
         Calculator calculator = new Calculator(2025);
         calculator.addIncomeSources(IncomeType.SAVINGS, createIncomeMock(IncomeType.SAVINGS, "100", "80"));
         calculator.addIncomeSources(IncomeType.DIVIDENDS, createIncomeMock(IncomeType.DIVIDENDS, "400", "350"));
 
-        BigDecimal result = calculator.calculateGrossIncomeByType(IncomeType.SAVINGS);
+        BigDecimal result = calculator.calculateAdjustedIncomeByType(IncomeType.SAVINGS);
 
-        assertBigDecimalEquals("100", result);
+        assertBigDecimalEquals("80", result);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -58,11 +58,11 @@ public class CalculatorTest {
         assertEquals(0, new BigDecimal(expected).compareTo(actual));
     }
 
-    private static Income createIncomeMock(IncomeType incomeType, String grossIncome, String taxableAmount) {
+    private static Income createIncomeMock(IncomeType incomeType, String grossIncome, String adjustedIncome) {
         Income income = mock(Income.class);
         when(income.getIncomeType()).thenReturn(incomeType);
-        when(income.calculateTaxableAmount()).thenReturn(new BigDecimal(taxableAmount));
         when(income.getGrossIncome()).thenReturn(new BigDecimal(grossIncome));
+        when(income.getAdjustedIncome()).thenReturn(new BigDecimal(adjustedIncome));
         when(income.getTaxYear()).thenReturn(2025);
         return income;
     }

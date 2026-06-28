@@ -10,56 +10,64 @@ import static org.junit.Assert.assertEquals;
 public class RentARoomIncomeTest {
 
     @Test
-    public void calculateTaxableAmount_usesAllowanceWhenItIsBetter() {
+    public void getGrossIncome_returnsRawRentBeforeLocalAdjustment() {
         RentARoomIncome income = new RentARoomIncome(new BigDecimal("15000"), 2025, BigDecimal.ONE);
 
-        BigDecimal taxableAmount = income.calculateTaxableAmount();
+        assertBigDecimalEquals("15000", income.getGrossIncome());
+        assertBigDecimalEquals("7500", income.getAdjustedIncome());
+    }
 
-        assertBigDecimalEquals("7500", taxableAmount);
+    @Test
+    public void getAdjustedIncome_usesAllowanceWhenItIsBetter() {
+        RentARoomIncome income = new RentARoomIncome(new BigDecimal("15000"), 2025, BigDecimal.ONE);
+
+        BigDecimal adjustedIncome = income.getAdjustedIncome();
+
+        assertBigDecimalEquals("7500", adjustedIncome);
         assertEquals(RentARoomCalculationMethod.ALLOWANCE, income.getPreferredCalculationMethod());
     }
 
     @Test
-    public void calculateTaxableAmount_usesActualExpensesWhenTheyReduceTaxableAmountMore() {
+    public void getAdjustedIncome_usesActualExpensesWhenTheyReduceTaxableAmountMore() {
         RentARoomIncome income = new RentARoomIncome(new BigDecimal("15000"), 2025, BigDecimal.ONE);
         income.addExpense(ExpenseType.REPAIRS, new BigDecimal("9000"));
 
-        BigDecimal taxableAmount = income.calculateTaxableAmount();
+        BigDecimal adjustedIncome = income.getAdjustedIncome();
 
-        assertBigDecimalEquals("6000", taxableAmount);
+        assertBigDecimalEquals("6000", adjustedIncome);
         assertEquals(RentARoomCalculationMethod.ACTUAL_EXPENSES, income.getPreferredCalculationMethod());
     }
 
     @Test
-    public void calculateTaxableAmount_returnsZeroWhenAllowanceCoversAllProfit() {
+    public void getAdjustedIncome_returnsZeroWhenAllowanceCoversAllProfit() {
         RentARoomIncome income = new RentARoomIncome(new BigDecimal("5000"), 2025, BigDecimal.ONE);
 
-        BigDecimal taxableAmount = income.calculateTaxableAmount();
+        BigDecimal adjustedIncome = income.getAdjustedIncome();
 
-        assertBigDecimalEquals("0", taxableAmount);
+        assertBigDecimalEquals("0", adjustedIncome);
         assertEquals(RentARoomCalculationMethod.ALLOWANCE, income.getPreferredCalculationMethod());
     }
 
     @Test
-    public void calculateTaxableAmount_appliesHouseholdAllocationToExpenses() {
+    public void getAdjustedIncome_appliesHouseholdAllocationToExpenses() {
         RentARoomIncome income = new RentARoomIncome(new BigDecimal("15000"), 2025, new BigDecimal("0.5"));
         income.addExpense(ExpenseType.REPAIRS, new BigDecimal("8000"));
 
-        BigDecimal taxableAmount = income.calculateTaxableAmount();
+        BigDecimal adjustedIncome = income.getAdjustedIncome();
 
-        assertBigDecimalEquals("7500", taxableAmount);
+        assertBigDecimalEquals("7500", adjustedIncome);
         assertEquals(RentARoomCalculationMethod.ALLOWANCE, income.getPreferredCalculationMethod());
     }
 
     @Test
-    public void calculateTaxableAmountWithActualExpenses_appliesHouseholdAllocationPercentage() {
+    public void getAdjustedIncomeWithActualExpenses_optsOutOfRentARoomAllowance() {
         RentARoomIncome income = new RentARoomIncome(new BigDecimal("15000"), 2025, new BigDecimal("0.5"));
         income.addExpense(ExpenseType.REPAIRS, new BigDecimal("8000"));
 
-        BigDecimal actualExpenseMethodTaxable = income.calculateTaxableAmountWithActualExpenses();
+        BigDecimal actualExpenseMethodAdjusted = income.getAdjustedIncomeWithActualExpenses();
 
-        // 8000 * 0.5 = 4000 allocated expenses; 15000 - 4000 = 11000 taxable
-        assertBigDecimalEquals("11000", actualExpenseMethodTaxable);
+        // No rent-a-room allowance is applied: 8000 * 0.5 = 4000 expenses; 15000 - 4000 = 11000.
+        assertBigDecimalEquals("11000", actualExpenseMethodAdjusted);
     }
 
     @Test(expected = NullPointerException.class)

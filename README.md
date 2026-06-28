@@ -1,6 +1,6 @@
 # Self Assessment Helper
 
-A flexible, framework-agnostic Java helper for UK Self Assessment workflows. The current focus is preparing gross income figures from multiple sources; taxable amount and tax estimate features can be added as later extensions.
+A flexible, framework-agnostic Java helper for UK Self Assessment workflows. The current focus is preparing gross and adjusted income figures from multiple sources; taxable income and tax due calculations can be added as later extensions.
 
 ## Features
 
@@ -9,8 +9,8 @@ A flexible, framework-agnostic Java helper for UK Self Assessment workflows. The
   - **Dividend** income
   - **Savings** income (including foreign savings conversion support)
 
-- Gross income summaries by category
-- Allowance and taxable amount helpers where useful
+- Gross and adjusted income summaries by category
+- Local income adjustments where the income source has enough context
 - FX conversion support for foreign savings
 - Detailed summaries for Self Assessment preparation
 
@@ -52,9 +52,9 @@ The core income contract is `Income` (`com.helper.core.income.Income`).
 
 Current concrete/related income models include:
 
-- `Calculator` (`com.helper.core.calculations`) - calculation entry point, currently including gross income summaries by category
-- `RentARoomIncome` (`com.helper.core.income.implementation`) - Rent-a-Room income with allowance vs actual-expense comparison
-- `SavingIncome` (`com.helper.core.income.implementation`) - aggregate savings category income, with taxable amount estimation support
+- `Calculator` (`com.helper.core.calculations`) - calculation entry point, currently including adjusted income summaries by category
+- `RentARoomIncome` (`com.helper.core.income.implementation`) - Rent-a-Room income with allowance vs actual-expense adjusted-income comparison
+- `SavingIncome` (`com.helper.core.income.implementation`) - aggregate savings category income
 - `ForeignSaving` (`com.helper.core.income.implementation.savings`) - foreign savings input with monthly/yearly FX conversion support
 - `Saving` (`com.helper.core.income.implementation.savings`) - contract for savings contributors used by `SavingIncome`
 - `Dividend` (`com.helper.core.income.implementation.dividend`) - contract for dividend contributors
@@ -85,5 +85,5 @@ mvn test
 - [ ] Export to Self Assessment helper formats (CSV, JSON)
 - [ ] Web UI integration
 - [ ] CLI tool wrapper
-- [ ] Taxable amount estimates by category
+- [ ] Taxable income calculator by category
 - [ ] Tax due estimate summaries

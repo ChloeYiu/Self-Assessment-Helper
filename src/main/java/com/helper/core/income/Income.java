@@ -15,16 +15,16 @@ public interface Income {
      * Get the gross income amount
      */
     BigDecimal getGrossIncome();
+
+    /**
+     * Get the amount that should feed into wider income calculations after local category rules.
+     */
+    default BigDecimal getAdjustedIncome() {
+        return getGrossIncome();
+    }
     
     /**
      * Get the tax year this income applies to
      */
     int getTaxYear();
-    
-    /**
-     * Calculate the taxable amount for this income source
-     * Different income types may have different calculations (e.g., deductions, exemptions, etc.)
-     */
-    BigDecimal calculateTaxableAmount();
-    
 }

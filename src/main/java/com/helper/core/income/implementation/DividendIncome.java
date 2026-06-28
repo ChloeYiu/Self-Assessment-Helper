@@ -33,9 +33,4 @@ public class DividendIncome implements Income {
     public int getTaxYear() {
         throw new UnsupportedOperationException();
     }
-
-    @Override
-    public BigDecimal calculateTaxableAmount() {
-        throw new UnsupportedOperationException();
-    }
 }
