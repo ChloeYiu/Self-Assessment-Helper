@@ -4,11 +4,11 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.taxcalc</groupId>
-    <artifactId>tax-calculator</artifactId>
+    <groupId>com.helper.core</groupId>
+    <artifactId>self-assessment-helper</artifactId>
     <version>1.0.0</version>
-    <name>Tax Calculator</name>
-    <description>Flexible tax calculation engine for multiple income sources</description>
+    <name>Self Assessment Helper</name>
+    <description>Helper for UK Self Assessment income summaries, with room for future tax estimates</description>
 
     <properties>
         <maven.compiler.source>11</maven.compiler.source>

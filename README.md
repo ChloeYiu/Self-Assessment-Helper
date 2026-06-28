@@ -1,6 +1,6 @@
-# Tax Calculator
+# Self Assessment Helper
 
-A flexible, framework-agnostic Java backend for calculating UK personal income tax from multiple income sources.
+A flexible, framework-agnostic Java helper for UK Self Assessment workflows. The current focus is preparing gross income figures from multiple sources; taxable amount and tax estimate features can be added as later extensions.
 
 ## Features
 
@@ -9,10 +9,10 @@ A flexible, framework-agnostic Java backend for calculating UK personal income t
   - **Dividend** income
   - **Savings** income (including foreign savings conversion support)
 
-- Accurate UK tax calculations for 2024/25 tax year
-- Income allowances and deductions per income type
-- Tax bracket calculations (basic, higher, additional rates)
-- Detailed tax summaries
+- Gross income summaries by category
+- Allowance and taxable amount helpers where useful
+- FX conversion support for foreign savings
+- Detailed summaries for Self Assessment preparation
 
 ## Project Structure
 
@@ -28,9 +28,9 @@ scripts/
 
 src/
 ├── main/
-│   ├── java/com/taxcalc/
+│   ├── java/com/helper/core/
 │   │   ├── builder/          # Builder utilities
-│   │   ├── calculations/     # Tax calculation logic
+│   │   ├── calculations/     # Calculation and summary logic
 │   │   ├── config/           # Tax-year and expense configuration
 │   │   ├── fx/               # FX rate contracts and services
 │   │   └── income/           # Income contracts and implementations
@@ -38,7 +38,7 @@ src/
 │       └── tax/
 │           └── tax-allowances.json
 └── test/
-  └── java/com/taxcalc/
+  └── java/com/helper/core/
     ├── calculations/
     └── income/
 
@@ -48,15 +48,16 @@ setup.sh
 
 ## Income Models
 
-The core income contract is `Income` (`com.taxcalc.income.Income`).
+The core income contract is `Income` (`com.helper.core.income.Income`).
 
 Current concrete/related income models include:
 
-- `RentARoomIncome` (`com.taxcalc.income.implementation`) - Rent-a-Room income with allowance vs actual-expense comparison
-- `SavingIncome` (`com.taxcalc.income.implementation`) - aggregate savings category income (applies savings allowance)
-- `ForeignSaving` (`com.taxcalc.income.implementation.savings`) - foreign savings input with monthly/yearly FX conversion support
-- `Saving` (`com.taxcalc.income.implementation.savings`) - contract for savings contributors used by `SavingIncome`
-- `Dividend` (`com.taxcalc.income.implementation.dividend`) - contract for dividend contributors
+- `Calculator` (`com.helper.core.calculations`) - calculation entry point, currently including gross income summaries by category
+- `RentARoomIncome` (`com.helper.core.income.implementation`) - Rent-a-Room income with allowance vs actual-expense comparison
+- `SavingIncome` (`com.helper.core.income.implementation`) - aggregate savings category income, with taxable amount estimation support
+- `ForeignSaving` (`com.helper.core.income.implementation.savings`) - foreign savings input with monthly/yearly FX conversion support
+- `Saving` (`com.helper.core.income.implementation.savings`) - contract for savings contributors used by `SavingIncome`
+- `Dividend` (`com.helper.core.income.implementation.dividend`) - contract for dividend contributors
 
 ## Usage
 
@@ -76,12 +77,13 @@ mvn test
 
 ## Future Enhancements
 
-- [ ] National Insurance calculations
-- [ ] Capital Gains Tax calculations
+- [ ] Capital gains income summaries
 - [ ] Self-employment income and NI
 - [ ] Marriage Allowance calculations
 - [ ] Child benefit tax charges
 - [ ] Student Loans repayment tracking
-- [ ] Export to tax software formats (CSV, JSON)
+- [ ] Export to Self Assessment helper formats (CSV, JSON)
 - [ ] Web UI integration
 - [ ] CLI tool wrapper
+- [ ] Taxable amount estimates by category
+- [ ] Tax due estimate summaries
