@@ -1,23 +1,28 @@
 package com.helper.core.income.implementation.dividend;
 
 import java.math.BigDecimal;
+import java.util.Objects;
 
 /**
- * Template model for managed-trade dividend income.
+ * Models reported managed-trade dividend income.
  */
 public class ManagedTradeDividend implements Dividend {
 
-    public ManagedTradeDividend(int taxYear, String managerName, String accountReference, BigDecimal grossDividend) {
-        throw new UnsupportedOperationException();
+    public int taxYear;
+    private final BigDecimal dividendAmount;
+
+    public ManagedTradeDividend(int taxYear, BigDecimal dividendAmount) {
+        this.taxYear = taxYear;
+        this.dividendAmount = Objects.requireNonNull(dividendAmount, "dividendAmount");
     }
 
     @Override
     public BigDecimal calculateDividendAmount() {
-        throw new UnsupportedOperationException();
+        return dividendAmount;
     }
 
     @Override
     public int getTaxYear() {
-        throw new UnsupportedOperationException();
+        return taxYear;
     }
 }

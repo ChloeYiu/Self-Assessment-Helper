@@ -1,5 +1,6 @@
 package com.helper.core.income.implementation;
 
+import com.helper.core.calculations.AllowanceCalculator;
 import com.helper.core.income.Income;
 import com.helper.core.income.IncomeType;
 import com.helper.core.income.implementation.savings.Saving;
@@ -17,11 +18,17 @@ public class SavingIncome implements Income {
     public BigDecimal grossSavingIncome;
     public int taxYear;
     private final List<Saving> savingSources;
+    private final AllowanceCalculator allowanceCalculator;
 
     public SavingIncome(int taxYear) {
+        this(taxYear, new AllowanceCalculator());
+    }
+
+    public SavingIncome(int taxYear, AllowanceCalculator allowanceCalculator) {
         this.grossSavingIncome = BigDecimal.ZERO;
         this.taxYear = taxYear;
         this.savingSources = new ArrayList<>();
+        this.allowanceCalculator = Objects.requireNonNull(allowanceCalculator, "allowanceCalculator");
     }
 
     @Override
@@ -47,18 +54,21 @@ public class SavingIncome implements Income {
     }
 
     public void addSavingIncome(Saving savingSource) {
-        savingSources.add(Objects.requireNonNull(savingSource, "savingSource"));
+        Saving source = Objects.requireNonNull(savingSource, "savingSource");
+        if (source.getTaxYear() != taxYear) {
+            throw new IllegalArgumentException("savingSource tax year must match aggregate tax year");
+        }
+        savingSources.add(source);
     }
 
     @Override
     public BigDecimal calculateTaxableAmount() {
-        BigDecimal grossIncome = getGrossIncome();
-        BigDecimal personalSavingsAllowance = getPersonalSavingsAllowance();
-        return grossIncome.subtract(personalSavingsAllowance).max(BigDecimal.ZERO);
+        return calculateTaxableAmount(getGrossIncome());
     }
 
-    private BigDecimal getPersonalSavingsAllowance() {
-        // Placeholder for actual allowance logic based on tax bands
-        return BigDecimal.valueOf(1000); // Example fixed allowance
+    public BigDecimal calculateTaxableAmount(BigDecimal totalIncome) {
+        BigDecimal grossIncome = getGrossIncome();
+        BigDecimal personalSavingsAllowance = allowanceCalculator.getPersonalSavingsAllowance(totalIncome);
+        return grossIncome.subtract(personalSavingsAllowance).max(BigDecimal.ZERO);
     }
 }
