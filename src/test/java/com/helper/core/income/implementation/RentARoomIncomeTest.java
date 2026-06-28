@@ -1,6 +1,7 @@
 package com.helper.core.income.implementation;
 
-import com.helper.core.config.ExpenseType;
+import com.helper.core.income.implementation.rentaroom.ExpenseType;
+import com.helper.core.income.implementation.rentaroom.RentARoomCalculationMethod;
 import org.junit.Test;
 
 import java.math.BigDecimal;

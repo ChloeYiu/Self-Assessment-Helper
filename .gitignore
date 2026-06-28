@@ -2,6 +2,7 @@
 .idea/
 .vscode/
 .github/copilot-instructions.md
+AGENTS.md
 *.swp
 *.swo
 

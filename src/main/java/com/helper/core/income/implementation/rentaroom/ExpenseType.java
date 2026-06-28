@@ -1,8 +1,7 @@
-package com.helper.core.config;
+package com.helper.core.income.implementation.rentaroom;
 
 /**
- * Type-safe enum for all expense categories
- * Used as keys in expense maps for compile-time safety
+ * Type-safe enum for Rent-a-Room expense categories.
  */
 public enum ExpenseType {
     COUNCIL_TAX,

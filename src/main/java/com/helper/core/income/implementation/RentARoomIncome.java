@@ -1,8 +1,9 @@
 package com.helper.core.income.implementation;
 
-import com.helper.core.config.ExpenseType;
 import com.helper.core.income.Income;
 import com.helper.core.income.IncomeType;
+import com.helper.core.income.implementation.rentaroom.ExpenseType;
+import com.helper.core.income.implementation.rentaroom.RentARoomCalculationMethod;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
