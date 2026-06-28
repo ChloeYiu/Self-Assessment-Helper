@@ -14,8 +14,8 @@ public class SavingIncomeTest {
     @Test
     public void getGrossIncome_sumsLocalSavings() {
         LocalSaving localSaving = new LocalSaving(2025);
-        localSaving.setMonthlyIncome(TaxYearPeriod.MAY, new BigDecimal("100.25"));
-        localSaving.setMonthlyIncome(TaxYearPeriod.JUNE, new BigDecimal("50.75"));
+        localSaving.addMonthlyIncome(TaxYearPeriod.MAY, new BigDecimal("100.25"));
+        localSaving.addMonthlyIncome(TaxYearPeriod.JUNE, new BigDecimal("50.75"));
 
         SavingIncome income = new SavingIncome(2025);
         income.addSavingIncome(localSaving);

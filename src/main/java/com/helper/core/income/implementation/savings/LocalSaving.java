@@ -31,10 +31,11 @@ public class LocalSaving implements Saving {
         return taxYear;
     }
 
-    public void setMonthlyIncome(TaxYearPeriod period, BigDecimal amount) {
-        monthlyIncome.put(
+    public void addMonthlyIncome(TaxYearPeriod period, BigDecimal amount) {
+        monthlyIncome.merge(
             Objects.requireNonNull(period, "period"),
-            Objects.requireNonNull(amount, "amount")
+            Objects.requireNonNull(amount, "amount"),
+            BigDecimal::add
         );
     }
 }

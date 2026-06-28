@@ -14,8 +14,8 @@ public class ForeignSavingTest {
     public void calculateSavingAmount_prefersYearlyWhenItProducesLowerGbp() {
         ForeignSaving income = new ForeignSaving(2025, CurrencyCode.HKD);
 
-        income.setMonthlyIncome(TaxYearPeriod.MAY, new BigDecimal("1000"));
-        income.setMonthlyIncome(TaxYearPeriod.JUNE, new BigDecimal("1000"));
+        income.addMonthlyIncome(TaxYearPeriod.MAY, new BigDecimal("1000"));
+        income.addMonthlyIncome(TaxYearPeriod.JUNE, new BigDecimal("1000"));
 
         income.setMonthlyRate(TaxYearPeriod.MAY, new BigDecimal("0.12"));
         income.setMonthlyRate(TaxYearPeriod.JUNE, new BigDecimal("0.12"));
@@ -35,8 +35,8 @@ public class ForeignSavingTest {
     public void calculateSavingAmount_prefersMonthlyWhenItProducesLowerGbp() {
         ForeignSaving income = new ForeignSaving(2025, CurrencyCode.HKD);
 
-        income.setMonthlyIncome(TaxYearPeriod.MAY, new BigDecimal("1000"));
-        income.setMonthlyIncome(TaxYearPeriod.JUNE, new BigDecimal("1000"));
+        income.addMonthlyIncome(TaxYearPeriod.MAY, new BigDecimal("1000"));
+        income.addMonthlyIncome(TaxYearPeriod.JUNE, new BigDecimal("1000"));
 
         income.setMonthlyRate(TaxYearPeriod.MAY, new BigDecimal("0.10"));
         income.setMonthlyRate(TaxYearPeriod.JUNE, new BigDecimal("0.10"));
@@ -56,7 +56,7 @@ public class ForeignSavingTest {
     public void calculateSavingAmount_usesMonthlyWhenOnlyMonthlyRatesExist() {
         ForeignSaving income = new ForeignSaving(2025, CurrencyCode.HKD);
 
-        income.setMonthlyIncome(TaxYearPeriod.MAY, new BigDecimal("1000"));
+        income.addMonthlyIncome(TaxYearPeriod.MAY, new BigDecimal("1000"));
         income.setMonthlyRate(TaxYearPeriod.MAY, new BigDecimal("0.10"));
 
         assertBigDecimalEquals("100.00", income.calculateSavingAmount());
@@ -67,7 +67,7 @@ public class ForeignSavingTest {
     public void calculateSavingAmount_usesYearlyWhenOnlyYearlyRateExists() {
         ForeignSaving income = new ForeignSaving(2025, CurrencyCode.HKD);
 
-        income.setMonthlyIncome(TaxYearPeriod.MAY, new BigDecimal("1000"));
+        income.addMonthlyIncome(TaxYearPeriod.MAY, new BigDecimal("1000"));
         income.setYearlyRate(new BigDecimal("0.10"));
 
         assertBigDecimalEquals("100.00", income.calculateSavingAmount());
@@ -78,7 +78,7 @@ public class ForeignSavingTest {
     public void calculateSavingAmount_throwsWhenIncomeExistsWithoutAnyRate() {
         ForeignSaving income = new ForeignSaving(2025, CurrencyCode.HKD);
 
-        income.setMonthlyIncome(TaxYearPeriod.MAY, new BigDecimal("1000"));
+        income.addMonthlyIncome(TaxYearPeriod.MAY, new BigDecimal("1000"));
 
         income.calculateSavingAmount();
     }
@@ -88,7 +88,7 @@ public class ForeignSavingTest {
         ForeignSaving income = new ForeignSaving(2025, CurrencyCode.HKD);
 
         for (TaxYearPeriod period : TaxYearPeriod.values()) {
-            income.setMonthlyIncome(period, new BigDecimal("100"));
+            income.addMonthlyIncome(period, new BigDecimal("100"));
             income.setMonthlyRate(period, new BigDecimal("0.10"));
         }
 
@@ -107,6 +107,17 @@ public class ForeignSavingTest {
         ForeignSaving income = new ForeignSaving(2025, CurrencyCode.HKD);
 
         income.setMonthlyRate(TaxYearPeriod.MAY, null);
+    }
+
+    @Test
+    public void calculateSavingAmount_accumulatesIncomeForSameMonth() {
+        ForeignSaving income = new ForeignSaving(2025, CurrencyCode.HKD);
+
+        income.addMonthlyIncome(TaxYearPeriod.MAY, new BigDecimal("1000"));
+        income.addMonthlyIncome(TaxYearPeriod.MAY, new BigDecimal("500"));
+        income.setMonthlyRate(TaxYearPeriod.MAY, new BigDecimal("0.10"));
+
+        assertBigDecimalEquals("150.00", income.calculateSavingAmount());
     }
 
     private static void assertBigDecimalEquals(String expected, BigDecimal actual) {

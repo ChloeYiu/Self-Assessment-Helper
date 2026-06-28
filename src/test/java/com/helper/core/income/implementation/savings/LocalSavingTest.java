@@ -21,17 +21,27 @@ public class LocalSavingTest {
     public void calculateSavingAmount_sumsMonthlyIncomeWhenProvided() {
         LocalSaving income = new LocalSaving(2025);
 
-        income.setMonthlyIncome(TaxYearPeriod.MAY, new BigDecimal("10.25"));
-        income.setMonthlyIncome(TaxYearPeriod.JUNE, new BigDecimal("12.75"));
+        income.addMonthlyIncome(TaxYearPeriod.MAY, new BigDecimal("10.25"));
+        income.addMonthlyIncome(TaxYearPeriod.JUNE, new BigDecimal("12.75"));
+
+        assertBigDecimalEquals("23.00", income.calculateSavingAmount());
+    }
+
+    @Test
+    public void calculateSavingAmount_accumulatesIncomeForSameMonth() {
+        LocalSaving income = new LocalSaving(2025);
+
+        income.addMonthlyIncome(TaxYearPeriod.MAY, new BigDecimal("10.25"));
+        income.addMonthlyIncome(TaxYearPeriod.MAY, new BigDecimal("12.75"));
 
         assertBigDecimalEquals("23.00", income.calculateSavingAmount());
     }
 
     @Test(expected = NullPointerException.class)
-    public void setMonthlyIncome_throwsWhenAmountIsNull() {
+    public void addMonthlyIncome_throwsWhenAmountIsNull() {
         LocalSaving income = new LocalSaving(2025);
 
-        income.setMonthlyIncome(TaxYearPeriod.MAY, null);
+        income.addMonthlyIncome(TaxYearPeriod.MAY, null);
     }
 
     private static void assertBigDecimalEquals(String expected, BigDecimal actual) {
