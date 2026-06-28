@@ -10,13 +10,13 @@ import java.util.ArrayList;
 import java.util.Objects;
 
 /**
- * Calculates Self Assessment helper values from income sources.
+ * Calculates income summary values from income sources.
  */
-public class Calculator {
+public class IncomeCalculator {
     private final int taxYear;
     private final Map<IncomeType, List<Income>> incomeSources;
 
-    public Calculator(int taxYear) {
+    public IncomeCalculator(int taxYear) {
         this.taxYear = taxYear;
         this.incomeSources = new HashMap<>();
     }

@@ -21,7 +21,7 @@ public class RentARoomIncome implements Income {
     public Map<ExpenseType, BigDecimal> expenses; // Type-safe categorized expenses
     public BigDecimal householdAllocationPercentage; // E.g., 0.5 = 50% if sharing with one other person
     public int taxYear;
-    // TODO: Load this from AllowanceCalculator/tax-year allowance configuration instead of hardcoding it.
+    // TODO: Load this from tax-year allowance configuration instead of hardcoding it.
     private final BigDecimal standardAllowance = BigDecimal.valueOf(7500);
 
     /**

@@ -46,13 +46,43 @@ pom.xml
 setup.sh
 ```
 
+## Calculation Architecture
+
+The helper separates income facts from later tax decisions:
+
+```text
+Input files/manual data
+  -> Extractors and mappers
+  -> Income builders
+  -> Income objects
+  -> Adjusted income summary
+  -> Allowance calculation (future)
+  -> Taxable income calculation (future)
+  -> Tax due calculation (future)
+```
+
+Current implementation covers the lower layers:
+
+- **Income builders** create income objects from mapped inputs.
+- **Income objects** expose `getGrossIncome()` for the raw amount received.
+- **Income objects** expose `getAdjustedIncome()` for the amount after local, self-contained rules.
+- **IncomeCalculator** currently summarizes adjusted income by category.
+
+Local adjustments live in the income class when the source has enough context. For example, `RentARoomIncome` can choose between the Rent-a-Room allowance and actual expenses. Most income types use the default adjusted income, which is the same as gross income.
+
+Future layers should use the adjusted income summary as input:
+
+- **Allowance calculation** will determine personal, savings, dividend, and capital gains allowances from the full income picture.
+- **TaxableIncomeCalculator** will apply those allowances to calculate taxable income by category.
+- **TaxDueCalculator** will apply rates and bands to calculate estimated tax due.
+
 ## Income Models
 
 The core income contract is `Income` (`com.helper.core.income.Income`).
 
 Current concrete/related income models include:
 
-- `Calculator` (`com.helper.core.calculations`) - calculation entry point, currently including adjusted income summaries by category
+- `IncomeCalculator` (`com.helper.core.calculations`) - calculation entry point, currently including adjusted income summaries by category
 - `RentARoomIncome` (`com.helper.core.income.implementation`) - Rent-a-Room income with allowance vs actual-expense adjusted-income comparison
 - `SavingIncome` (`com.helper.core.income.implementation`) - aggregate savings category income
 - `ForeignSaving` (`com.helper.core.income.implementation.savings`) - foreign savings input with monthly/yearly FX conversion support

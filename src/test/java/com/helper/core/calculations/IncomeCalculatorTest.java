@@ -9,11 +9,11 @@ import java.math.BigDecimal;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
-public class CalculatorTest {
+public class IncomeCalculatorTest {
 
     @Test
     public void calculateAdjustedIncomeByType_returnsZeroWhenNoSourcesForType() {
-        Calculator calculator = new Calculator(2025);
+        IncomeCalculator calculator = new IncomeCalculator(2025);
 
         BigDecimal result = calculator.calculateAdjustedIncomeByType(IncomeType.SAVINGS);
 
@@ -22,7 +22,7 @@ public class CalculatorTest {
 
     @Test
     public void calculateAdjustedIncomeByType_sumsAdjustedIncomeForSameType() {
-        Calculator calculator = new Calculator(2025);
+        IncomeCalculator calculator = new IncomeCalculator(2025);
         calculator.addIncomeSources(IncomeType.SAVINGS, createIncomeMock(IncomeType.SAVINGS, "100", "80"));
         calculator.addIncomeSources(IncomeType.SAVINGS, createIncomeMock(IncomeType.SAVINGS, "250.50", "200"));
 
@@ -33,7 +33,7 @@ public class CalculatorTest {
 
     @Test
     public void calculateAdjustedIncomeByType_onlyUsesRequestedType() {
-        Calculator calculator = new Calculator(2025);
+        IncomeCalculator calculator = new IncomeCalculator(2025);
         calculator.addIncomeSources(IncomeType.SAVINGS, createIncomeMock(IncomeType.SAVINGS, "100", "80"));
         calculator.addIncomeSources(IncomeType.DIVIDENDS, createIncomeMock(IncomeType.DIVIDENDS, "400", "350"));
 
@@ -44,13 +44,13 @@ public class CalculatorTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void addIncomeSources_throwsWhenIncomeTypeIsNull() {
-        Calculator calculator = new Calculator(2025);
+        IncomeCalculator calculator = new IncomeCalculator(2025);
         calculator.addIncomeSources(null, createIncomeMock(IncomeType.SAVINGS, "100", "80"));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void addIncomeSources_throwsWhenSourceIsNull() {
-        Calculator calculator = new Calculator(2025);
+        IncomeCalculator calculator = new IncomeCalculator(2025);
         calculator.addIncomeSources(IncomeType.SAVINGS, null);
     }
 
