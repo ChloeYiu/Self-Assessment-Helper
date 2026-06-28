@@ -1,4 +1,4 @@
-package com.helper.core.builder;
+package com.helper.core.income.builder;
 
 import com.helper.core.income.implementation.SavingIncome;
 import com.helper.core.income.implementation.savings.Saving;
