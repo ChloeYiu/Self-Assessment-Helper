@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 public interface Dividend {
 
     /**
-     * Gross dividend amount in GBP before category-level allowance.
+     * Gross dividend amount before category-level allowance.
      */
     BigDecimal calculateDividendAmount();
 
