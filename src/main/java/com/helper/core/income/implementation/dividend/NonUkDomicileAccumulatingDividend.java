@@ -1,5 +1,6 @@
 package com.helper.core.income.implementation.dividend;
 
+import com.helper.core.config.TaxYear;
 import java.math.BigDecimal;
 
 /**
@@ -17,7 +18,7 @@ public class NonUkDomicileAccumulatingDividend implements Dividend {
     }
 
     @Override
-    public int getTaxYear() {
+    public TaxYear getTaxYear() {
         throw new UnsupportedOperationException();
     }
 }

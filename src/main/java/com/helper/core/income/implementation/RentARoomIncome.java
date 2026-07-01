@@ -1,5 +1,6 @@
 package com.helper.core.income.implementation;
 
+import com.helper.core.config.TaxYear;
 import com.helper.core.income.Income;
 import com.helper.core.income.IncomeType;
 import com.helper.core.income.implementation.rentaroom.ExpenseType;
@@ -21,21 +22,21 @@ public class RentARoomIncome implements Income {
     public BigDecimal grossRent;
     public Map<ExpenseType, BigDecimal> expenses; // Type-safe categorized expenses
     public BigDecimal householdAllocationPercentage; // E.g., 0.5 = 50% if sharing with one other person
-    public int taxYear;
+    public TaxYear taxYear;
     // TODO: Load this from tax-year allowance configuration instead of hardcoding it.
     private final BigDecimal standardAllowance = BigDecimal.valueOf(7500);
 
     /**
      * Full constructor with all fields
      */
-    public RentARoomIncome(BigDecimal grossRent, int taxYear, BigDecimal householdAllocationPercentage) {
+    public RentARoomIncome(BigDecimal grossRent, TaxYear taxYear, BigDecimal householdAllocationPercentage) {
         this.grossRent = Objects.requireNonNull(grossRent, "grossRent");
         this.expenses = new HashMap<>();
         this.householdAllocationPercentage = Objects.requireNonNull(
             householdAllocationPercentage,
             "householdAllocationPercentage"
         );
-        this.taxYear = taxYear;
+        this.taxYear = Objects.requireNonNull(taxYear, "taxYear");
     }
     
     /**
@@ -59,7 +60,7 @@ public class RentARoomIncome implements Income {
     }
     
     @Override
-    public int getTaxYear() {
+    public TaxYear getTaxYear() {
         return taxYear;
     }
 

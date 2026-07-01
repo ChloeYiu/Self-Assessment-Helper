@@ -1,5 +1,6 @@
 package com.helper.core.income.implementation;
 
+import com.helper.core.config.TaxYear;
 import com.helper.core.income.Income;
 import com.helper.core.income.IncomeType;
 import com.helper.core.income.implementation.savings.Saving;
@@ -15,12 +16,12 @@ import java.util.Objects;
 public class SavingIncome implements Income {
 
     public BigDecimal grossSavingIncome;
-    public int taxYear;
+    public TaxYear taxYear;
     private final List<Saving> savingSources;
 
-    public SavingIncome(int taxYear) {
+    public SavingIncome(TaxYear taxYear) {
         this.grossSavingIncome = BigDecimal.ZERO;
-        this.taxYear = taxYear;
+        this.taxYear = Objects.requireNonNull(taxYear, "taxYear");
         this.savingSources = new ArrayList<>();
     }
 
@@ -42,13 +43,13 @@ public class SavingIncome implements Income {
     }
 
     @Override
-    public int getTaxYear() {
+    public TaxYear getTaxYear() {
         return taxYear;
     }
 
     public void addSavingIncome(Saving savingSource) {
         Saving source = Objects.requireNonNull(savingSource, "savingSource");
-        if (source.getTaxYear() != taxYear) {
+        if (!source.getTaxYear().equals(taxYear)) {
             throw new IllegalArgumentException("savingSource tax year must match aggregate tax year");
         }
         savingSources.add(source);

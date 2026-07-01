@@ -1,5 +1,6 @@
 package com.helper.core.income.implementation.savings;
 
+import com.helper.core.config.TaxYear;
 import com.helper.core.config.TaxYearPeriod;
 import org.junit.Test;
 
@@ -11,15 +12,15 @@ public class LocalSavingTest {
 
     @Test
     public void calculateSavingAmount_returnsZeroWhenNoIncomeExists() {
-        LocalSaving income = new LocalSaving(2025);
+        LocalSaving income = new LocalSaving(TaxYear.of(2025));
 
         assertBigDecimalEquals("0", income.calculateSavingAmount());
-        assertEquals(2025, income.getTaxYear());
+        assertEquals(TaxYear.of(2025), income.getTaxYear());
     }
 
     @Test
     public void calculateSavingAmount_sumsMonthlyIncomeWhenProvided() {
-        LocalSaving income = new LocalSaving(2025);
+        LocalSaving income = new LocalSaving(TaxYear.of(2025));
 
         income.addMonthlyIncome(TaxYearPeriod.MAY, new BigDecimal("10.25"));
         income.addMonthlyIncome(TaxYearPeriod.JUNE, new BigDecimal("12.75"));
@@ -29,7 +30,7 @@ public class LocalSavingTest {
 
     @Test
     public void calculateSavingAmount_accumulatesIncomeForSameMonth() {
-        LocalSaving income = new LocalSaving(2025);
+        LocalSaving income = new LocalSaving(TaxYear.of(2025));
 
         income.addMonthlyIncome(TaxYearPeriod.MAY, new BigDecimal("10.25"));
         income.addMonthlyIncome(TaxYearPeriod.MAY, new BigDecimal("12.75"));
@@ -39,7 +40,7 @@ public class LocalSavingTest {
 
     @Test(expected = NullPointerException.class)
     public void addMonthlyIncome_throwsWhenAmountIsNull() {
-        LocalSaving income = new LocalSaving(2025);
+        LocalSaving income = new LocalSaving(TaxYear.of(2025));
 
         income.addMonthlyIncome(TaxYearPeriod.MAY, null);
     }

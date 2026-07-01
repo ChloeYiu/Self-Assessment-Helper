@@ -1,5 +1,6 @@
 package com.helper.core.income.implementation.capitalgain;
 
+import com.helper.core.config.TaxYear;
 import java.math.BigDecimal;
 
 /**
@@ -12,8 +13,8 @@ public interface CapitalGain {
      */
     BigDecimal calculateCapitalGainAmount();
 
-    /**
+     /**
      * Tax year this gain applies to.
      */
-    int getTaxYear();
+    TaxYear getTaxYear();
 }

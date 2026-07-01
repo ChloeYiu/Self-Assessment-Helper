@@ -1,5 +1,6 @@
 package com.helper.core.income.implementation.dividend;
 
+import com.helper.core.config.TaxYear;
 import java.math.BigDecimal;
 import java.util.Objects;
 
@@ -8,11 +9,11 @@ import java.util.Objects;
  */
 public class ManagedTradeDividend implements Dividend {
 
-    public int taxYear;
+    public TaxYear taxYear;
     private final BigDecimal dividendAmount;
 
-    public ManagedTradeDividend(int taxYear, BigDecimal dividendAmount) {
-        this.taxYear = taxYear;
+    public ManagedTradeDividend(TaxYear taxYear, BigDecimal dividendAmount) {
+        this.taxYear = Objects.requireNonNull(taxYear, "taxYear");
         this.dividendAmount = Objects.requireNonNull(dividendAmount, "dividendAmount");
     }
 
@@ -22,7 +23,7 @@ public class ManagedTradeDividend implements Dividend {
     }
 
     @Override
-    public int getTaxYear() {
+    public TaxYear getTaxYear() {
         return taxYear;
     }
 }

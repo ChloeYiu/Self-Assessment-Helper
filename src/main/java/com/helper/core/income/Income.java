@@ -1,5 +1,6 @@
 package com.helper.core.income;
 
+import com.helper.core.config.TaxYear;
 import java.math.BigDecimal;
 
 /**
@@ -23,8 +24,8 @@ public interface Income {
         return getGrossIncome();
     }
     
-    /**
+     /**
      * Get the tax year this income applies to
      */
-    int getTaxYear();
+    TaxYear getTaxYear();
 }

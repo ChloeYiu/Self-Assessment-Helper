@@ -1,5 +1,6 @@
 package com.helper.core.income.implementation.capitalgain;
 
+import com.helper.core.config.TaxYear;
 import java.math.BigDecimal;
 import java.util.Objects;
 
@@ -8,11 +9,11 @@ import java.util.Objects;
  */
 public class ManagedTradeCapitalGain implements CapitalGain {
 
-    public int taxYear;
+    public TaxYear taxYear;
     private final BigDecimal capitalGainAmount;
 
-    public ManagedTradeCapitalGain(int taxYear, BigDecimal capitalGainAmount) {
-        this.taxYear = taxYear;
+    public ManagedTradeCapitalGain(TaxYear taxYear, BigDecimal capitalGainAmount) {
+        this.taxYear = Objects.requireNonNull(taxYear, "taxYear");
         this.capitalGainAmount = Objects.requireNonNull(capitalGainAmount, "capitalGainAmount");
     }
 
@@ -22,7 +23,7 @@ public class ManagedTradeCapitalGain implements CapitalGain {
     }
 
     @Override
-    public int getTaxYear() {
+    public TaxYear getTaxYear() {
         return taxYear;
     }
 }

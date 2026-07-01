@@ -1,5 +1,6 @@
 package com.helper.core.income.implementation;
 
+import com.helper.core.config.TaxYear;
 import com.helper.core.income.implementation.rentaroom.ExpenseType;
 import com.helper.core.income.implementation.rentaroom.RentARoomCalculationMethod;
 import org.junit.Test;
@@ -12,7 +13,7 @@ public class RentARoomIncomeTest {
 
     @Test
     public void getGrossIncome_returnsRawRentBeforeLocalAdjustment() {
-        RentARoomIncome income = new RentARoomIncome(new BigDecimal("15000"), 2025, BigDecimal.ONE);
+        RentARoomIncome income = new RentARoomIncome(new BigDecimal("15000"), TaxYear.of(2025), BigDecimal.ONE);
 
         assertBigDecimalEquals("15000", income.getGrossIncome());
         assertBigDecimalEquals("7500", income.getAdjustedIncome());
@@ -20,7 +21,7 @@ public class RentARoomIncomeTest {
 
     @Test
     public void getAdjustedIncome_usesAllowanceWhenItIsBetter() {
-        RentARoomIncome income = new RentARoomIncome(new BigDecimal("15000"), 2025, BigDecimal.ONE);
+        RentARoomIncome income = new RentARoomIncome(new BigDecimal("15000"), TaxYear.of(2025), BigDecimal.ONE);
 
         BigDecimal adjustedIncome = income.getAdjustedIncome();
 
@@ -30,7 +31,7 @@ public class RentARoomIncomeTest {
 
     @Test
     public void getAdjustedIncome_usesActualExpensesWhenTheyReduceTaxableAmountMore() {
-        RentARoomIncome income = new RentARoomIncome(new BigDecimal("15000"), 2025, BigDecimal.ONE);
+        RentARoomIncome income = new RentARoomIncome(new BigDecimal("15000"), TaxYear.of(2025), BigDecimal.ONE);
         income.addExpense(ExpenseType.REPAIRS, new BigDecimal("9000"));
 
         BigDecimal adjustedIncome = income.getAdjustedIncome();
@@ -41,7 +42,7 @@ public class RentARoomIncomeTest {
 
     @Test
     public void getAdjustedIncome_returnsZeroWhenAllowanceCoversAllProfit() {
-        RentARoomIncome income = new RentARoomIncome(new BigDecimal("5000"), 2025, BigDecimal.ONE);
+        RentARoomIncome income = new RentARoomIncome(new BigDecimal("5000"), TaxYear.of(2025), BigDecimal.ONE);
 
         BigDecimal adjustedIncome = income.getAdjustedIncome();
 
@@ -51,7 +52,7 @@ public class RentARoomIncomeTest {
 
     @Test
     public void getAdjustedIncome_appliesHouseholdAllocationToExpenses() {
-        RentARoomIncome income = new RentARoomIncome(new BigDecimal("15000"), 2025, new BigDecimal("0.5"));
+        RentARoomIncome income = new RentARoomIncome(new BigDecimal("15000"), TaxYear.of(2025), new BigDecimal("0.5"));
         income.addExpense(ExpenseType.REPAIRS, new BigDecimal("8000"));
 
         BigDecimal adjustedIncome = income.getAdjustedIncome();
@@ -62,7 +63,7 @@ public class RentARoomIncomeTest {
 
     @Test
     public void getAdjustedIncomeWithActualExpenses_optsOutOfRentARoomAllowance() {
-        RentARoomIncome income = new RentARoomIncome(new BigDecimal("15000"), 2025, new BigDecimal("0.5"));
+        RentARoomIncome income = new RentARoomIncome(new BigDecimal("15000"), TaxYear.of(2025), new BigDecimal("0.5"));
         income.addExpense(ExpenseType.REPAIRS, new BigDecimal("8000"));
 
         BigDecimal actualExpenseMethodAdjusted = income.getAdjustedIncomeWithActualExpenses();
@@ -73,12 +74,12 @@ public class RentARoomIncomeTest {
 
     @Test(expected = NullPointerException.class)
     public void constructor_throwsWhenGrossRentIsNull() {
-        new RentARoomIncome(null, 2025, BigDecimal.ONE);
+        new RentARoomIncome(null, TaxYear.of(2025), BigDecimal.ONE);
     }
 
     @Test(expected = NullPointerException.class)
     public void addExpense_throwsWhenAmountIsNull() {
-        RentARoomIncome income = new RentARoomIncome(new BigDecimal("15000"), 2025, BigDecimal.ONE);
+        RentARoomIncome income = new RentARoomIncome(new BigDecimal("15000"), TaxYear.of(2025), BigDecimal.ONE);
 
         income.addExpense(ExpenseType.REPAIRS, null);
     }

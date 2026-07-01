@@ -1,5 +1,6 @@
 package com.helper.core.income.builder;
 
+import com.helper.core.config.TaxYear;
 import com.helper.core.income.implementation.SavingIncome;
 import com.helper.core.income.implementation.savings.Saving;
 import java.util.List;
@@ -12,7 +13,7 @@ public class SavingIncomeBuilder implements IncomeBuilder<SavingIncome, Saving> 
         // pass
     }
 
-    public SavingIncome build(int taxYear, List<Saving> sources) {
+    public SavingIncome build(TaxYear taxYear, List<Saving> sources) {
         throw new UnsupportedOperationException();
     }
 }

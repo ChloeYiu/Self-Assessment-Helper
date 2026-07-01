@@ -1,5 +1,6 @@
 package com.helper.core.calculations;
 
+import com.helper.core.config.TaxYear;
 import com.helper.core.income.Income;
 import com.helper.core.income.IncomeType;
 import java.math.BigDecimal;
@@ -13,11 +14,11 @@ import java.util.Objects;
  * Calculates income summary values from income sources.
  */
 public class IncomeCalculator {
-    private final int taxYear;
+    private final TaxYear taxYear;
     private final Map<IncomeType, List<Income>> incomeSources;
 
-    public IncomeCalculator(int taxYear) {
-        this.taxYear = taxYear;
+    public IncomeCalculator(TaxYear taxYear) {
+        this.taxYear = Objects.requireNonNull(taxYear, "taxYear");
         this.incomeSources = new HashMap<>();
     }
 
@@ -38,7 +39,7 @@ public class IncomeCalculator {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    public int getTaxYear() {
+    public TaxYear getTaxYear() {
         return taxYear;
     }
 }

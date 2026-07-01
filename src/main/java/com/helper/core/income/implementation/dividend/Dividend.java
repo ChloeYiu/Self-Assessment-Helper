@@ -1,5 +1,6 @@
 package com.helper.core.income.implementation.dividend;
 
+import com.helper.core.config.TaxYear;
 import java.math.BigDecimal;
 
 /**
@@ -12,8 +13,8 @@ public interface Dividend {
      */
     BigDecimal calculateDividendAmount();
 
-    /**
+     /**
      * Tax year this income applies to.
      */
-    int getTaxYear();
+    TaxYear getTaxYear();
 }

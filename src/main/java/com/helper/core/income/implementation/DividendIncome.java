@@ -1,5 +1,6 @@
 package com.helper.core.income.implementation;
 
+import com.helper.core.config.TaxYear;
 import com.helper.core.income.Income;
 import com.helper.core.income.IncomeType;
 import com.helper.core.income.implementation.dividend.Dividend;
@@ -11,7 +12,7 @@ import java.math.BigDecimal;
  */
 public class DividendIncome implements Income {
 
-    public DividendIncome(int taxYear) {
+    public DividendIncome(TaxYear taxYear) {
         throw new UnsupportedOperationException();
     }
 
@@ -30,7 +31,7 @@ public class DividendIncome implements Income {
     }
 
     @Override
-    public int getTaxYear() {
+    public TaxYear getTaxYear() {
         throw new UnsupportedOperationException();
     }
 }

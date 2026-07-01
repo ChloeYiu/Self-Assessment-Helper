@@ -1,5 +1,6 @@
 package com.helper.core.income.implementation.savings;
 
+import com.helper.core.config.TaxYear;
 import java.math.BigDecimal;
 
 /**
@@ -12,8 +13,8 @@ public interface Saving {
      */
     BigDecimal calculateSavingAmount();
 
-    /**
+     /**
      * Tax year this income applies to.
      */
-    int getTaxYear();
+    TaxYear getTaxYear();
 }

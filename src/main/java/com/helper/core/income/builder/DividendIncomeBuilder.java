@@ -1,5 +1,6 @@
 package com.helper.core.income.builder;
 
+import com.helper.core.config.TaxYear;
 import com.helper.core.income.implementation.DividendIncome;
 import com.helper.core.income.implementation.dividend.Dividend;
 
@@ -15,7 +16,7 @@ public class DividendIncomeBuilder implements IncomeBuilder<DividendIncome, Divi
     }
 
     @Override
-    public DividendIncome build(int taxYear, List<Dividend> sources) {
+    public DividendIncome build(TaxYear taxYear, List<Dividend> sources) {
         throw new UnsupportedOperationException();
     }
 }

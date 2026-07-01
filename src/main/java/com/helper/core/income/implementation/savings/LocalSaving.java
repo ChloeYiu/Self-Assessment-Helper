@@ -1,5 +1,6 @@
 package com.helper.core.income.implementation.savings;
 
+import com.helper.core.config.TaxYear;
 import com.helper.core.config.TaxYearPeriod;
 
 import java.math.BigDecimal;
@@ -12,11 +13,11 @@ import java.util.Objects;
  */
 public class LocalSaving implements Saving {
 
-    public int taxYear;
+    public TaxYear taxYear;
     private final Map<TaxYearPeriod, BigDecimal> monthlyIncome;
 
-    public LocalSaving(int taxYear) {
-        this.taxYear = taxYear;
+    public LocalSaving(TaxYear taxYear) {
+        this.taxYear = Objects.requireNonNull(taxYear, "taxYear");
         this.monthlyIncome = new EnumMap<>(TaxYearPeriod.class);
     }
 
@@ -27,7 +28,7 @@ public class LocalSaving implements Saving {
     }
 
     @Override
-    public int getTaxYear() {
+    public TaxYear getTaxYear() {
         return taxYear;
     }
 
