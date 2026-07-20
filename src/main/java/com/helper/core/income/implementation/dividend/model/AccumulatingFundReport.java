@@ -1,4 +1,4 @@
-package com.helper.core.income.implementation.dividend;
+package com.helper.core.income.implementation.dividend.model;
 
 import com.helper.core.config.CurrencyCode;
 import java.math.BigDecimal;

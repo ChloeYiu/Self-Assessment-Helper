@@ -3,6 +3,8 @@ package com.helper.core.income.implementation.dividend;
 import com.helper.core.config.CurrencyCode;
 import com.helper.core.config.TaxYear;
 import com.helper.core.config.TaxYearPeriod;
+import com.helper.core.income.implementation.dividend.model.AccumulatingFundReport;
+import com.helper.core.income.implementation.dividend.model.HoldingMovementType;
 import com.helper.core.security.Security;
 import org.junit.Test;
 
