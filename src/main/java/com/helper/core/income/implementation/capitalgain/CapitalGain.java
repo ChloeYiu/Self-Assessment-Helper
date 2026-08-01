@@ -1,17 +1,14 @@
 package com.helper.core.income.implementation.capitalgain;
 
 import com.helper.core.config.TaxYear;
-import java.math.BigDecimal;
+import com.helper.core.income.implementation.capitalgain.model.CapitalGainResult;
 
 /**
  * Interface for income sources that contribute to the capital gain category.
  */
 public interface CapitalGain {
 
-    /**
-     * Gross capital gain amount in GBP before category-level allowance.
-     */
-    BigDecimal calculateCapitalGainAmount();
+    CapitalGainResult calculateCapitalGain();
 
      /**
      * Tax year this gain applies to.

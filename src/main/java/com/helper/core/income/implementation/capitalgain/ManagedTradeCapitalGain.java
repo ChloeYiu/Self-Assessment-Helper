@@ -1,6 +1,7 @@
 package com.helper.core.income.implementation.capitalgain;
 
 import com.helper.core.config.TaxYear;
+import com.helper.core.income.implementation.capitalgain.model.CapitalGainResult;
 import java.math.BigDecimal;
 import java.util.Objects;
 
@@ -18,8 +19,8 @@ public class ManagedTradeCapitalGain implements CapitalGain {
     }
 
     @Override
-    public BigDecimal calculateCapitalGainAmount() {
-        return capitalGainAmount;
+    public CapitalGainResult calculateCapitalGain() {
+        return new CapitalGainResult(capitalGainAmount);
     }
 
     @Override

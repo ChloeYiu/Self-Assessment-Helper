@@ -2,6 +2,7 @@ package com.helper.core.income.implementation;
 
 import com.helper.core.config.TaxYear;
 import com.helper.core.config.TaxYearPeriod;
+import com.helper.core.income.IncomeResult;
 import com.helper.core.income.IncomeType;
 import com.helper.core.income.implementation.savings.LocalSaving;
 import org.junit.Test;
@@ -13,33 +14,34 @@ import static org.junit.Assert.assertEquals;
 public class SavingIncomeTest {
 
     @Test
-    public void getGrossIncome_sumsLocalSavings() {
+    public void calculateResult_sumsLocalSavings() {
         LocalSaving localSaving = new LocalSaving(TaxYear.of(2025));
         localSaving.addMonthlyIncome(TaxYearPeriod.MAY, new BigDecimal("100.25"));
         localSaving.addMonthlyIncome(TaxYearPeriod.JUNE, new BigDecimal("50.75"));
 
         SavingIncome income = new SavingIncome(TaxYear.of(2025));
-        income.addSavingIncome(localSaving);
+        income.addSource(localSaving);
+        IncomeResult result = income.calculateResult();
 
         assertEquals(IncomeType.SAVINGS, income.getIncomeType());
         assertEquals(TaxYear.of(2025), income.getTaxYear());
-        assertBigDecimalEquals("151.00", income.getGrossIncome());
-        assertBigDecimalEquals("151.00", income.getAdjustedIncome());
+        assertBigDecimalEquals("151.00", result.getGrossIncome());
+        assertBigDecimalEquals("151.00", result.getAdjustedIncome());
     }
 
     @Test(expected = NullPointerException.class)
-    public void addSavingIncome_throwsWhenSourceIsNull() {
+    public void addSource_throwsWhenSourceIsNull() {
         SavingIncome income = new SavingIncome(TaxYear.of(2025));
 
-        income.addSavingIncome(null);
+        income.addSource(null);
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void addSavingIncome_throwsWhenSourceTaxYearDoesNotMatch() {
+    public void addSource_throwsWhenSourceTaxYearDoesNotMatch() {
         SavingIncome income = new SavingIncome(TaxYear.of(2025));
         LocalSaving foreignSaving = new LocalSaving(TaxYear.of(2024));
 
-        income.addSavingIncome(foreignSaving);
+        income.addSource(foreignSaving);
     }
 
     private static void assertBigDecimalEquals(String expected, BigDecimal actual) {

@@ -2,11 +2,13 @@ package com.helper.core.income.implementation;
 
 import com.helper.core.config.TaxYear;
 import com.helper.core.income.Income;
+import com.helper.core.income.IncomeResult;
 import com.helper.core.income.IncomeType;
 import com.helper.core.income.implementation.rentaroom.ExpenseType;
 import com.helper.core.income.implementation.rentaroom.RentARoomCalculationMethod;
 import java.math.BigDecimal;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -55,21 +57,16 @@ public class RentARoomIncome implements Income {
     }
     
     @Override
-    public BigDecimal getGrossIncome() {
-        return grossRent;
+    public IncomeResult calculateResult() {
+        BigDecimal allowanceMethod = getAdjustedIncomeWithAllowance();
+        BigDecimal expensesMethod = getAdjustedIncomeWithActualExpenses();
+
+        return new IncomeResult(getIncomeType(), grossRent, allowanceMethod.min(expensesMethod), List.of());
     }
     
     @Override
     public TaxYear getTaxYear() {
         return taxYear;
-    }
-
-    @Override
-    public BigDecimal getAdjustedIncome() {
-        BigDecimal allowanceMethod = getAdjustedIncomeWithAllowance();
-        BigDecimal expensesMethod = getAdjustedIncomeWithActualExpenses();
-
-        return allowanceMethod.min(expensesMethod);
     }
 
     public RentARoomCalculationMethod getPreferredCalculationMethod() {

@@ -2,6 +2,8 @@ package com.helper.core.income.implementation.capitalgain;
 
 import com.helper.core.config.CurrencyCode;
 import com.helper.core.config.TaxYear;
+import com.helper.core.income.artifact.CarryForwardSnapshotArtifact;
+import com.helper.core.income.artifact.IncomeArtifactType;
 import com.helper.core.income.implementation.capitalgain.model.CapitalGainResult;
 import com.helper.core.income.implementation.capitalgain.model.CarryForwardSnapshot;
 import com.helper.core.income.implementation.capitalgain.model.EriAdjustment;
@@ -39,26 +41,26 @@ public class NonUkDomicileAccumulatingCapitalGainTest {
                 )
         );
 
-        CapitalGainResult result = capitalGain.calculate();
+        CapitalGainResult result = capitalGain.calculateCapitalGain();
         assertBigDecimalEquals("55.00", result.getCapitalGainAmount());
 
-        CarryForwardSnapshot closingPool = result.getCarryForwardSnapshot();
+        CarryForwardSnapshot closingPool = closingSnapshot(result);
         assertBigDecimalEquals("12", closingPool.getQuantity());
         assertBigDecimalEquals("1230.00", closingPool.getPooledCostGbp());
 
         assertMatchDetails(
-                result.getMatches().get(0),
+                matches(result).get(0),
                 MatchType.SAME_DAY,
                 "2",
                 "300"
         );
         assertMatchDetails(
-                result.getMatches().get(1),
+                matches(result).get(1),
                 MatchType.THIRTY_DAY,
                 "2",
                 "240"
         );
-        assertEquals(2, result.getMatches().size());
+        assertEquals(2, matches(result).size());
     }
 
     @Test
@@ -72,16 +74,16 @@ public class NonUkDomicileAccumulatingCapitalGainTest {
                 )
         );
 
-        CapitalGainResult result = capitalGain.calculate();
+        CapitalGainResult result = capitalGain.calculateCapitalGain();
         assertBigDecimalEquals("155.00", result.getCapitalGainAmount());
 
-        CarryForwardSnapshot closingPool = result.getCarryForwardSnapshot();
+        CarryForwardSnapshot closingPool = closingSnapshot(result);
         assertBigDecimalEquals("7", closingPool.getQuantity());
         assertBigDecimalEquals("700.00", closingPool.getPooledCostGbp());
 
-        assertEquals(1, result.getMatches().size());
+        assertEquals(1, matches(result).size());
         assertMatchDetails(
-                result.getMatches().get(0),
+                matches(result).get(0),
                 MatchType.THIRTY_DAY,
                 "2",
                 "240"
@@ -99,13 +101,13 @@ public class NonUkDomicileAccumulatingCapitalGainTest {
                 )
         );
 
-        CapitalGainResult result = capitalGain.calculate();
+        CapitalGainResult result = capitalGain.calculateCapitalGain();
         assertBigDecimalEquals("178.33", result.getCapitalGainAmount());
 
-        CarryForwardSnapshot closingPool = result.getCarryForwardSnapshot();
+        CarryForwardSnapshot closingPool = closingSnapshot(result);
         assertBigDecimalEquals("7", closingPool.getQuantity());
         assertBigDecimalEquals("723.33", closingPool.getPooledCostGbp());
-        assertEquals(0, result.getMatches().size());
+        assertEquals(0, matches(result).size());
     }
 
     @Test
@@ -119,13 +121,13 @@ public class NonUkDomicileAccumulatingCapitalGainTest {
                 )
         );
 
-        CapitalGainResult result = capitalGain.calculate();
+        CapitalGainResult result = capitalGain.calculateCapitalGain();
         assertBigDecimalEquals("93.33", result.getCapitalGainAmount());
 
-        CarryForwardSnapshot closingPool = result.getCarryForwardSnapshot();
+        CarryForwardSnapshot closingPool = closingSnapshot(result);
         assertBigDecimalEquals("10", closingPool.getQuantity());
         assertBigDecimalEquals("1033.33", closingPool.getPooledCostGbp());
-        assertEquals(0, result.getMatches().size());
+        assertEquals(0, matches(result).size());
     }
 
     @Test
@@ -139,10 +141,10 @@ public class NonUkDomicileAccumulatingCapitalGainTest {
                 )
         );
 
-        CapitalGainResult result = capitalGain.calculate();
+        CapitalGainResult result = capitalGain.calculateCapitalGain();
         assertBigDecimalEquals("178.33", result.getCapitalGainAmount());
 
-        CarryForwardSnapshot closingPool = result.getCarryForwardSnapshot();
+        CarryForwardSnapshot closingPool = closingSnapshot(result);
         assertBigDecimalEquals("7", closingPool.getQuantity());
         assertBigDecimalEquals("723.33", closingPool.getPooledCostGbp());
     }
@@ -156,10 +158,10 @@ public class NonUkDomicileAccumulatingCapitalGainTest {
                 tradeBook(sell(ERI_DATE, "5", "700", "5"))
         );
 
-        CapitalGainResult result = capitalGain.calculate();
+        CapitalGainResult result = capitalGain.calculateCapitalGain();
         assertBigDecimalEquals("170.00", result.getCapitalGainAmount());
 
-        CarryForwardSnapshot closingPool = result.getCarryForwardSnapshot();
+        CarryForwardSnapshot closingPool = closingSnapshot(result);
         assertBigDecimalEquals("5", closingPool.getQuantity());
         assertBigDecimalEquals("525.00", closingPool.getPooledCostGbp());
     }
@@ -172,10 +174,10 @@ public class NonUkDomicileAccumulatingCapitalGainTest {
                 tradeBook(sell(LocalDate.of(2026, 3, 20), "5", "400", "5"))
         );
 
-        CapitalGainResult result = capitalGain.calculate();
+        CapitalGainResult result = capitalGain.calculateCapitalGain();
         assertBigDecimalEquals("-105.00", result.getCapitalGainAmount());
 
-        CarryForwardSnapshot closingPool = result.getCarryForwardSnapshot();
+        CarryForwardSnapshot closingPool = closingSnapshot(result);
         assertBigDecimalEquals("5", closingPool.getQuantity());
         assertBigDecimalEquals("500.00", closingPool.getPooledCostGbp());
     }
@@ -419,6 +421,20 @@ public class NonUkDomicileAccumulatingCapitalGainTest {
 
     private static void assertBigDecimalEquals(String expected, BigDecimal actual) {
         assertEquals(0, new BigDecimal(expected).compareTo(actual));
+    }
+
+    private static CarryForwardSnapshot closingSnapshot(CapitalGainResult result) {
+        return result.getArtifacts()
+                .stream()
+                .filter(artifact -> artifact.getArtifactType() == IncomeArtifactType.CAPITAL_GAIN_CARRY_FORWARD_SNAPSHOT)
+                .map(CarryForwardSnapshotArtifact.class::cast)
+                .map(CarryForwardSnapshotArtifact::getSnapshot)
+                .findFirst()
+                .orElseThrow();
+    }
+
+    private static List<Match> matches(CapitalGainResult result) {
+        return closingSnapshot(result).getConsumedAcquisitions();
     }
 
     private static void assertMatchDetails(

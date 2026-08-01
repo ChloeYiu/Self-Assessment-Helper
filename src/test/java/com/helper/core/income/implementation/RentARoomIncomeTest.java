@@ -1,6 +1,7 @@
 package com.helper.core.income.implementation;
 
 import com.helper.core.config.TaxYear;
+import com.helper.core.income.IncomeResult;
 import com.helper.core.income.implementation.rentaroom.ExpenseType;
 import com.helper.core.income.implementation.rentaroom.RentARoomCalculationMethod;
 import org.junit.Test;
@@ -12,50 +13,51 @@ import static org.junit.Assert.assertEquals;
 public class RentARoomIncomeTest {
 
     @Test
-    public void getGrossIncome_returnsRawRentBeforeLocalAdjustment() {
+    public void calculateResult_returnsRawRentBeforeLocalAdjustment() {
         RentARoomIncome income = new RentARoomIncome(new BigDecimal("15000"), TaxYear.of(2025), BigDecimal.ONE);
+        IncomeResult result = income.calculateResult();
 
-        assertBigDecimalEquals("15000", income.getGrossIncome());
-        assertBigDecimalEquals("7500", income.getAdjustedIncome());
+        assertBigDecimalEquals("15000", result.getGrossIncome());
+        assertBigDecimalEquals("7500", result.getAdjustedIncome());
     }
 
     @Test
-    public void getAdjustedIncome_usesAllowanceWhenItIsBetter() {
+    public void calculateResult_usesAllowanceWhenItIsBetter() {
         RentARoomIncome income = new RentARoomIncome(new BigDecimal("15000"), TaxYear.of(2025), BigDecimal.ONE);
 
-        BigDecimal adjustedIncome = income.getAdjustedIncome();
+        BigDecimal adjustedIncome = income.calculateResult().getAdjustedIncome();
 
         assertBigDecimalEquals("7500", adjustedIncome);
         assertEquals(RentARoomCalculationMethod.ALLOWANCE, income.getPreferredCalculationMethod());
     }
 
     @Test
-    public void getAdjustedIncome_usesActualExpensesWhenTheyReduceTaxableAmountMore() {
+    public void calculateResult_usesActualExpensesWhenTheyReduceTaxableAmountMore() {
         RentARoomIncome income = new RentARoomIncome(new BigDecimal("15000"), TaxYear.of(2025), BigDecimal.ONE);
         income.addExpense(ExpenseType.REPAIRS, new BigDecimal("9000"));
 
-        BigDecimal adjustedIncome = income.getAdjustedIncome();
+        BigDecimal adjustedIncome = income.calculateResult().getAdjustedIncome();
 
         assertBigDecimalEquals("6000", adjustedIncome);
         assertEquals(RentARoomCalculationMethod.ACTUAL_EXPENSES, income.getPreferredCalculationMethod());
     }
 
     @Test
-    public void getAdjustedIncome_returnsZeroWhenAllowanceCoversAllProfit() {
+    public void calculateResult_returnsZeroWhenAllowanceCoversAllProfit() {
         RentARoomIncome income = new RentARoomIncome(new BigDecimal("5000"), TaxYear.of(2025), BigDecimal.ONE);
 
-        BigDecimal adjustedIncome = income.getAdjustedIncome();
+        BigDecimal adjustedIncome = income.calculateResult().getAdjustedIncome();
 
         assertBigDecimalEquals("0", adjustedIncome);
         assertEquals(RentARoomCalculationMethod.ALLOWANCE, income.getPreferredCalculationMethod());
     }
 
     @Test
-    public void getAdjustedIncome_appliesHouseholdAllocationToExpenses() {
+    public void calculateResult_appliesHouseholdAllocationToExpenses() {
         RentARoomIncome income = new RentARoomIncome(new BigDecimal("15000"), TaxYear.of(2025), new BigDecimal("0.5"));
         income.addExpense(ExpenseType.REPAIRS, new BigDecimal("8000"));
 
-        BigDecimal adjustedIncome = income.getAdjustedIncome();
+        BigDecimal adjustedIncome = income.calculateResult().getAdjustedIncome();
 
         assertBigDecimalEquals("7500", adjustedIncome);
         assertEquals(RentARoomCalculationMethod.ALLOWANCE, income.getPreferredCalculationMethod());

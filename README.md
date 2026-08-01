@@ -18,7 +18,6 @@ A flexible, framework-agnostic Java helper for UK Self Assessment workflows. The
 
 ```
 .github/
-├── copilot-instructions.md
 └── workflows/
   └── maven.yml
 
@@ -29,11 +28,11 @@ scripts/
 src/
 ├── main/
 │   ├── java/com/helper/core/
-│   │   ├── builder/          # Builder utilities
 │   │   ├── calculations/     # Calculation and summary logic
-│   │   ├── config/           # Tax-year and expense configuration
-│   │   ├── fx/               # FX rate contracts and services
-│   │   └── income/           # Income contracts and implementations
+│   │   ├── config/           # Tax-year configuration
+│   │   ├── income/           # Income contracts, builders, and implementations
+│   │   ├── ingestion/        # Extractors and source entry models
+│   │   └── support/          # Shared support services such as FX
 │   └── resources/
 │       └── tax/
 │           └── tax-allowances.json
@@ -52,10 +51,13 @@ The helper separates income facts from later tax decisions:
 
 ```text
 Input files/manual data
-  -> Extractors and mappers
-  -> Income builders
+  -> Extractors
+  -> Entry objects
+  -> Entry-to-income bridge (future)
+  -> Income source objects
   -> Income objects
-  -> Adjusted income summary
+  -> Income results and artifacts
+  -> Adjusted income summary/export processing
   -> Allowance calculation (future)
   -> Taxable income calculation (future)
   -> Tax due calculation (future)
@@ -63,10 +65,17 @@ Input files/manual data
 
 Current implementation covers the lower layers:
 
-- **Income builders** create income objects from mapped inputs.
-- **Income objects** expose `getGrossIncome()` for the raw amount received.
-- **Income objects** expose `getAdjustedIncome()` for the amount after local, self-contained rules.
+- **Extractors** read source-specific data into entry objects.
+- **IncomeWithSource** income objects accept source objects directly.
+- **Income objects** produce `IncomeResult` values from `calculateResult()`.
+- **IncomeResult** carries gross income, adjusted income, and calculation artifacts.
 - **IncomeCalculator** currently summarizes adjusted income by category.
+
+The entry-to-income bridge is not implemented yet. When added, it should translate ingested entries into income source objects before those sources are added to income objects.
+
+Simple income categories may be able to feed entries into an income source object incrementally. For example, savings interest entries could add monthly income into a `Saving` source before that source is added to the aggregate `SavingIncome`.
+
+More complex categories can combine multiple source inputs inside the income source object. For example, a non-UK domiciled accumulating dividend source can take broker holding data and an `AccumulatingFundReport`, determine units held on the fund report date, and calculate the resulting dividend amount.
 
 Local adjustments live in the income class when the source has enough context. For example, `RentARoomIncome` can choose between the Rent-a-Room allowance and actual expenses. Most income types use the default adjusted income, which is the same as gross income.
 

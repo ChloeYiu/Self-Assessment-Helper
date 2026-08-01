@@ -58,19 +58,8 @@ public class NonUkDomicileAccumulatingCapitalGain implements CapitalGain {
         requireConsumedAcquisitionsAvailable();
     }
 
-    /**
-     * Total gains and losses from disposals inside this tax year.
-     */
     @Override
-    public BigDecimal calculateCapitalGainAmount() {
-        return calculate().getCapitalGainAmount();
-    }
-
-    public CapitalGainResult calculate() {
-        return runCalculation();
-    }
-
-    private CapitalGainResult runCalculation() {
+    public CapitalGainResult calculateCapitalGain() {
         TradeBookSession session = tradeBook.createSession();
         session.applyConsumedAcquisitions(openingCarryForwardSnapshot.getConsumedAcquisitions());
         PoolState pool = openingCarryForwardSnapshot.createPoolState();

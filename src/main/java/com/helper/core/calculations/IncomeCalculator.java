@@ -22,20 +22,30 @@ public class IncomeCalculator {
         this.incomeSources = new HashMap<>();
     }
 
-    public void addIncomeSources(IncomeType incomeType, Income source) {
-        if (incomeType == null || source == null) {
-            throw new IllegalArgumentException("incomeType and source must not be null");
+    public void addIncome(Income income) {
+        Income value = Objects.requireNonNull(income, "income");
+        if (!value.getTaxYear().equals(taxYear)) {
+            throw new IllegalArgumentException("income tax year must match calculator tax year");
         }
-        incomeSources.computeIfAbsent(incomeType, k -> new ArrayList<>()).add(source);
+        incomeSources
+                .computeIfAbsent(value.getIncomeType(), ignored -> new ArrayList<>())
+                .add(value);
+    }
+
+    public void addIncomeSources(IncomeType incomeType, Income source) {
+        if (!Objects.requireNonNull(incomeType, "incomeType").equals(
+                Objects.requireNonNull(source, "source").getIncomeType()
+        )) {
+            throw new IllegalArgumentException("incomeType must match source income type");
+        }
+        addIncome(source);
     }
 
     public BigDecimal calculateAdjustedIncomeByType(IncomeType incomeType) {
-        List<Income> sources = incomeSources.getOrDefault(
-                Objects.requireNonNull(incomeType, "incomeType"),
-                List.of()
-        );
-        return sources.stream()
-                .map(Income::getAdjustedIncome)
+        return incomeSources
+                .getOrDefault(Objects.requireNonNull(incomeType, "incomeType"), List.of())
+                .stream()
+                .map(income -> income.calculateResult().getAdjustedIncome())
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 

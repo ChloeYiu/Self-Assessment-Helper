@@ -1,7 +1,6 @@
 package com.helper.core.income;
 
 import com.helper.core.config.TaxYear;
-import java.math.BigDecimal;
 
 /**
  * Base interface for all income sources
@@ -11,20 +10,13 @@ public interface Income {
      * Get the income type
      */
     IncomeType getIncomeType();
-    
-    /**
-     * Get the gross income amount
-     */
-    BigDecimal getGrossIncome();
 
     /**
-     * Get the amount that should feed into wider income calculations after local category rules.
+     * Calculate this income and any side-products together
      */
-    default BigDecimal getAdjustedIncome() {
-        return getGrossIncome();
-    }
-    
-     /**
+    IncomeResult calculateResult();
+
+    /**
      * Get the tax year this income applies to
      */
     TaxYear getTaxYear();

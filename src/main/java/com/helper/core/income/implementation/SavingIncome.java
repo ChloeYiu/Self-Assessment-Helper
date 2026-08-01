@@ -1,8 +1,9 @@
 package com.helper.core.income.implementation;
 
 import com.helper.core.config.TaxYear;
-import com.helper.core.income.Income;
+import com.helper.core.income.IncomeResult;
 import com.helper.core.income.IncomeType;
+import com.helper.core.income.IncomeWithSource;
 import com.helper.core.income.implementation.savings.Saving;
 
 import java.math.BigDecimal;
@@ -13,7 +14,7 @@ import java.util.Objects;
 /**
  * Aggregate for storing multiple savings income sources.
  */
-public class SavingIncome implements Income {
+public class SavingIncome implements IncomeWithSource<Saving> {
 
     public BigDecimal grossSavingIncome;
     public TaxYear taxYear;
@@ -31,15 +32,15 @@ public class SavingIncome implements Income {
     }
 
     @Override
-    public BigDecimal getGrossIncome() {
+    public IncomeResult calculateResult() {
         if (savingSources.isEmpty()) {
-            return grossSavingIncome;
+            return new IncomeResult(getIncomeType(), grossSavingIncome, grossSavingIncome, List.of());
         }
 
         grossSavingIncome = savingSources.stream()
             .map(Saving::calculateSavingAmount)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
-        return grossSavingIncome;
+        return new IncomeResult(getIncomeType(), grossSavingIncome, grossSavingIncome, List.of());
     }
 
     @Override
@@ -47,11 +48,12 @@ public class SavingIncome implements Income {
         return taxYear;
     }
 
-    public void addSavingIncome(Saving savingSource) {
-        Saving source = Objects.requireNonNull(savingSource, "savingSource");
-        if (!source.getTaxYear().equals(taxYear)) {
-            throw new IllegalArgumentException("savingSource tax year must match aggregate tax year");
+    @Override
+    public void addSource(Saving source) {
+        Saving value = Objects.requireNonNull(source, "source");
+        if (!value.getTaxYear().equals(taxYear)) {
+            throw new IllegalArgumentException("source tax year must match aggregate tax year");
         }
-        savingSources.add(source);
+        savingSources.add(value);
     }
 }
