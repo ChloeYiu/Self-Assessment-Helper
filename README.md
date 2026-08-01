@@ -69,7 +69,7 @@ Current implementation covers the lower layers:
 - **IncomeWithSource** income objects accept source objects directly.
 - **Income objects** produce `IncomeResult` values from `calculateResult()`.
 - **IncomeResult** carries gross income, adjusted income, and calculation artifacts.
-- **IncomeCalculator** currently summarizes adjusted income by category.
+- **IncomeCalculator** is currently a shell for the future calculation workflow.
 
 The entry-to-income bridge is not implemented yet. When added, it should translate ingested entries into income source objects before those sources are added to income objects.
 
@@ -91,7 +91,7 @@ The core income contract is `Income` (`com.helper.core.income.Income`).
 
 Current concrete/related income models include:
 
-- `IncomeCalculator` (`com.helper.core.calculations`) - calculation entry point, currently including adjusted income summaries by category
+- `IncomeCalculator` (`com.helper.core.calculations`) - shell for the future calculation workflow
 - `RentARoomIncome` (`com.helper.core.income.implementation`) - Rent-a-Room income with allowance vs actual-expense adjusted-income comparison
 - `SavingIncome` (`com.helper.core.income.implementation`) - aggregate savings category income
 - `ForeignSaving` (`com.helper.core.income.implementation.savings`) - foreign savings input with monthly/yearly FX conversion support
