@@ -1,0 +1,10 @@
+package com.helper.config;
+
+/**
+ * Currency codes supported by the Self Assessment helper.
+ */
+public enum CurrencyCode {
+    GBP,
+    HKD,
+    USD
+}

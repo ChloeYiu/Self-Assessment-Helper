@@ -27,7 +27,7 @@ scripts/
 
 src/
 ├── main/
-│   ├── java/com/helper/core/
+│   ├── java/com/helper/
 │   │   ├── calculations/     # Calculation and summary logic
 │   │   ├── config/           # Tax-year configuration
 │   │   ├── income/           # Income contracts, builders, and implementations
@@ -37,7 +37,7 @@ src/
 │       └── tax/
 │           └── tax-allowances.json
 └── test/
-  └── java/com/helper/core/
+  └── java/com/helper/
     ├── calculations/
     └── income/
 
@@ -87,16 +87,16 @@ Future layers should use the adjusted income summary as input:
 
 ## Income Models
 
-The core income contract is `Income` (`com.helper.core.income.Income`).
+The core income contract is `Income` (`com.helper.income.Income`).
 
 Current concrete/related income models include:
 
-- `IncomeCalculator` (`com.helper.core.calculations`) - shell for the future calculation workflow
-- `RentARoomIncome` (`com.helper.core.income.implementation`) - Rent-a-Room income with allowance vs actual-expense adjusted-income comparison
-- `SavingIncome` (`com.helper.core.income.implementation`) - aggregate savings category income
-- `ForeignSaving` (`com.helper.core.income.implementation.savings`) - foreign savings input with monthly/yearly FX conversion support
-- `Saving` (`com.helper.core.income.implementation.savings`) - contract for savings contributors used by `SavingIncome`
-- `Dividend` (`com.helper.core.income.implementation.dividend`) - contract for dividend contributors
+- `IncomeCalculator` (`com.helper.calculations`) - shell for the future calculation workflow
+- `RentARoomIncome` (`com.helper.income.implementation`) - Rent-a-Room income with allowance vs actual-expense adjusted-income comparison
+- `SavingIncome` (`com.helper.income.implementation`) - aggregate savings category income
+- `ForeignSaving` (`com.helper.income.implementation.savings`) - foreign savings input with monthly/yearly FX conversion support
+- `Saving` (`com.helper.income.implementation.savings`) - contract for savings contributors used by `SavingIncome`
+- `Dividend` (`com.helper.income.implementation.dividend`) - contract for dividend contributors
 
 ## Usage
 
