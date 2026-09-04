@@ -27,33 +27,41 @@ public class TabularTableTest {
                         new TestSourceLocation("built-source", rowIndex, columnNames.indexOf(columnName))))
                 .buildTable();
         TabularDocument document = new TabularDocument(sourceName, List.of(table));
-        TabularRow dataRow = table.getRows().get(0);
-        TabularRow secondDataRow = table.getRows().get(1);
+        TabularRow dataRow = table.getRow(0).orElseThrow();
 
         assertEquals(sourceName, document.getSourceName().orElseThrow());
         assertEquals("Test Table", document.getTables().get(0).getName().orElseThrow());
         assertEquals("Test Table", table.getName().orElseThrow());
         assertEquals(3, table.getColumns().size());
         assertEquals(2, table.getRows().size());
-        assertEquals("test date", table.getColumns().get(0).getNormalizedName().orElseThrow());
+        assertEquals(0, dataRow.getIndex());
+        assertEquals(1, table.getRow(1).orElseThrow().getIndex());
+        assertEquals("description", table.getColumn(1).orElseThrow().getName().orElseThrow());
+        assertEquals(2, table.getColumn("TEST AMOUNT").orElseThrow().getIndex());
+        assertEquals("test date", table.getColumn(0).orElseThrow().getNormalizedName().orElseThrow());
         assertEquals("test date", table.getHeaderRow().orElseThrow().getCell(0).orElseThrow().getRawText());
 
-        assertEquals(" 2026-01-01 ", dataRow.getCell(0).orElseThrow().getRawText());
-        assertEquals("2026-01-01", dataRow.getCell("test date").orElseThrow().getNormalizedText().orElseThrow());
+        assertEquals(" 2026-01-01 ", table.getCell(0, 0).orElseThrow().getRawText());
+        assertEquals("100.00", table.getCell(0, "test amount").orElseThrow().getRawText());
+        assertEquals("2026-01-01", table.getCell(0, "test date").orElseThrow().getNormalizedText().orElseThrow());
         assertEquals(
                 "First test row",
-                dataRow.getCell("DESCRIPTION").orElseThrow().getNormalizedText().orElseThrow());
-        assertEquals("100.00", dataRow.getCell("test amount").orElseThrow().getRawText());
+                table.getCell(0, "DESCRIPTION").orElseThrow().getNormalizedText().orElseThrow());
+        assertEquals("100.00", table.getCell(0, "test amount").orElseThrow().getRawText());
         TestSourceLocation actualAmountLocation =
-                (TestSourceLocation) dataRow.getCell(2).orElseThrow().getSourceLocation().orElseThrow();
+                (TestSourceLocation) table.getCell(0, 2).orElseThrow().getSourceLocation().orElseThrow();
         assertEquals("built-source", actualAmountLocation.getSourceName());
         assertEquals(0, actualAmountLocation.getRowNumber());
         assertEquals(2, actualAmountLocation.getColumnIndex());
-        assertEquals("2026-01-02", secondDataRow.getCell("test date").orElseThrow().getRawText());
-        assertEquals("200.00", secondDataRow.getCell("test amount").orElseThrow().getRawText());
+        assertEquals("2026-01-02", table.getCell(1, "test date").orElseThrow().getRawText());
+        assertEquals("200.00", table.getCell(1, "test amount").orElseThrow().getRawText());
 
-        assertFalse(dataRow.getCell(99).isPresent());
-        assertFalse(dataRow.getCell("missing amount").isPresent());
+        assertFalse(table.getRow(99).isPresent());
+        assertFalse(table.getColumn(99).isPresent());
+        assertFalse(table.getColumn("missing amount").isPresent());
+        assertFalse(table.getCell(99, 0).isPresent());
+        assertFalse(table.getCell(0, 99).isPresent());
+        assertFalse(table.getCell(0, "missing amount").isPresent());
         assertThrows(UnsupportedOperationException.class, () -> table.getRows().add(dataRow));
         assertThrows(UnsupportedOperationException.class, () -> dataRow.getCells().add(new TabularCell("extra")));
     }

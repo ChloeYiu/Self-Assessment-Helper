@@ -3,6 +3,8 @@ package com.helper.ingestion.util.table;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -39,5 +41,48 @@ public class TabularTable {
 
     public List<TabularRow> getRows() {
         return rows;
+    }
+
+    public Optional<TabularRow> getRow(int rowIndex) {
+        if (rowIndex < 0 || rowIndex >= rows.size()) {
+            return Optional.empty();
+        }
+
+        return Optional.of(rows.get(rowIndex));
+    }
+
+    public Optional<TabularColumn> getColumn(int columnIndex) {
+        if (columnIndex < 0 || columnIndex >= columns.size()) {
+            return Optional.empty();
+        }
+
+        return Optional.of(columns.get(columnIndex));
+    }
+
+    public Optional<TabularColumn> getColumn(String columnName) {
+        String normalizedColumnName = normalizeColumnLookupKey(columnName);
+
+        return columns.stream()
+                .filter(column -> column.getName()
+                        .map(TabularTable::normalizeColumnLookupKey)
+                        .filter(normalizedColumnName::equals)
+                        .isPresent()
+                        || column.getNormalizedName()
+                                .map(TabularTable::normalizeColumnLookupKey)
+                                .filter(normalizedColumnName::equals)
+                                .isPresent())
+                .findFirst();
+    }
+
+    public Optional<TabularCell> getCell(int rowIndex, int columnIndex) {
+        return getRow(rowIndex).flatMap(row -> row.getCell(columnIndex));
+    }
+
+    public Optional<TabularCell> getCell(int rowIndex, String columnName) {
+        return getRow(rowIndex).flatMap(row -> row.getCell(columnName));
+    }
+
+    private static String normalizeColumnLookupKey(String value) {
+        return Objects.requireNonNull(value, "value").trim().replaceAll("\\s+", " ").toLowerCase(Locale.ROOT);
     }
 }
