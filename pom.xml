@@ -32,6 +32,12 @@
             <version>4.11.0</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>de.vandermeer</groupId>
+            <artifactId>asciitable</artifactId>
+            <version>0.3.2</version>
+            <scope>test</scope>
+        </dependency>
 
         <!-- JSON processing for data import/export -->
         <dependency>

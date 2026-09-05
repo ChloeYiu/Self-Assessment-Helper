@@ -16,5 +16,9 @@ Thumbs.db
 # Logs
 *.iml
 
+# Local config
+config/*.properties
+!config/*.example.properties
+
 # Notes
 notes/
