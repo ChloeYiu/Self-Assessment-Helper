@@ -12,7 +12,7 @@ import com.helper.income.implementation.capitalgain.model.MatchType;
 import com.helper.income.implementation.capitalgain.model.Trade;
 import com.helper.income.implementation.capitalgain.model.TradeBook;
 import com.helper.income.implementation.capitalgain.model.TradeType;
-import com.helper.security.Security;
+import com.helper.income.implementation.Security;
 import org.junit.Test;
 
 import java.math.BigDecimal;

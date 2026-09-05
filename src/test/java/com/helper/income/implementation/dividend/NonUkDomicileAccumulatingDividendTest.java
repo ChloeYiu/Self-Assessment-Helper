@@ -5,7 +5,7 @@ import com.helper.config.TaxYear;
 import com.helper.config.TaxYearPeriod;
 import com.helper.income.implementation.dividend.model.AccumulatingFundReport;
 import com.helper.income.implementation.dividend.model.HoldingMovementType;
-import com.helper.security.Security;
+import com.helper.income.implementation.Security;
 import org.junit.Test;
 
 import java.math.BigDecimal;

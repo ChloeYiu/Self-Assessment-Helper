@@ -11,7 +11,7 @@ import com.helper.income.implementation.capitalgain.model.EriAdjustment;
 import com.helper.income.implementation.capitalgain.model.Match;
 import com.helper.income.implementation.capitalgain.model.MatchType;
 import com.helper.income.implementation.capitalgain.model.TradeBook;
-import com.helper.security.Security;
+import com.helper.income.implementation.Security;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;

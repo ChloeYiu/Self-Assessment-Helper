@@ -3,7 +3,7 @@ package com.helper.income.implementation.capitalgain.internal;
 import com.helper.config.TaxYear;
 import com.helper.income.implementation.capitalgain.model.CarryForwardSnapshot;
 import com.helper.income.implementation.capitalgain.model.Match;
-import com.helper.security.Security;
+import com.helper.income.implementation.Security;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;

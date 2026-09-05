@@ -2,7 +2,7 @@ package com.helper.income.implementation.capitalgain.model;
 
 import com.helper.config.TaxYear;
 import com.helper.income.implementation.capitalgain.internal.PoolState;
-import com.helper.security.Security;
+import com.helper.income.implementation.Security;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;

@@ -4,7 +4,7 @@ import com.helper.config.TaxYear;
 import com.helper.income.implementation.capitalgain.internal.BuyState;
 import com.helper.income.implementation.capitalgain.internal.SellState;
 import com.helper.income.implementation.capitalgain.internal.TradeBookSession;
-import com.helper.security.Security;
+import com.helper.income.implementation.Security;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;

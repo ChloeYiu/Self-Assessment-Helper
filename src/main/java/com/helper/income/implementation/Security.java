@@ -1,4 +1,4 @@
-package com.helper.security;
+package com.helper.income.implementation;
 
 import com.helper.config.CurrencyCode;
 import java.util.Objects;
