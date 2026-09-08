@@ -22,3 +22,6 @@ config/*.properties
 
 # Notes
 notes/
+
+# Files
+files/

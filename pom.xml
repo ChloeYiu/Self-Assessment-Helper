@@ -39,11 +39,11 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- JSON processing for data import/export -->
+        <!-- Local PDF text extraction -->
         <dependency>
-            <groupId>com.google.code.gson</groupId>
-            <artifactId>gson</artifactId>
-            <version>2.10.1</version>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>3.0.3</version>
         </dependency>
 
         <!-- Logging -->
