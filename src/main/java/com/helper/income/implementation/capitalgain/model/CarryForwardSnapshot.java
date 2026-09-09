@@ -18,6 +18,13 @@ public class CarryForwardSnapshot {
     private final BigDecimal pooledCostGbp;
     private final List<Match> consumedAcquisitions;
 
+    /**
+     * Creates an assumed zero carry-forward snapshot for a tax year and security.
+     */
+    public static CarryForwardSnapshot assumedZero(TaxYear taxYear, Security security) {
+        return new CarryForwardSnapshot(taxYear, security, BigDecimal.ZERO, BigDecimal.ZERO);
+    }
+
     public CarryForwardSnapshot(
             TaxYear taxYear,
             Security security,

@@ -4,12 +4,16 @@ import com.helper.config.CurrencyCode;
 import com.helper.config.TaxYear;
 import com.helper.config.TaxYearPeriod;
 import com.helper.income.implementation.dividend.model.AccumulatingFundReport;
+import com.helper.income.artifact.HoldingSnapshotArtifact;
+import com.helper.income.implementation.dividend.model.DividendResult;
 import com.helper.income.implementation.dividend.model.HoldingMovementType;
+import com.helper.income.implementation.dividend.model.SecurityHoldingSnapshot;
 import com.helper.income.implementation.Security;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -84,8 +88,7 @@ public class NonUkDomicileAccumulatingDividend implements Dividend {
     /**
      * Returns the accumulating fund dividend amount in the fund report currency.
      */
-    @Override
-    public BigDecimal calculateDividendAmount() {
+    private BigDecimal calculateDividendAmount() {
         if (quantityHeld.compareTo(BigDecimal.ZERO) < 0) {
             throw new IllegalStateException("quantity held must not be negative");
         }
@@ -93,7 +96,7 @@ public class NonUkDomicileAccumulatingDividend implements Dividend {
         return quantityHeld.multiply(fundReport.getReportedIncomePerUnit());
     }
 
-    public BigDecimal calculateDividendAmountInGbp() {
+    private BigDecimal calculateDividendAmountInGbp() {
         boolean canUseMonthlyRate = getFundDistributionPeriodMonthlyRate() != null;
         boolean canUseYearlyRate = yearlyRate != null;
 
@@ -113,7 +116,25 @@ public class NonUkDomicileAccumulatingDividend implements Dividend {
         throw new IllegalStateException("monthly rate or yearly rate must be provided");
     }
 
-    public BigDecimal calculateDividendAmountInGbpWithMonthlyRate() {
+    /**
+     * Returns the GBP dividend result and closing holding snapshot artifact.
+     */
+    @Override
+    public DividendResult calculateDividendResult() {
+        BigDecimal dividendAmountGbp = calculateDividendAmountInGbp();
+        SecurityHoldingSnapshot closingHoldingSnapshot = new SecurityHoldingSnapshot(
+                fundReport.getReportingPeriodEndDate(),
+                security,
+                quantityHeld
+        );
+
+        return new DividendResult(
+                dividendAmountGbp,
+                List.of(new HoldingSnapshotArtifact(closingHoldingSnapshot))
+        );
+    }
+
+    private BigDecimal calculateDividendAmountInGbpWithMonthlyRate() {
         BigDecimal monthlyRate = getFundDistributionPeriodMonthlyRate();
         if (monthlyRate == null) {
             throw new IllegalStateException("monthly rate must be set for fund distribution period");
@@ -122,7 +143,7 @@ public class NonUkDomicileAccumulatingDividend implements Dividend {
         return convertToGbp(calculateDividendAmount(), monthlyRate);
     }
 
-    public BigDecimal calculateDividendAmountInGbpWithYearlyRate() {
+    private BigDecimal calculateDividendAmountInGbpWithYearlyRate() {
         if (yearlyRate == null) {
             throw new IllegalStateException("yearlyRate must be set before yearly calculation");
         }

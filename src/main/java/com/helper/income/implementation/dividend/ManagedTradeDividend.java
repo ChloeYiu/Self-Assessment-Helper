@@ -1,6 +1,7 @@
 package com.helper.income.implementation.dividend;
 
 import com.helper.config.TaxYear;
+import com.helper.income.implementation.dividend.model.DividendResult;
 import java.math.BigDecimal;
 import java.util.Objects;
 
@@ -18,8 +19,8 @@ public class ManagedTradeDividend implements Dividend {
     }
 
     @Override
-    public BigDecimal calculateDividendAmount() {
-        return dividendAmount;
+    public DividendResult calculateDividendResult() {
+        return new DividendResult(dividendAmount);
     }
 
     @Override

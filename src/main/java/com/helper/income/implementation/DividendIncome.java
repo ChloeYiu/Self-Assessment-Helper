@@ -4,7 +4,9 @@ import com.helper.config.TaxYear;
 import com.helper.income.IncomeResult;
 import com.helper.income.IncomeType;
 import com.helper.income.IncomeWithSource;
+import com.helper.income.artifact.IncomeArtifact;
 import com.helper.income.implementation.dividend.Dividend;
+import com.helper.income.implementation.dividend.model.DividendResult;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -39,10 +41,16 @@ public class DividendIncome implements IncomeWithSource<Dividend> {
 
     @Override
     public IncomeResult calculateResult() {
-        BigDecimal grossIncome = dividendSources.stream()
-                .map(Dividend::calculateDividendAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        return new IncomeResult(getIncomeType(), grossIncome, grossIncome, List.of());
+        BigDecimal grossIncome = BigDecimal.ZERO;
+        List<IncomeArtifact> artifacts = new ArrayList<>();
+
+        for (Dividend dividendSource : dividendSources) {
+            DividendResult result = dividendSource.calculateDividendResult();
+            grossIncome = grossIncome.add(result.getDividendAmount());
+            artifacts.addAll(result.getArtifacts());
+        }
+
+        return new IncomeResult(getIncomeType(), grossIncome, grossIncome, artifacts);
     }
 
     @Override

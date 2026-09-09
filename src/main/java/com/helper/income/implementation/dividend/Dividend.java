@@ -1,7 +1,7 @@
 package com.helper.income.implementation.dividend;
 
 import com.helper.config.TaxYear;
-import java.math.BigDecimal;
+import com.helper.income.implementation.dividend.model.DividendResult;
 
 /**
  * Interface for income sources that contribute to the dividend category.
@@ -9,9 +9,9 @@ import java.math.BigDecimal;
 public interface Dividend {
 
     /**
-     * Gross dividend amount before category-level allowance.
+     * Calculates the dividend result before category-level allowance.
      */
-    BigDecimal calculateDividendAmount();
+    DividendResult calculateDividendResult();
 
      /**
      * Tax year this income applies to.

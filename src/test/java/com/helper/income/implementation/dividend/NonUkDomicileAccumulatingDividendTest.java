@@ -4,6 +4,7 @@ import com.helper.config.CurrencyCode;
 import com.helper.config.TaxYear;
 import com.helper.config.TaxYearPeriod;
 import com.helper.income.implementation.dividend.model.AccumulatingFundReport;
+import com.helper.income.implementation.dividend.model.DividendResult;
 import com.helper.income.implementation.dividend.model.HoldingMovementType;
 import com.helper.income.implementation.Security;
 import org.junit.Test;
@@ -16,7 +17,7 @@ import static org.junit.Assert.assertEquals;
 public class NonUkDomicileAccumulatingDividendTest {
 
     @Test
-    public void calculateDividendAmount_usesHoldingAtReportingPeriodEnd() {
+    public void calculateDividendResult_usesHoldingAtReportingPeriodEnd() {
         NonUkDomicileAccumulatingDividend dividend = new NonUkDomicileAccumulatingDividend(
                 TaxYear.of(2026),
                 createAcwiSecurity(),
@@ -26,8 +27,12 @@ public class NonUkDomicileAccumulatingDividendTest {
 
         dividend.addHoldingMovement(LocalDate.of(2025, 1, 15), new BigDecimal("2"), HoldingMovementType.BUY);
         dividend.addHoldingMovement(LocalDate.of(2025, 8, 1), new BigDecimal("1"), HoldingMovementType.SELL);
+        dividend.setMonthlyRate(TaxYearPeriod.MAY, new BigDecimal("0.90"));
 
-        assertBigDecimalEquals("22.00", dividend.calculateDividendAmount());
+        DividendResult result = dividend.calculateDividendResult();
+
+        assertBigDecimalEquals("19.80", result.getDividendAmount());
+        assertEquals(1, result.getArtifacts().size());
         assertEquals(TaxYear.of(2026), dividend.getTaxYear());
         assertEquals("IE00B6R52259", dividend.getFundIdentifier());
         assertEquals("iShares MSCI ACWI UCITS ETF", dividend.getFundName());
@@ -43,9 +48,9 @@ public class NonUkDomicileAccumulatingDividendTest {
         dividend.setMonthlyRate(TaxYearPeriod.MAY, new BigDecimal("0.90"));
         dividend.setYearlyRate(new BigDecimal("0.80"));
 
-        assertBigDecimalEquals("19.80", dividend.calculateDividendAmountInGbpWithMonthlyRate());
-        assertBigDecimalEquals("17.60", dividend.calculateDividendAmountInGbpWithYearlyRate());
-        assertBigDecimalEquals("17.60", dividend.calculateDividendAmountInGbp());
+        DividendResult result = dividend.calculateDividendResult();
+
+        assertBigDecimalEquals("17.60", result.getDividendAmount());
     }
 
     @Test
@@ -55,9 +60,9 @@ public class NonUkDomicileAccumulatingDividendTest {
         dividend.setMonthlyRate(TaxYearPeriod.MAY, new BigDecimal("0.80"));
         dividend.setYearlyRate(new BigDecimal("0.90"));
 
-        assertBigDecimalEquals("17.60", dividend.calculateDividendAmountInGbpWithMonthlyRate());
-        assertBigDecimalEquals("19.80", dividend.calculateDividendAmountInGbpWithYearlyRate());
-        assertBigDecimalEquals("17.60", dividend.calculateDividendAmountInGbp());
+        DividendResult result = dividend.calculateDividendResult();
+
+        assertBigDecimalEquals("17.60", result.getDividendAmount());
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -85,7 +90,7 @@ public class NonUkDomicileAccumulatingDividendTest {
     }
 
     @Test(expected = IllegalStateException.class)
-    public void calculateDividendAmount_throwsWhenMovementsCreateNegativeHolding() {
+    public void calculateDividendResult_throwsWhenMovementsCreateNegativeHolding() {
         NonUkDomicileAccumulatingDividend dividend = new NonUkDomicileAccumulatingDividend(
                 TaxYear.of(2026),
                 createAcwiSecurity(),
@@ -95,7 +100,7 @@ public class NonUkDomicileAccumulatingDividendTest {
 
         dividend.addHoldingMovement(LocalDate.of(2025, 8, 1), new BigDecimal("11"), HoldingMovementType.SELL);
 
-        dividend.calculateDividendAmount();
+        dividend.calculateDividendResult();
     }
 
     @Test(expected = IllegalArgumentException.class)
