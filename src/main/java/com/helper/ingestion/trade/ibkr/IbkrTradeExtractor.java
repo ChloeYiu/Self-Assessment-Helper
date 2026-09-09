@@ -1,6 +1,5 @@
 package com.helper.ingestion.trade.ibkr;
 
-import com.helper.ingestion.Extractor;
 import com.helper.ingestion.util.table.TabularCell;
 import com.helper.ingestion.util.table.TabularDocument;
 import com.helper.ingestion.util.table.TabularTable;
@@ -25,7 +24,7 @@ import org.w3c.dom.NodeList;
 /**
  * Extractor for IBKR Flex trade history payloads.
  */
-public class IbkrTradeExtractor implements Extractor<TabularDocument> {
+public class IbkrTradeExtractor {
     private static final String TRADES_TABLE_NAME = "Trades";
     private static final String SECURITIES_TABLE_NAME = "Securities";
     private static final List<String> PREFERRED_TRADE_COLUMNS = List.of(
