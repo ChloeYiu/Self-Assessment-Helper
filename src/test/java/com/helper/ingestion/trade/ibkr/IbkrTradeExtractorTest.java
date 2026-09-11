@@ -1,7 +1,7 @@
 package com.helper.ingestion.trade.ibkr;
 
-import com.helper.ingestion.util.table.TabularDocument;
-import com.helper.ingestion.util.table.TabularTable;
+import com.helper.util.table.TabularDocument;
+import com.helper.util.table.TabularTable;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

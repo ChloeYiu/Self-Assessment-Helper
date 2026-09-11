@@ -1,9 +1,9 @@
 package com.helper.ingestion.trade.ibkr;
 
 import com.helper.config.CurrencyCode;
-import com.helper.ingestion.util.pdf.PdfTextDocument;
-import com.helper.ingestion.util.pdf.PdfTextExtractor;
-import com.helper.ingestion.util.pdf.PdfTextFilter;
+import com.helper.util.pdf.PdfTextDocument;
+import com.helper.util.pdf.PdfTextExtractor;
+import com.helper.util.pdf.PdfTextFilter;
 import com.helper.income.implementation.dividend.model.AccumulatingFundReport;
 import java.math.BigDecimal;
 import java.io.IOException;

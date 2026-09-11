@@ -1,9 +1,9 @@
 package com.helper.ingestion.trade.ibkr;
 
-import com.helper.ingestion.util.api.ApiRequest;
-import com.helper.ingestion.util.api.DateRangeValidator;
-import com.helper.ingestion.util.api.PropertiesConfig;
-import com.helper.ingestion.util.api.XmlDocumentParser;
+import com.helper.util.api.ApiRequest;
+import com.helper.util.api.DateRangeValidator;
+import com.helper.util.api.PropertiesConfig;
+import com.helper.util.api.XmlDocumentParser;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;

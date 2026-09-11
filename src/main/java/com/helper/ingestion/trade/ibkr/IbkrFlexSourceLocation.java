@@ -1,6 +1,6 @@
 package com.helper.ingestion.trade.ibkr;
 
-import com.helper.ingestion.util.table.TabularSourceLocation;
+import com.helper.util.table.TabularSourceLocation;
 
 /**
  * Source location for a value extracted from an IBKR Flex statement.

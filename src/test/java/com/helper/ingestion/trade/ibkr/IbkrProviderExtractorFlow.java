@@ -1,8 +1,8 @@
 package com.helper.ingestion.trade.ibkr;
 
-import com.helper.ingestion.util.table.TabularDocument;
-import com.helper.ingestion.util.table.TabularColumn;
-import com.helper.ingestion.util.table.TabularTable;
+import com.helper.util.table.TabularDocument;
+import com.helper.util.table.TabularColumn;
+import com.helper.util.table.TabularTable;
 import de.vandermeer.asciitable.AsciiTable;
 import java.io.InputStream;
 import java.nio.file.Files;

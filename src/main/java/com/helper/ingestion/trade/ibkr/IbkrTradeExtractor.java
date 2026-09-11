@@ -1,10 +1,10 @@
 package com.helper.ingestion.trade.ibkr;
 
-import com.helper.ingestion.util.table.TabularCell;
-import com.helper.ingestion.util.table.TabularDocument;
-import com.helper.ingestion.util.table.TabularTable;
-import com.helper.ingestion.util.table.TabularTableBuilder;
-import com.helper.ingestion.util.api.XmlDocumentParser;
+import com.helper.util.table.TabularCell;
+import com.helper.util.table.TabularDocument;
+import com.helper.util.table.TabularTable;
+import com.helper.util.table.TabularTableBuilder;
+import com.helper.util.api.XmlDocumentParser;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;

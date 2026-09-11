@@ -2,7 +2,7 @@ package com.helper.ingestion.transaction.hsbc;
 
 import com.helper.income.implementation.savings.Saving;
 import com.helper.ingestion.Mapper;
-import com.helper.ingestion.util.table.TabularTable;
+import com.helper.util.table.TabularTable;
 
 /**
  * Shell mapper for HSBC entries.
