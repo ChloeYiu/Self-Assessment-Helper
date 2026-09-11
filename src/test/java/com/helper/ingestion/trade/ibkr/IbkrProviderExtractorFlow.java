@@ -31,7 +31,7 @@ public class IbkrProviderExtractorFlow {
         }
 
         IbkrApiProvider provider = new IbkrApiProvider(DEFAULT_CONFIG_PATH);
-        IbkrApiExtractor extractor = new IbkrApiExtractor();
+        IbkrTradeExtractor extractor = new IbkrTradeExtractor();
 
         try (InputStream statementXml = provider.getFlexStatement(dateRange.fromDate(), dateRange.toDate())) {
             TabularDocument document = extractor.extractFlexStatementDocument(statementXml);
