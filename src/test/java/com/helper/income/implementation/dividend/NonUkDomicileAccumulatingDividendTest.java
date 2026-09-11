@@ -11,6 +11,7 @@ import org.junit.Test;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 
@@ -27,7 +28,7 @@ public class NonUkDomicileAccumulatingDividendTest {
 
         dividend.addHoldingMovement(LocalDate.of(2025, 1, 15), new BigDecimal("2"), HoldingMovementType.BUY);
         dividend.addHoldingMovement(LocalDate.of(2025, 8, 1), new BigDecimal("1"), HoldingMovementType.SELL);
-        dividend.setMonthlyRate(TaxYearPeriod.MAY, new BigDecimal("0.90"));
+        dividend.setMonthlyRates(Map.of(TaxYearPeriod.MAY, new BigDecimal("0.90")));
 
         DividendResult result = dividend.calculateDividendResult();
 
@@ -45,7 +46,7 @@ public class NonUkDomicileAccumulatingDividendTest {
     public void calculateDividendAmountInGbp_prefersYearlyWhenItProducesLowerAmount() {
         NonUkDomicileAccumulatingDividend dividend = createAcwiDividend();
 
-        dividend.setMonthlyRate(TaxYearPeriod.MAY, new BigDecimal("0.90"));
+        dividend.setMonthlyRates(Map.of(TaxYearPeriod.MAY, new BigDecimal("0.90")));
         dividend.setYearlyRate(new BigDecimal("0.80"));
 
         DividendResult result = dividend.calculateDividendResult();
@@ -57,7 +58,7 @@ public class NonUkDomicileAccumulatingDividendTest {
     public void calculateDividendAmountInGbp_prefersMonthlyWhenItProducesLowerAmount() {
         NonUkDomicileAccumulatingDividend dividend = createAcwiDividend();
 
-        dividend.setMonthlyRate(TaxYearPeriod.MAY, new BigDecimal("0.80"));
+        dividend.setMonthlyRates(Map.of(TaxYearPeriod.MAY, new BigDecimal("0.80")));
         dividend.setYearlyRate(new BigDecimal("0.90"));
 
         DividendResult result = dividend.calculateDividendResult();

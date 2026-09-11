@@ -100,11 +100,12 @@ public class ForeignSaving implements Saving {
         );
     }
 
-    public void setMonthlyRate(TaxYearPeriod period, BigDecimal rate) {
-        monthlyRates.put(
-            Objects.requireNonNull(period, "period"),
-            Objects.requireNonNull(rate, "rate")
-        );
+    public void setMonthlyRates(Map<TaxYearPeriod, BigDecimal> monthlyRates) {
+        Objects.requireNonNull(monthlyRates, "monthlyRates")
+            .forEach((period, rate) -> this.monthlyRates.put(
+                Objects.requireNonNull(period, "period"),
+                Objects.requireNonNull(rate, "rate")
+            ));
     }
 
     public void setYearlyRate(BigDecimal yearlyRate) {
