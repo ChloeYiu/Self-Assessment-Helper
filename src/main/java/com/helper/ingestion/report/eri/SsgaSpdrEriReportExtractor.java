@@ -12,6 +12,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -79,21 +80,28 @@ public class SsgaSpdrEriReportExtractor implements EriReportExtractor {
     }
 
     private EriReportRow extractReportRow(PdfTextDocument document, String isin) {
-        String rowText = PdfTextFilter.firstMatchingText(document, text -> text.contains(isin))
-                .map(line -> line.getText())
-                .orElseThrow(() -> new IllegalArgumentException("ERI row was not found for ISIN " + isin));
+        return PdfTextFilter.matchingText(document, text -> text.contains(isin))
+                .stream()
+                .map(line -> tryParseReportRow(line.getText(), isin))
+                .flatMap(Optional::stream)
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "ERI row was not found or did not match the expected SSGA report format for ISIN " + isin
+                ));
+    }
 
+    private Optional<EriReportRow> tryParseReportRow(String rowText, String isin) {
         Pattern rowPattern = Pattern.compile(String.format(ROW_VALUE_PATTERN.pattern(), Pattern.quote(isin)));
         Matcher matcher = rowPattern.matcher(rowText);
         if (!matcher.matches()) {
-            throw new IllegalArgumentException("ERI row did not match the expected SSGA report format");
+            return Optional.empty();
         }
 
         CurrencyCode currencyCode = parseCurrencyCode(matcher.group(1));
         BigDecimal reportedIncomePerUnit = new BigDecimal(matcher.group(2));
         LocalDate fundDistributionDate = extractFirstDate(matcher.group(3));
 
-        return new EriReportRow(currencyCode, reportedIncomePerUnit, fundDistributionDate);
+        return Optional.of(new EriReportRow(currencyCode, reportedIncomePerUnit, fundDistributionDate));
     }
 
     private CurrencyCode parseCurrencyCode(String value) {
