@@ -1,4 +1,4 @@
-package com.helper.ingestion.trade.ibkr;
+package com.helper.ingestion.report.eri;
 
 import com.helper.config.CurrencyCode;
 import com.helper.util.pdf.PdfTextDocument;
@@ -7,7 +7,6 @@ import com.helper.util.pdf.PdfTextFilter;
 import com.helper.income.implementation.dividend.model.AccumulatingFundReport;
 import java.math.BigDecimal;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -16,8 +15,8 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/** Extracts issuer ERI reports for holdings imported from IBKR. */
-public class IbkrEriReportExtractor {
+/** Extracts SSGA SPDR UK reportable income ERI PDF reports. */
+public class SsgaSpdrEriReportExtractor implements EriReportExtractor {
     private static final DateTimeFormatter REPORT_DATE_FORMATTER = DateTimeFormatter
             .ofPattern("d MMMM uuuu", Locale.ENGLISH);
     private static final Pattern REPORTING_PERIOD_ENDED_PATTERN = Pattern.compile(
@@ -32,26 +31,29 @@ public class IbkrEriReportExtractor {
     private final PdfTextFilter pdfTextFilter;
 
     /** Creates a deterministic ERI report extractor. */
-    public IbkrEriReportExtractor() {
+    public SsgaSpdrEriReportExtractor() {
         this(new PdfTextExtractor(), new PdfTextFilter());
     }
 
     /**
      * Creates a deterministic ERI report extractor with supplied PDF utilities.
      */
-    public IbkrEriReportExtractor(PdfTextExtractor pdfTextExtractor, PdfTextFilter pdfTextFilter) {
+    public SsgaSpdrEriReportExtractor(PdfTextExtractor pdfTextExtractor, PdfTextFilter pdfTextFilter) {
         this.pdfTextExtractor = Objects.requireNonNull(pdfTextExtractor, "pdfTextExtractor");
         this.pdfTextFilter = Objects.requireNonNull(pdfTextFilter, "pdfTextFilter");
     }
 
     /**
-     * Extracts the accumulating fund report row for the supplied ISIN and reporting year.
+     * Extracts the accumulating fund report row from a shared ERI report input.
      */
-    public AccumulatingFundReport extractReport(Path report, String isin, int reportingYear)
-            throws IOException {
-        String fundIdentifier = requireNonBlank(isin, "isin");
-        PdfTextDocument document = pdfTextExtractor.extract(Objects.requireNonNull(report, "report"));
-        LocalDate reportingPeriodEndDate = extractReportingPeriodEndDate(document, reportingYear);
+    @Override
+    public AccumulatingFundReport extractReport(EriReportInput input) throws IOException {
+        EriReportInput reportInput = Objects.requireNonNull(input, "input");
+        String fundIdentifier = requireNonBlank(reportInput.getIsin(), "isin");
+        PdfTextDocument document = pdfTextExtractor.extract(Objects.requireNonNull(
+                reportInput.getLocalReportPath(),
+                "localReportPath"));
+        LocalDate reportingPeriodEndDate = extractReportingPeriodEndDate(document, reportInput.getReportingYear());
         EriReportRow row = extractReportRow(document, fundIdentifier);
 
         LocalDate expectedDistributionDate = reportingPeriodEndDate.plusMonths(6);
