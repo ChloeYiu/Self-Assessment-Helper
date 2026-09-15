@@ -1,5 +1,6 @@
 package com.helper.util.table;
 
+import java.math.BigDecimal;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -35,6 +36,16 @@ public class TabularCell {
 
     public Optional<TabularSourceLocation> getSourceLocation() {
         return Optional.ofNullable(sourceLocation);
+    }
+
+    public Optional<BigDecimal> getBigDecimal() {
+        try {
+            return getNormalizedText()
+                    .filter(value -> !value.isBlank())
+                    .map(BigDecimal::new);
+        } catch (NumberFormatException exception) {
+            return Optional.empty();
+        }
     }
 
     private static String normalize(String value) {
