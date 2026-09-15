@@ -8,9 +8,8 @@ import java.util.function.Predicate;
 /**
  * Selects relevant text lines from an extracted PDF text document.
  */
-public class PdfTextFilter {
-    /** Creates a PDF text filter. */
-    public PdfTextFilter() {
+public final class PdfTextFilter {
+    private PdfTextFilter() {
     }
 
     /**
@@ -20,7 +19,7 @@ public class PdfTextFilter {
      * @param predicate line predicate
      * @return matching lines in document order
      */
-    public List<PdfTextLine> matching(PdfTextDocument document, Predicate<PdfTextLine> predicate) {
+    public static List<PdfTextLine> matching(PdfTextDocument document, Predicate<PdfTextLine> predicate) {
         Objects.requireNonNull(predicate, "predicate");
         return Objects.requireNonNull(document, "document")
                 .getLines()
@@ -36,7 +35,7 @@ public class PdfTextFilter {
      * @param predicate text predicate
      * @return matching lines in document order
      */
-    public List<PdfTextLine> matchingText(PdfTextDocument document, Predicate<String> predicate) {
+    public static List<PdfTextLine> matchingText(PdfTextDocument document, Predicate<String> predicate) {
         Objects.requireNonNull(predicate, "predicate");
         return matching(document, line -> predicate.test(line.getText()));
     }
@@ -48,7 +47,7 @@ public class PdfTextFilter {
      * @param predicate line predicate
      * @return first matching line, if present
      */
-    public Optional<PdfTextLine> firstMatching(PdfTextDocument document, Predicate<PdfTextLine> predicate) {
+    public static Optional<PdfTextLine> firstMatching(PdfTextDocument document, Predicate<PdfTextLine> predicate) {
         Objects.requireNonNull(predicate, "predicate");
         return Objects.requireNonNull(document, "document")
                 .getLines()
@@ -64,7 +63,7 @@ public class PdfTextFilter {
      * @param predicate text predicate
      * @return first matching line, if present
      */
-    public Optional<PdfTextLine> firstMatchingText(PdfTextDocument document, Predicate<String> predicate) {
+    public static Optional<PdfTextLine> firstMatchingText(PdfTextDocument document, Predicate<String> predicate) {
         Objects.requireNonNull(predicate, "predicate");
         return firstMatching(document, line -> predicate.test(line.getText()));
     }
@@ -79,7 +78,7 @@ public class PdfTextFilter {
      * @param includeEnd whether to include the matched end line
      * @return selected lines in document order, or an empty list when no valid range is found
      */
-    public List<PdfTextLine> between(
+    public static List<PdfTextLine> between(
             PdfTextDocument document,
             Predicate<String> startPredicate,
             Predicate<String> endPredicate,
@@ -116,7 +115,7 @@ public class PdfTextFilter {
      * @param after number of lines after the center line
      * @return selected lines in document order
      */
-    public List<PdfTextLine> around(PdfTextDocument document, PdfTextLine line, int before, int after) {
+    public static List<PdfTextLine> around(PdfTextDocument document, PdfTextLine line, int before, int after) {
         if (before < 0) {
             throw new IllegalArgumentException("before must not be negative");
         }

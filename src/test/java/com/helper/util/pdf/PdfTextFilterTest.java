@@ -8,8 +8,6 @@ import java.util.List;
 import org.junit.Test;
 
 public class PdfTextFilterTest {
-    private final PdfTextFilter filter = new PdfTextFilter();
-
     @Test
     public void matchingText_returnsAllTextMatchesInOrder() {
         PdfTextDocument document = document(
@@ -20,7 +18,7 @@ public class PdfTextFilterTest {
                 "01/04/25 01/05/25 Example credit 20.00 1010.00",
                 "Total 30.00 1010.00");
 
-        List<PdfTextLine> transactionStarts = filter.matchingText(
+        List<PdfTextLine> transactionStarts = PdfTextFilter.matchingText(
                 document,
                 text -> text.matches("\\d{2}/\\d{2}/\\d{2} \\d{2}/\\d{2}/\\d{2} .*"));
 
@@ -35,7 +33,7 @@ public class PdfTextFilterTest {
         PdfTextLine pageTwoLine = new PdfTextLine("page two", new PdfTextLocation(2, 1));
         PdfTextDocument document = new PdfTextDocument(List.of(pageOneLine, pageTwoLine));
 
-        List<PdfTextLine> pageTwoLines = filter.matching(
+        List<PdfTextLine> pageTwoLines = PdfTextFilter.matching(
                 document,
                 line -> line.getLocation().orElseThrow().getPageNumber() == 2);
 
@@ -46,10 +44,10 @@ public class PdfTextFilterTest {
     public void firstMatchingText_returnsFirstTextMatch() {
         PdfTextDocument document = document("alpha", "Total first", "Total second");
 
-        PdfTextLine firstTotal = filter.firstMatchingText(document, text -> text.startsWith("Total")).orElseThrow();
+        PdfTextLine firstTotal = PdfTextFilter.firstMatchingText(document, text -> text.startsWith("Total")).orElseThrow();
 
         assertEquals("Total first", firstTotal.getText());
-        assertTrue(filter.firstMatchingText(document, text -> text.equals("missing")).isEmpty());
+        assertTrue(PdfTextFilter.firstMatchingText(document, text -> text.equals("missing")).isEmpty());
     }
 
     @Test
@@ -58,13 +56,13 @@ public class PdfTextFilterTest {
 
         assertTexts(
                 List.of("one", "two"),
-                filter.between(document, text -> text.equals("START"), text -> text.equals("END"), false, false));
+                PdfTextFilter.between(document, text -> text.equals("START"), text -> text.equals("END"), false, false));
         assertTexts(
                 List.of("START", "one", "two", "END"),
-                filter.between(document, text -> text.equals("START"), text -> text.equals("END"), true, true));
-        assertTrue(filter.between(document, text -> text.equals("missing"), text -> text.equals("END"), false, false)
+                PdfTextFilter.between(document, text -> text.equals("START"), text -> text.equals("END"), true, true));
+        assertTrue(PdfTextFilter.between(document, text -> text.equals("missing"), text -> text.equals("END"), false, false)
                 .isEmpty());
-        assertTrue(filter.between(document, text -> text.equals("START"), text -> text.equals("missing"), false, false)
+        assertTrue(PdfTextFilter.between(document, text -> text.equals("START"), text -> text.equals("missing"), false, false)
                 .isEmpty());
     }
 
@@ -77,11 +75,11 @@ public class PdfTextFilterTest {
                 center,
                 new PdfTextLine("three")));
 
-        assertTexts(List.of("one", "center", "three"), filter.around(document, center, 1, 1));
-        assertTexts(List.of("zero", "one", "center"), filter.around(document, center, 5, 0));
-        assertTrue(filter.around(document, new PdfTextLine("center"), 1, 1).isEmpty());
-        assertThrows(IllegalArgumentException.class, () -> filter.around(document, center, -1, 0));
-        assertThrows(IllegalArgumentException.class, () -> filter.around(document, center, 0, -1));
+        assertTexts(List.of("one", "center", "three"), PdfTextFilter.around(document, center, 1, 1));
+        assertTexts(List.of("zero", "one", "center"), PdfTextFilter.around(document, center, 5, 0));
+        assertTrue(PdfTextFilter.around(document, new PdfTextLine("center"), 1, 1).isEmpty());
+        assertThrows(IllegalArgumentException.class, () -> PdfTextFilter.around(document, center, -1, 0));
+        assertThrows(IllegalArgumentException.class, () -> PdfTextFilter.around(document, center, 0, -1));
     }
 
     private static PdfTextDocument document(String... lines) {

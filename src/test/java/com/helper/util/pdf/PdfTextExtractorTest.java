@@ -23,7 +23,7 @@ public class PdfTextExtractorTest {
         Path pdfPath = temporaryFolder.newFile("sample.pdf").toPath();
         writePdf(pdfPath);
 
-        PdfTextDocument document = new PdfTextExtractor().extract(pdfPath);
+        PdfTextDocument document = PdfTextExtractor.extract(pdfPath);
 
         assertEquals("sample.pdf", document.getSourceName().orElseThrow());
         assertEquals(List.of("First page line", "Second page line"), document.getLines()

@@ -13,9 +13,8 @@ import org.apache.pdfbox.text.PDFTextStripper;
 /**
  * Extracts raw text lines from a local PDF document.
  */
-public class PdfTextExtractor {
-    /** Creates a PDF text extractor. */
-    public PdfTextExtractor() {
+public final class PdfTextExtractor {
+    private PdfTextExtractor() {
     }
 
     /**
@@ -25,7 +24,7 @@ public class PdfTextExtractor {
      * @return raw PDF text document
      * @throws IOException if the PDF cannot be read
      */
-    public PdfTextDocument extract(Path pdfPath) throws IOException {
+    public static PdfTextDocument extract(Path pdfPath) throws IOException {
         Path path = Objects.requireNonNull(pdfPath, "pdfPath");
         List<PdfTextLine> lines = new ArrayList<>();
 

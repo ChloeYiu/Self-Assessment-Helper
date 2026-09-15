@@ -27,20 +27,8 @@ public class SsgaSpdrEriReportExtractor implements EriReportExtractor {
             "^.*?%s\\s+\\S+\\s+([A-Z]{3})\\s+([0-9]+(?:\\.[0-9]+)?)(?:\\s+|$)(.*)$"
     );
 
-    private final PdfTextExtractor pdfTextExtractor;
-    private final PdfTextFilter pdfTextFilter;
-
     /** Creates a deterministic ERI report extractor. */
     public SsgaSpdrEriReportExtractor() {
-        this(new PdfTextExtractor(), new PdfTextFilter());
-    }
-
-    /**
-     * Creates a deterministic ERI report extractor with supplied PDF utilities.
-     */
-    public SsgaSpdrEriReportExtractor(PdfTextExtractor pdfTextExtractor, PdfTextFilter pdfTextFilter) {
-        this.pdfTextExtractor = Objects.requireNonNull(pdfTextExtractor, "pdfTextExtractor");
-        this.pdfTextFilter = Objects.requireNonNull(pdfTextFilter, "pdfTextFilter");
     }
 
     /**
@@ -50,7 +38,7 @@ public class SsgaSpdrEriReportExtractor implements EriReportExtractor {
     public AccumulatingFundReport extractReport(EriReportInput input) throws IOException {
         EriReportInput reportInput = Objects.requireNonNull(input, "input");
         String fundIdentifier = requireNonBlank(reportInput.getIsin(), "isin");
-        PdfTextDocument document = pdfTextExtractor.extract(Objects.requireNonNull(
+        PdfTextDocument document = PdfTextExtractor.extract(Objects.requireNonNull(
                 reportInput.getLocalReportPath(),
                 "localReportPath"));
         LocalDate reportingPeriodEndDate = extractReportingPeriodEndDate(document, reportInput.getReportingYear());
@@ -72,7 +60,7 @@ public class SsgaSpdrEriReportExtractor implements EriReportExtractor {
     }
 
     private LocalDate extractReportingPeriodEndDate(PdfTextDocument document, int reportingYear) {
-        return pdfTextFilter.matchingText(document, text -> REPORTING_PERIOD_ENDED_PATTERN.matcher(text).matches())
+        return PdfTextFilter.matchingText(document, text -> REPORTING_PERIOD_ENDED_PATTERN.matcher(text).matches())
                 .stream()
                 .map(line -> parseReportingPeriodEndDate(line.getText()))
                 .filter(date -> date.getYear() == reportingYear)
@@ -91,7 +79,7 @@ public class SsgaSpdrEriReportExtractor implements EriReportExtractor {
     }
 
     private EriReportRow extractReportRow(PdfTextDocument document, String isin) {
-        String rowText = pdfTextFilter.firstMatchingText(document, text -> text.contains(isin))
+        String rowText = PdfTextFilter.firstMatchingText(document, text -> text.contains(isin))
                 .map(line -> line.getText())
                 .orElseThrow(() -> new IllegalArgumentException("ERI row was not found for ISIN " + isin));
 
