@@ -4,8 +4,11 @@ import static org.junit.Assert.assertEquals;
 
 import com.helper.config.CurrencyCode;
 import com.helper.income.implementation.dividend.model.AccumulatingFundReport;
+import com.helper.util.api.MockHttpClient;
 import java.math.BigDecimal;
+import java.net.URI;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.Objects;
@@ -21,8 +24,7 @@ public class SsgaSpdrEriReportExtractorTest {
         AccumulatingFundReport report = new SsgaSpdrEriReportExtractor().extractReport(new EriReportInput(
                 ACWI_ISIN,
                 2025,
-                pdfPath,
-                null
+                pdfPath
         ));
 
         assertReport(report, 2025, "3.4253", CurrencyCode.USD);
@@ -35,11 +37,26 @@ public class SsgaSpdrEriReportExtractorTest {
         AccumulatingFundReport report = new SsgaSpdrEriReportExtractor().extractReport(new EriReportInput(
                 ACWI_ISIN,
                 2023,
-                pdfPath,
-                null
+                pdfPath
         ));
 
         assertReport(report, 2023, "2.7449", CurrencyCode.USD);
+    }
+
+    @Test
+    public void extractReport_fetchesReportUri() throws Exception {
+        Path pdfPath = resourcePath("ssga-spdr-europe-i-reportable-income-2025.pdf");
+        MockHttpClient httpClient = new MockHttpClient()
+                .respondWith(200, Files.readAllBytes(pdfPath));
+
+        AccumulatingFundReport report = new SsgaSpdrEriReportExtractor().extractReport(new EriReportInput(
+                ACWI_ISIN,
+                2025,
+                URI.create("https://example.com/report.pdf"),
+                httpClient
+        ));
+
+        assertReport(report, 2025, "3.4253", CurrencyCode.USD);
     }
 
     private static Path resourcePath(String fileName) throws Exception {

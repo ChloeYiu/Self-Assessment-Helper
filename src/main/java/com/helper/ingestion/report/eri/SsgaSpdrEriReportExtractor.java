@@ -2,7 +2,6 @@ package com.helper.ingestion.report.eri;
 
 import com.helper.config.CurrencyCode;
 import com.helper.util.pdf.PdfTextDocument;
-import com.helper.util.pdf.PdfTextExtractor;
 import com.helper.util.pdf.PdfTextFilter;
 import com.helper.income.implementation.dividend.model.AccumulatingFundReport;
 import java.math.BigDecimal;
@@ -39,9 +38,7 @@ public class SsgaSpdrEriReportExtractor implements EriReportExtractor {
     public AccumulatingFundReport extractReport(EriReportInput input) throws IOException {
         EriReportInput reportInput = Objects.requireNonNull(input, "input");
         String fundIdentifier = requireNonBlank(reportInput.getIsin(), "isin");
-        PdfTextDocument document = PdfTextExtractor.extract(Objects.requireNonNull(
-                reportInput.getLocalReportPath(),
-                "localReportPath"));
+        PdfTextDocument document = reportInput.loadPdfTextDocument();
         LocalDate reportingPeriodEndDate = extractReportingPeriodEndDate(document, reportInput.getReportingYear());
         EriReportRow row = extractReportRow(document, fundIdentifier);
 
