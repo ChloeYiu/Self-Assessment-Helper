@@ -22,9 +22,9 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.NodeList;
 
 /**
- * Extractor for IBKR Flex trade history payloads.
+ * Maps IBKR Flex trade history payloads into tabular documents.
  */
-public class IbkrTradeExtractor {
+public class IbkrTradeMapper {
     private static final String TRADES_TABLE_NAME = "Trades";
     private static final String SECURITIES_TABLE_NAME = "Securities";
     private static final List<String> PREFERRED_TRADE_COLUMNS = List.of(

@@ -31,10 +31,10 @@ public class IbkrProviderExtractorFlow {
         }
 
         IbkrApiProvider provider = new IbkrApiProvider(DEFAULT_CONFIG_PATH);
-        IbkrTradeExtractor extractor = new IbkrTradeExtractor();
+        IbkrTradeMapper mapper = new IbkrTradeMapper();
 
         try (InputStream statementXml = provider.getFlexStatement(dateRange.fromDate(), dateRange.toDate())) {
-            TabularDocument document = extractor.extractFlexStatementDocument(statementXml);
+            TabularDocument document = mapper.extractFlexStatementDocument(statementXml);
             printSummary(document, dateRange);
         }
     }

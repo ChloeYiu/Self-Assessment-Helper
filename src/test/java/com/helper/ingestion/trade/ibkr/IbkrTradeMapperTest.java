@@ -7,7 +7,7 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class IbkrTradeExtractorTest {
+public class IbkrTradeMapperTest {
 
         @Test
         public void extractFlexStatementDocument_mapsFlexTradeAttributesToTabularTable() {
@@ -33,7 +33,7 @@ public class IbkrTradeExtractorTest {
                                 + "</FlexStatements>"
                                 + "</FlexQueryResponse>";
 
-                TabularDocument document = new IbkrTradeExtractor().extractFlexStatementDocument(xml);
+                TabularDocument document = new IbkrTradeMapper().extractFlexStatementDocument(xml);
                 TabularTable tradesTable = document.getTables().get(0);
                 TabularTable securitiesTable = document.getTables().get(1);
 
