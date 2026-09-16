@@ -94,19 +94,11 @@ public class SsgaSpdrEriReportExtractor implements EriReportExtractor {
             return Optional.empty();
         }
 
-        CurrencyCode currencyCode = parseCurrencyCode(matcher.group(1));
+        CurrencyCode currencyCode = CurrencyCode.parse(matcher.group(1), "ERI report");
         BigDecimal reportedIncomePerUnit = new BigDecimal(matcher.group(2));
         LocalDate fundDistributionDate = extractFirstDate(matcher.group(3));
 
         return Optional.of(new EriReportRow(currencyCode, reportedIncomePerUnit, fundDistributionDate));
-    }
-
-    private CurrencyCode parseCurrencyCode(String value) {
-        try {
-            return CurrencyCode.valueOf(value);
-        } catch (IllegalArgumentException exception) {
-            throw new IllegalArgumentException("unsupported ERI report currency: " + value, exception);
-        }
     }
 
     private LocalDate extractFirstDate(String text) {
