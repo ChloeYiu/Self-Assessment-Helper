@@ -1,6 +1,7 @@
-package com.helper.income.implementation;
+package com.helper.ingestion.trade.ibkr;
 
 import com.helper.config.CurrencyCode;
+import com.helper.income.implementation.Security;
 import com.helper.util.table.TabularDocument;
 import com.helper.util.table.TabularRow;
 import com.helper.util.table.TabularTable;
@@ -8,12 +9,12 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * Extracts domain securities from a standard securities table.
+ * Extracts domain securities from an IBKR Flex securities table.
  */
-public class SecurityExtractor {
+public class IbkrSecurityExtractor {
     private static final String SECURITIES_TABLE_NAME = "Securities";
 
-    /** Extracts domain securities from a document containing a Securities table. */
+    /** Extracts domain securities from a document containing an IBKR Securities table. */
     public List<Security> extractSecurities(TabularDocument document) {
         TabularTable securitiesTable = Objects.requireNonNull(document, "document")
                 .getTable(SECURITIES_TABLE_NAME)
