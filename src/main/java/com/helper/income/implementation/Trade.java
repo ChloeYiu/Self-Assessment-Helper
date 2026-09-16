@@ -1,4 +1,4 @@
-package com.helper.income.implementation.capitalgain.model;
+package com.helper.income.implementation;
 
 import com.helper.income.implementation.Security;
 import java.math.BigDecimal;

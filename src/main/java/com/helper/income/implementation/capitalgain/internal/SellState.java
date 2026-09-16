@@ -2,7 +2,7 @@ package com.helper.income.implementation.capitalgain.internal;
 
 import com.helper.income.implementation.capitalgain.model.Match;
 import com.helper.income.implementation.capitalgain.model.MatchType;
-import com.helper.income.implementation.capitalgain.model.Trade;
+import com.helper.income.implementation.Trade;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;

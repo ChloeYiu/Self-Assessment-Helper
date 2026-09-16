@@ -9,9 +9,9 @@ import com.helper.income.implementation.capitalgain.model.CarryForwardSnapshot;
 import com.helper.income.implementation.capitalgain.model.EriAdjustment;
 import com.helper.income.implementation.capitalgain.model.Match;
 import com.helper.income.implementation.capitalgain.model.MatchType;
-import com.helper.income.implementation.capitalgain.model.Trade;
+import com.helper.income.implementation.Trade;
 import com.helper.income.implementation.capitalgain.model.TradeBook;
-import com.helper.income.implementation.capitalgain.model.TradeType;
+import com.helper.income.implementation.TradeType;
 import com.helper.income.implementation.Security;
 import org.junit.Test;
 
