@@ -1,5 +1,8 @@
 package com.helper.util.table;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -65,6 +68,47 @@ public class TabularRow {
         }
 
         return getCell(columnIndex);
+    }
+
+    /** Returns required normalized text from a named cell. */
+    public String getText(String columnName) {
+        return getCell(columnName)
+                .flatMap(TabularCell::getNormalizedText)
+                .filter(value -> !value.isBlank())
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "row " + index + " missing required column " + Objects.requireNonNull(columnName, "columnName")));
+    }
+
+    /** Returns required BigDecimal from a named cell. */
+    public BigDecimal getBigDecimal(String columnName) {
+        return getCell(columnName)
+                .flatMap(TabularCell::getBigDecimal)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "row " + index + " missing numeric column " + Objects.requireNonNull(columnName, "columnName")));
+    }
+
+    /** Returns required ISO local date from a named cell. */
+    public LocalDate getLocalDate(String columnName) {
+        String value = getText(columnName);
+        try {
+            return LocalDate.parse(value);
+        } catch (DateTimeParseException exception) {
+            throw new IllegalArgumentException(
+                    "invalid row " + index + " " + columnName + ": " + value,
+                    exception);
+        }
+    }
+
+    /** Returns required enum value from a named cell. */
+    public <E extends Enum<E>> E getEnum(String columnName, Class<E> enumType) {
+        String value = getText(columnName);
+        try {
+            return Enum.valueOf(Objects.requireNonNull(enumType, "enumType"), value);
+        } catch (IllegalArgumentException exception) {
+            throw new IllegalArgumentException(
+                    "unsupported row " + index + " " + columnName + ": " + value,
+                    exception);
+        }
     }
 
     private static String normalizeColumnLookupKey(String value) {
