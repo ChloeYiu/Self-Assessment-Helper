@@ -8,6 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import org.junit.Test;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 
@@ -64,5 +65,39 @@ public class ApiRequestTest {
                         "request failed"));
 
         assertEquals("request failed: HTTP 500", exception.getMessage());
+    }
+
+    @Test
+    public void sendGetBytes_returnsResponseBodyAndSetsDefaultUserAgent() throws Exception {
+        byte[] expectedBody = "pdf bytes".getBytes();
+        MockHttpClient httpClient = new MockHttpClient()
+                .respondWith(200, expectedBody);
+
+        byte[] responseBody = ApiRequest.sendGetBytes(
+                httpClient,
+                URI.create("https://example.com/report.pdf"),
+                "request failed");
+
+        assertArrayEquals(expectedBody, responseBody);
+        assertEquals("Java/Self-Assessment-Helper", httpClient.getRequests()
+                .get(0)
+                .headers()
+                .firstValue("User-Agent")
+                .orElseThrow());
+    }
+
+    @Test
+    public void sendGetBytes_throwsWhenResponseStatusIsNotSuccessful() {
+        MockHttpClient httpClient = new MockHttpClient()
+                .respondWith(404, new byte[0]);
+
+        IOException exception = assertThrows(
+                IOException.class,
+                () -> ApiRequest.sendGetBytes(
+                        httpClient,
+                        URI.create("https://example.com/report.pdf"),
+                        "request failed"));
+
+        assertEquals("request failed: HTTP 404", exception.getMessage());
     }
 }

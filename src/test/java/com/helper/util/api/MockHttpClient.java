@@ -42,6 +42,11 @@ public class MockHttpClient extends HttpClient {
         return this;
     }
 
+    public MockHttpClient respondWith(int statusCode, byte[] body) {
+        responses.add(new MockResponse(statusCode, body));
+        return this;
+    }
+
     public List<HttpRequest> getRequests() {
         return List.copyOf(requests);
     }
@@ -143,7 +148,7 @@ public class MockHttpClient extends HttpClient {
         }
     }
 
-    private record MockResponse(int statusCode, String body) {
+    private record MockResponse(int statusCode, Object body) {
     }
 
     private record MockHttpResponse<T>(

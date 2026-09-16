@@ -49,6 +49,33 @@ public final class ApiRequest {
         return response.body();
     }
 
+    public static byte[] sendGetBytes(
+            HttpClient httpClient,
+            URI uri,
+            String failureMessage) throws IOException, InterruptedException {
+        return sendGetBytes(httpClient, uri, DEFAULT_USER_AGENT, failureMessage);
+    }
+
+    public static byte[] sendGetBytes(
+            HttpClient httpClient,
+            URI uri,
+            String userAgent,
+            String failureMessage) throws IOException, InterruptedException {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(Objects.requireNonNull(uri, "uri"))
+                .header("User-Agent", Objects.requireNonNull(userAgent, "userAgent"))
+                .GET()
+                .build();
+
+        HttpResponse<byte[]> response = Objects.requireNonNull(httpClient, "httpClient")
+                .send(request, HttpResponse.BodyHandlers.ofByteArray());
+        if (response.statusCode() < 200 || response.statusCode() >= 300) {
+            throw new IOException(failureMessage + ": HTTP " + response.statusCode());
+        }
+
+        return response.body();
+    }
+
     public static URI createGetUri(String baseUrl, String path, Map<String, String> queryParameters) {
         Objects.requireNonNull(baseUrl, "baseUrl");
         Objects.requireNonNull(path, "path");
