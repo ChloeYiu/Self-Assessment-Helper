@@ -6,9 +6,10 @@ import com.helper.config.TaxYearPeriod;
 import com.helper.income.implementation.dividend.model.AccumulatingFundReport;
 import com.helper.income.artifact.HoldingSnapshotArtifact;
 import com.helper.income.implementation.dividend.model.DividendResult;
-import com.helper.income.implementation.dividend.model.HoldingMovementType;
 import com.helper.income.implementation.dividend.model.SecurityHoldingSnapshot;
 import com.helper.income.implementation.Security;
+import com.helper.income.implementation.Trade;
+import com.helper.income.implementation.TradeType;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -61,28 +62,40 @@ public class NonUkDomicileAccumulatingDividend implements Dividend {
     }
 
     /**
-     * Adds a buy/sell movement after the opening holding baseline.
+     * Adds trades after the opening holding baseline.
      */
-    public void addHoldingMovement(
-            LocalDate transactionDate,
-            BigDecimal quantity,
-            HoldingMovementType movementType
-    ) {
-        LocalDate movementDate = Objects.requireNonNull(transactionDate, "transactionDate");
-        BigDecimal movementQuantity = Objects.requireNonNull(quantity, "quantity");
-        HoldingMovementType type = Objects.requireNonNull(movementType, "movementType");
+    public void addTrades(List<Trade> trades) {
+        Objects.requireNonNull(trades, "trades").forEach(this::addTrade);
+    }
 
-        if (movementDate.isBefore(fundReport.getReportingPeriodStartDate())) {
-            throw new IllegalArgumentException("transactionDate must not be before fund report period start date");
-        }
-        if (movementDate.isAfter(fundReport.getReportingPeriodEndDate())) {
-            throw new IllegalArgumentException("transactionDate must not be after fund report period end date");
-        }
+    /**
+     * Adds one trade after the opening holding baseline.
+     */
+    public void addTrade(Trade trade) {
+        Trade value = Objects.requireNonNull(trade, "trade");
+        requireSameSecurity(value);
+        requireInsideReportPeriod(value);
 
-        if (type == HoldingMovementType.BUY) {
-            quantityHeld = quantityHeld.add(movementQuantity);
+        if (value.getTradeType() == TradeType.BUY) {
+            quantityHeld = quantityHeld.add(value.getQuantity());
         } else {
-            quantityHeld = quantityHeld.subtract(movementQuantity);
+            quantityHeld = quantityHeld.subtract(value.getQuantity());
+        }
+    }
+
+    private void requireSameSecurity(Trade trade) {
+        if (!security.getIdentifier().equals(trade.getSecurity().getIdentifier())) {
+            throw new IllegalArgumentException("trade security must match dividend security");
+        }
+    }
+
+    private void requireInsideReportPeriod(Trade trade) {
+        LocalDate tradeDate = trade.getTransactionDate();
+        if (tradeDate.isBefore(fundReport.getReportingPeriodStartDate())) {
+            throw new IllegalArgumentException("trade date must not be before fund report period start date");
+        }
+        if (tradeDate.isAfter(fundReport.getReportingPeriodEndDate())) {
+            throw new IllegalArgumentException("trade date must not be after fund report period end date");
         }
     }
 

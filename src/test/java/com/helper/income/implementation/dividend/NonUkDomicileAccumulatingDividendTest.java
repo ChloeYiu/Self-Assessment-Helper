@@ -5,12 +5,14 @@ import com.helper.config.TaxYear;
 import com.helper.config.TaxYearPeriod;
 import com.helper.income.implementation.dividend.model.AccumulatingFundReport;
 import com.helper.income.implementation.dividend.model.DividendResult;
-import com.helper.income.implementation.dividend.model.HoldingMovementType;
 import com.helper.income.implementation.Security;
+import com.helper.income.implementation.Trade;
+import com.helper.income.implementation.TradeType;
 import org.junit.Test;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
@@ -18,7 +20,7 @@ import static org.junit.Assert.assertEquals;
 public class NonUkDomicileAccumulatingDividendTest {
 
     @Test
-    public void calculateDividendResult_usesHoldingAtReportingPeriodEnd() {
+    public void calculateDividendResult_usesTradesToCalculateHoldingAtReportingPeriodEnd() {
         NonUkDomicileAccumulatingDividend dividend = new NonUkDomicileAccumulatingDividend(
                 TaxYear.of(2026),
                 createAcwiSecurity(),
@@ -26,8 +28,10 @@ public class NonUkDomicileAccumulatingDividendTest {
                 new BigDecimal("10")
         );
 
-        dividend.addHoldingMovement(LocalDate.of(2025, 1, 15), new BigDecimal("2"), HoldingMovementType.BUY);
-        dividend.addHoldingMovement(LocalDate.of(2025, 8, 1), new BigDecimal("1"), HoldingMovementType.SELL);
+        dividend.addTrades(List.of(
+                createTrade(LocalDate.of(2025, 1, 15), new BigDecimal("2"), TradeType.BUY),
+                createTrade(LocalDate.of(2025, 8, 1), new BigDecimal("1"), TradeType.SELL)
+        ));
         dividend.setMonthlyRates(Map.of(TaxYearPeriod.MAY, new BigDecimal("0.90")));
 
         DividendResult result = dividend.calculateDividendResult();
@@ -67,7 +71,7 @@ public class NonUkDomicileAccumulatingDividendTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void addHoldingMovement_throwsWhenMovementIsBeforeReportStartDate() {
+    public void addTrade_throwsWhenTradeIsBeforeReportStartDate() {
         NonUkDomicileAccumulatingDividend dividend = new NonUkDomicileAccumulatingDividend(
                 TaxYear.of(2026),
                 createAcwiSecurity(),
@@ -75,11 +79,11 @@ public class NonUkDomicileAccumulatingDividendTest {
                 new BigDecimal("10")
         );
 
-        dividend.addHoldingMovement(LocalDate.of(2024, 11, 30), BigDecimal.ONE, HoldingMovementType.BUY);
+        dividend.addTrade(createTrade(LocalDate.of(2024, 11, 30), BigDecimal.ONE, TradeType.BUY));
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void addHoldingMovement_throwsWhenMovementIsAfterReportEndDate() {
+    public void addTrade_throwsWhenTradeIsAfterReportEndDate() {
         NonUkDomicileAccumulatingDividend dividend = new NonUkDomicileAccumulatingDividend(
                 TaxYear.of(2026),
                 createAcwiSecurity(),
@@ -87,11 +91,36 @@ public class NonUkDomicileAccumulatingDividendTest {
                 new BigDecimal("10")
         );
 
-        dividend.addHoldingMovement(LocalDate.of(2025, 12, 1), BigDecimal.ONE, HoldingMovementType.BUY);
+        dividend.addTrade(createTrade(LocalDate.of(2025, 12, 1), BigDecimal.ONE, TradeType.BUY));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void addTrade_throwsWhenTradeSecurityDoesNotMatchDividendSecurity() {
+        NonUkDomicileAccumulatingDividend dividend = new NonUkDomicileAccumulatingDividend(
+                TaxYear.of(2026),
+                createAcwiSecurity(),
+                createAcwiReport(),
+                new BigDecimal("10")
+        );
+
+        dividend.addTrade(new Trade(
+                "BUY_DIFFERENT_SECURITY",
+                LocalDate.of(2025, 1, 15),
+                new Security(
+                        "DIFFERENT",
+                        "DIFF",
+                        "Different security",
+                        CurrencyCode.GBP
+                ),
+                TradeType.BUY,
+                BigDecimal.ONE,
+                BigDecimal.ZERO,
+                BigDecimal.ZERO
+        ));
     }
 
     @Test(expected = IllegalStateException.class)
-    public void calculateDividendResult_throwsWhenMovementsCreateNegativeHolding() {
+    public void calculateDividendResult_throwsWhenTradesCreateNegativeHolding() {
         NonUkDomicileAccumulatingDividend dividend = new NonUkDomicileAccumulatingDividend(
                 TaxYear.of(2026),
                 createAcwiSecurity(),
@@ -99,7 +128,7 @@ public class NonUkDomicileAccumulatingDividendTest {
                 new BigDecimal("10")
         );
 
-        dividend.addHoldingMovement(LocalDate.of(2025, 8, 1), new BigDecimal("11"), HoldingMovementType.SELL);
+        dividend.addTrade(createTrade(LocalDate.of(2025, 8, 1), new BigDecimal("11"), TradeType.SELL));
 
         dividend.calculateDividendResult();
     }
@@ -131,6 +160,18 @@ public class NonUkDomicileAccumulatingDividendTest {
         );
     }
 
+    private static Trade createTrade(LocalDate transactionDate, BigDecimal quantity, TradeType tradeType) {
+        return new Trade(
+                tradeType.name() + "_" + transactionDate + "_" + quantity,
+                transactionDate,
+                createAcwiSecurity(),
+                tradeType,
+                quantity,
+                BigDecimal.ZERO,
+                BigDecimal.ZERO
+        );
+    }
+
     private static NonUkDomicileAccumulatingDividend createAcwiDividend() {
         NonUkDomicileAccumulatingDividend dividend = new NonUkDomicileAccumulatingDividend(
                 TaxYear.of(2026),
@@ -138,8 +179,10 @@ public class NonUkDomicileAccumulatingDividendTest {
                 createAcwiReport(),
                 new BigDecimal("10")
         );
-        dividend.addHoldingMovement(LocalDate.of(2025, 1, 15), new BigDecimal("2"), HoldingMovementType.BUY);
-        dividend.addHoldingMovement(LocalDate.of(2025, 8, 1), new BigDecimal("1"), HoldingMovementType.SELL);
+        dividend.addTrades(List.of(
+                createTrade(LocalDate.of(2025, 1, 15), new BigDecimal("2"), TradeType.BUY),
+                createTrade(LocalDate.of(2025, 8, 1), new BigDecimal("1"), TradeType.SELL)
+        ));
         return dividend;
     }
 
