@@ -1,7 +1,6 @@
 package com.helper.income.implementation;
 
 import com.helper.config.CurrencyCode;
-import com.helper.util.table.TabularCell;
 import com.helper.util.table.TabularDocument;
 import com.helper.util.table.TabularRow;
 import com.helper.util.table.TabularTable;
@@ -29,18 +28,10 @@ public class SecurityExtractor {
 
     private Security extractSecurity(TabularRow row) {
         return new Security(
-                requireCellText(row, "identifier"),
-                requireCellText(row, "symbol"),
-                requireCellText(row, "description"),
-                CurrencyCode.parse(requireCellText(row, "currency"), "security")
+                row.getText("identifier"),
+                row.getText("symbol"),
+                row.getText("description"),
+                CurrencyCode.parse(row.getText("currency"), "security")
         );
-    }
-
-    private String requireCellText(TabularRow row, String columnName) {
-        return row.getCell(columnName)
-                .flatMap(TabularCell::getNormalizedText)
-                .filter(value -> !value.isBlank())
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "security row missing required column " + columnName));
     }
 }
