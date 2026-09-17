@@ -25,41 +25,39 @@ import org.w3c.dom.NodeList;
  * Maps IBKR Flex trade history payloads into tabular documents.
  */
 public class IbkrTradeMapper {
-    private static final String TRADES_TABLE_NAME = "Trades";
-    private static final String SECURITIES_TABLE_NAME = "Securities";
     private static final List<String> PREFERRED_TRADE_COLUMNS = List.of(
-            "accountId",
-            "assetCategory",
-            "symbol",
-            "description",
-            "conid",
-            "isin",
-            "securityID",
-            "securityIDType",
-            "figi",
-            "listingExchange",
-            "tradeDate",
-            "settleDateTarget",
-            "buySell",
-            "quantity",
-            "tradePrice",
-            "proceeds",
-            "ibCommission",
-            "currency",
-            "fifoPnlRealized");
+            IbkrNames.RawTradeColumns.ACCOUNT_ID,
+            IbkrNames.RawTradeColumns.ASSET_CATEGORY,
+            IbkrNames.RawTradeColumns.SYMBOL,
+            IbkrNames.RawTradeColumns.DESCRIPTION,
+            IbkrNames.RawTradeColumns.CONID,
+            IbkrNames.RawTradeColumns.ISIN,
+            IbkrNames.RawTradeColumns.SECURITY_ID,
+            IbkrNames.RawTradeColumns.SECURITY_ID_TYPE,
+            IbkrNames.RawTradeColumns.FIGI,
+            IbkrNames.RawTradeColumns.LISTING_EXCHANGE,
+            IbkrNames.RawTradeColumns.TRADE_DATE,
+            IbkrNames.RawTradeColumns.SETTLE_DATE_TARGET,
+            IbkrNames.RawTradeColumns.BUY_SELL,
+            IbkrNames.RawTradeColumns.QUANTITY,
+            IbkrNames.RawTradeColumns.TRADE_PRICE,
+            IbkrNames.RawTradeColumns.PROCEEDS,
+            IbkrNames.RawTradeColumns.IB_COMMISSION,
+            IbkrNames.RawTradeColumns.CURRENCY,
+            IbkrNames.RawTradeColumns.FIFO_PNL_REALIZED);
     private static final List<String> SECURITY_COLUMNS = List.of(
-            "identifier",
-            "identifierType",
-            "symbol",
-            "description",
-            "assetCategory",
-            "conid",
-            "isin",
-            "securityID",
-            "securityIDType",
-            "figi",
-            "listingExchange",
-            "currency");
+            IbkrNames.SecurityColumns.IDENTIFIER,
+            IbkrNames.SecurityColumns.IDENTIFIER_TYPE,
+            IbkrNames.SecurityColumns.SYMBOL,
+            IbkrNames.SecurityColumns.DESCRIPTION,
+            IbkrNames.SecurityColumns.ASSET_CATEGORY,
+            IbkrNames.SecurityColumns.CONID,
+            IbkrNames.SecurityColumns.ISIN,
+            IbkrNames.SecurityColumns.SECURITY_ID,
+            IbkrNames.SecurityColumns.SECURITY_ID_TYPE,
+            IbkrNames.SecurityColumns.FIGI,
+            IbkrNames.SecurityColumns.LISTING_EXCHANGE,
+            IbkrNames.SecurityColumns.CURRENCY);
 
     private final XmlDocumentParser xmlDocumentParser = new XmlDocumentParser();
 
@@ -82,7 +80,7 @@ public class IbkrTradeMapper {
     private TabularTable extractTradesTable(List<Element> tradeRows) {
         List<String> columnNames = findTradeColumnNames(tradeRows);
         TabularTable tradesTable = new TabularTableBuilder<>(
-                TRADES_TABLE_NAME,
+                IbkrNames.Tables.TRADES,
                 columnNames,
                 tradeRows,
                 this::createTradeCell)
@@ -95,7 +93,7 @@ public class IbkrTradeMapper {
         List<Element> securityRows = findSecurityRows(tradeRows);
 
         return new TabularTableBuilder<>(
-                SECURITIES_TABLE_NAME,
+                IbkrNames.Tables.SECURITIES,
                 SECURITY_COLUMNS,
                 securityRows,
                 this::createSecurityCell)
@@ -139,7 +137,7 @@ public class IbkrTradeMapper {
     private TabularCell createTradeCell(Element tradeRow, String columnName, int rowIndex) {
         return new TabularCell(
                 tradeRow.getAttribute(columnName),
-                new IbkrFlexSourceLocation(TRADES_TABLE_NAME, rowIndex, columnName));
+                new IbkrFlexSourceLocation(IbkrNames.Tables.TRADES, rowIndex, columnName));
     }
 
     private List<Element> findSecurityRows(List<Element> tradeRows) {
@@ -161,21 +159,21 @@ public class IbkrTradeMapper {
     }
 
     private boolean isSecurityTradeRow(Element tradeRow) {
-        return "STK".equalsIgnoreCase(tradeRow.getAttribute("assetCategory"));
+        return "STK".equalsIgnoreCase(tradeRow.getAttribute(IbkrNames.RawTradeColumns.ASSET_CATEGORY));
     }
 
     private TabularCell createSecurityCell(Element tradeRow, String columnName, int rowIndex) {
         return new TabularCell(
                 getSecurityCellValue(tradeRow, columnName),
-                new IbkrFlexSourceLocation(SECURITIES_TABLE_NAME, rowIndex, columnName));
+                new IbkrFlexSourceLocation(IbkrNames.Tables.SECURITIES, rowIndex, columnName));
     }
 
     private String getSecurityCellValue(Element tradeRow, String columnName) {
-        if ("identifier".equals(columnName)) {
+        if (IbkrNames.SecurityColumns.IDENTIFIER.equals(columnName)) {
             return getSecurityIdentifier(tradeRow);
         }
 
-        if ("identifierType".equals(columnName)) {
+        if (IbkrNames.SecurityColumns.IDENTIFIER_TYPE.equals(columnName)) {
             return getSecurityIdentifierType(tradeRow);
         }
 
@@ -183,7 +181,7 @@ public class IbkrTradeMapper {
     }
 
     private String getSecurityIdentifier(Element tradeRow) {
-        for (String columnName : List.of("isin", "securityID", "figi", "conid", "symbol")) {
+        for (String columnName : List.of(IbkrNames.RawTradeColumns.ISIN, IbkrNames.RawTradeColumns.SECURITY_ID, IbkrNames.RawTradeColumns.FIGI, IbkrNames.RawTradeColumns.CONID, IbkrNames.RawTradeColumns.SYMBOL)) {
             String value = tradeRow.getAttribute(columnName);
 
             if (!value.isBlank()) {
@@ -195,7 +193,7 @@ public class IbkrTradeMapper {
     }
 
     private String getSecurityIdentifierType(Element tradeRow) {
-        for (String columnName : List.of("isin", "securityID", "figi", "conid", "symbol")) {
+        for (String columnName : List.of(IbkrNames.RawTradeColumns.ISIN, IbkrNames.RawTradeColumns.SECURITY_ID, IbkrNames.RawTradeColumns.FIGI, IbkrNames.RawTradeColumns.CONID, IbkrNames.RawTradeColumns.SYMBOL)) {
             String value = tradeRow.getAttribute(columnName);
 
             if (!value.isBlank()) {

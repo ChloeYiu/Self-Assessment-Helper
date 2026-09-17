@@ -13,19 +13,17 @@ import java.util.Objects;
  * Extracts domain trades from an IBKR trades table.
  */
 public class IbkrTradeExtractor {
-    private static final String TRADES_TABLE_NAME = "Trades";
-
     /** Extracts all trades for one security from a document containing an IBKR Trades table. */
     public List<Trade> extractTrades(TabularDocument document, Security security) {
         Security targetSecurity = Objects.requireNonNull(security, "security");
         TabularTable tradesTable = Objects.requireNonNull(document, "document")
-                .getTable(TRADES_TABLE_NAME)
+                .getTable(IbkrNames.Tables.TRADES)
                 .orElseThrow(() -> new IllegalArgumentException(
-                        "document must contain " + TRADES_TABLE_NAME + " table"));
+                        "document must contain " + IbkrNames.Tables.TRADES + " table"));
 
         return tradesTable.getRows()
                 .stream()
-                .filter(row -> targetSecurity.getIdentifier().equals(row.getText("identifier")))
+                .filter(row -> targetSecurity.getIdentifier().equals(row.getText(IbkrNames.NormalizedTradeColumns.IDENTIFIER)))
                 .map(row -> extractTrade(row, targetSecurity))
                 .toList();
     }
@@ -34,13 +32,13 @@ public class IbkrTradeExtractor {
     public Trade extractTrade(TabularRow row, Security security) {
         TabularRow tradeRow = Objects.requireNonNull(row, "row");
         return new Trade(
-                tradeRow.getText("tradeId"),
-                tradeRow.getLocalDate("transactionDate"),
+                tradeRow.getText(IbkrNames.NormalizedTradeColumns.TRADE_ID),
+                tradeRow.getLocalDate(IbkrNames.NormalizedTradeColumns.TRANSACTION_DATE),
                 Objects.requireNonNull(security, "security"),
-                tradeRow.getEnum("tradeType", TradeType.class),
-                tradeRow.getBigDecimal("quantity"),
-                tradeRow.getBigDecimal("grossAmountGbp"),
-                tradeRow.getBigDecimal("feeGbp")
+                tradeRow.getEnum(IbkrNames.NormalizedTradeColumns.TRADE_TYPE, TradeType.class),
+                tradeRow.getBigDecimal(IbkrNames.NormalizedTradeColumns.QUANTITY),
+                tradeRow.getBigDecimal(IbkrNames.NormalizedTradeColumns.GROSS_AMOUNT_GBP),
+                tradeRow.getBigDecimal(IbkrNames.NormalizedTradeColumns.FEE_GBP)
         );
     }
 }

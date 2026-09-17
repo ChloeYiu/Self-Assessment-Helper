@@ -12,14 +12,12 @@ import java.util.Objects;
  * Extracts domain securities from an IBKR Flex securities table.
  */
 public class IbkrSecurityExtractor {
-    private static final String SECURITIES_TABLE_NAME = "Securities";
-
     /** Extracts domain securities from a document containing an IBKR Securities table. */
     public List<Security> extractSecurities(TabularDocument document) {
         TabularTable securitiesTable = Objects.requireNonNull(document, "document")
-                .getTable(SECURITIES_TABLE_NAME)
+                .getTable(IbkrNames.Tables.SECURITIES)
                 .orElseThrow(() -> new IllegalArgumentException(
-                        "document must contain " + SECURITIES_TABLE_NAME + " table"));
+                        "document must contain " + IbkrNames.Tables.SECURITIES + " table"));
 
         return securitiesTable.getRows()
                 .stream()
@@ -29,10 +27,10 @@ public class IbkrSecurityExtractor {
 
     private Security extractSecurity(TabularRow row) {
         return new Security(
-                row.getText("identifier"),
-                row.getText("symbol"),
-                row.getText("description"),
-                CurrencyCode.parse(row.getText("currency"), "security")
+                row.getText(IbkrNames.SecurityColumns.IDENTIFIER),
+                row.getText(IbkrNames.SecurityColumns.SYMBOL),
+                row.getText(IbkrNames.SecurityColumns.DESCRIPTION),
+                CurrencyCode.parse(row.getText(IbkrNames.SecurityColumns.CURRENCY), "security")
         );
     }
 }
