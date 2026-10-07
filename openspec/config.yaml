@@ -1,0 +1,37 @@
+schema: spec-driven
+context: |
+  Java Self Assessment backend. Read AGENTS.md.
+  Installation/migration authorizes documentation and tooling only.
+  Never implement business logic unless explicitly requested. New Java types
+  contain signatures/Javadoc and empty or UnsupportedOperationException bodies.
+  Do not generate tests unless explicitly requested. Before any commit, review
+  each new file and tell the user whether it needs unit tests and why.
+  Never push unless explicitly requested in the current message.
+  Ask and wait when intent, requirements, or implementation choices are uncertain.
+  The active delivery changes are proposed, not implementation approval.
+  Their relevant D001-D008 and D010 decisions remain unresolved.
+  Preserve requirement IDs R1-R8, OpenSpec task numbers, D records, and I records. Never equate
+  artifact completeness or spec validation with implementation completion.
+rules:
+  proposal:
+    - Link the originating idea/decision and existing requirement/task IDs.
+    - Preserve deferred scope and unresolved decisions; do not silently approve them.
+  specs:
+    - Keep requirement IDs in headings and use WHEN/THEN acceptance scenarios.
+    - Scenarios are documentation; do not generate executable tests without a request.
+  design:
+    - Describe inputs, outputs, side effects, validation and errors before implementation.
+    - Keep blocking decisions explicit and stop before implementing dependent behavior.
+  tasks:
+    - Preserve task numbers and completion states; give new tasks stable numbers.
+    - Separate scaffolding from implementing logic; require explicit authorization for logic.
+    - Record verification evidence; test generation requires an explicit user request.
+operations:
+  apply:
+    guidance:
+      - Follow AGENTS.md source-code and test restrictions, including in apply workflows.
+      - Update task checkboxes and component evidence together in tasks.md.
+  archive:
+    guidance:
+      - Do not archive the imported roadmap while delivery tasks or blocking decisions remain.
+      - Update README and workflow links to the archived location after a successful archive.

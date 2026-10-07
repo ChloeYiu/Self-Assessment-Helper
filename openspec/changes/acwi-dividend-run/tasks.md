@@ -1,0 +1,42 @@
+# Tasks
+
+Planning revision: 3 October 2026, incorporating I007 and D010 from the pipeline discussion. Existing task numbers and unchecked states are preserved. The added work defines the ACWI portion of the migration; CG, savings, other providers, storage, and UI remain owned by their existing changes.
+
+## Authorization and execution order
+
+This list is a plan, not authorization to implement logic unless the user explicitly requests it. Do not generate tests unless explicitly requested. Existing suitable checks, compilation, or an agreed manual run can supply verification evidence.
+
+Execution order: 1.1 → 2.1–2.4 → 1.2 / 3.1 → 1.3–1.5 → 3.2 / 1.6 → 1.7 / 3.3 → 1.8–1.10 → parent 1. Blocked decisions are listed in [design.md](design.md#blocking-decisions). Complete affected documentation and record verification evidence with each task; a scaffold cannot complete a logic task.
+
+## 1. ACWI delivery tasks retained and refined
+
+- [ ] 1 Deliver the complete ACWI dividend run. Verify all child delivery and migration tasks are complete and task 1.10 has recorded end-to-end evidence; planning validation alone is insufficient.
+- [ ] 1.1 Agree contribution/result ownership and report fields, including `SourceImporter`, `SourceAssemblyPipeline`, `SourceImportResult`, `TaxPipelineInput`, `TaxInputReconciler`, `TaxInputBundle`, support results, and ownership/coverage context. The initial importer contract is: `TaxPipelineInput` supplies tax year and opening snapshots; `IbkrImportInput` supplies config path and requested range; `SourceImportResult` supplies securities, trades, and requested coverage. Retrieval and parsing failures are fatal; review issues start in support resolution. Verify remaining D001/D006/D010 policies are recorded and explicitly gated. (R1, R3, R5, R7.)
+- [ ] 1.2 Implement shared supported-operation resolution through `SecuritySupportResolver`; load configuration once per run and separate importer capabilities from executable calculation support. Verify missing config and unimplemented methods produce distinct review outcomes, source references survive, and unsupported dividend methods do not discard imported facts. (R2, R5; depends on 1.1, 2.3.)
+- [ ] 1.3 Resolve the ERI source and reporting year in shared dividend preparation, reusing report-format-specific extraction. Verify selected ISIN, distribution year, reporting period, and source provenance using an agreed report; document the D002 decision. (R4.)
+- [ ] 1.4 Normalize raw IBKR rows into imported domain facts using the existing mapper/extractors and shared FX policy where needed. Verify representative records retain security identity, account/provider references, dates, amounts, and source IDs; malformed required values are visible. (R3, R5, R8; D004.)
+- [ ] 1.5 Validate imported movements and holdings against each applicable security/report dividend window, including coverage handling for holdings without trades. Verify actual record/date coverage against the report/opening boundaries; insufficient uploaded or fetched data is not treated as empty activity or as a failure of an unrelated covered security/report pair. (R4; depends on 1.3, 1.4, 3.1; D002, D003, D005, D010.)
+- [ ] 1.6 Select/validate opening holdings from shared run state and report permitted assumed-zero cases. Verify security, account context, and boundary reconciliation, including an explicit assumption for any allowed fallback. (R4, R5, R7; depends on 3.2; D005, D006.)
+- [ ] 1.7 Assemble dividend inputs with report-currency FX in `DividendInputAssembler` and return `DividendInputAssemblyResult`. Verify assembled inputs have the validated report, movements, opening state and rates; invalid identity/year/FX inputs produce the agreed error outcome. (R3, R6; depends on 2.4, 1.3–1.6.)
+- [ ] 1.8 Connect `SourceAssemblyPipeline`, `DividendPipeline`, aggregation, and `TaxCalculator`. Verify the top-level run reaches the shared dividend path without constructing dividend calculators in IBKR ingestion; remove obsolete migrated references only after callers compile. (R1, R3, R6; depends on 3.3.)
+- [ ] 1.9 Return totals, holding artifacts, and calculated/ignored/review/assumption information. Verify each result retains security/report/account provenance and incomplete or fatal outcomes cannot appear as successful zero results. (R5, R6, R7; D001, D006.)
+- [ ] 1.10 Verify the agreed complete and invalid/missing-input behavior across the integrated flow. Record the command/manual procedure, observed GBP result and closing holding, report/window checks, and invalid/missing-input outcomes. Generate executable tests only if explicitly requested; review the existing acceptance scenarios and update evidence in this file. (R2, R4–R7.)
+
+## 2. Contract scaffolding only
+
+- [ ] 2.1 After task 1.1, create interface/class shells for the approved `SourceImporter`, `SourceAssemblyPipeline`, input, support, and result types. Verify the file/package inventory matches the approved migration and no method logic was added; preserve compiling existing types until their migration step.
+- [ ] 2.2 Add approved constructors, method signatures, and Javadoc to the provider-import and source-assembly shells, using empty or throwing bodies. Cover source import inputs, normalized facts, provenance, account context, coverage, support decisions, and issues. Verify signatures compile with callers/stubs as appropriate and contain no parsing, mapping, fetching, reconciliation, or tax logic.
+- [ ] 2.3 Scaffold `SecuritySupportResolver`, `SecuritySupportResult`, `TaxInputReconciler`, and `TaxInputBundle` signatures for `SourceAssemblyPipeline`, following the agreed contracts. Verify inputs/outputs/error contracts are documented and all bodies remain empty or throw `UnsupportedOperationException`.
+- [ ] 2.4 Scaffold shared `DividendInputAssembler`, `DividendInputAssemblyResult`, and `DividendPipeline` shells, then signatures/Javadoc. Verify no IBKR-specific result type crosses their public boundary and no calculation logic is implemented by this task.
+
+## 3. Shared migration logic — explicit implementation request required
+
+- [ ] 3.1 Replace `TaxSourcePipeline`, `IbkrTaxSourcePipeline`, and their IBKR-specific input/result/extraction types with `SourceImporter`, `IbkrImportInput`, `IbkrImporter`, and `SourceImportResult`. Move fetching/provider creation from `IbkrSupportedSecurityExtractor`, reuse IBKR security/trade extraction, and return source facts before support resolution or category calculation. Verify provider configuration stays local, requested coverage is retained, the importer no longer loads security tax configuration or invokes dividend assembly, and obsolete classes are removed after callers compile. (R3, R8; depends on 2.2 and the support split in 1.2.)
+- [ ] 3.2 Implement `SourceAssemblyPipeline` and `TaxInputReconciler` for the approved ACWI support and reconciliation rules, with scoped opening-state input. Verify repeated imports, conflicting identity, and insufficient coverage yield the agreed results; retain provenance and do not silently discard unsupported records. Document transfer handling limits and stop on unresolved D010 policies. (R3, R5, R7; depends on 2.3, 1.4, 1.5.)
+- [ ] 3.3 Implement `DividendPipeline` coordination over prepared shared inputs, reports, and the existing dividend aggregate. Verify it consumes the reconciler output, creates independent security/report calculations in distribution-date order, propagates preparation issues, and returns the GBP result and closing artifact without depending on IBKR input/result classes. (R3, R6; depends on 2.4, 1.7.)
+
+## Evidence and remaining blockers
+
+On 7 October 2026, the user explicitly authorized the initial IBKR importer migration. `TaxSourcePipeline`, `IbkrTaxSourcePipeline`, `IbkrPipelineInput`, `IbkrPipelineResult`, `IbkrSupportedSecurityExtractor`, `IbkrDividendExtractor`, and their old IBKR result types were removed. `SourceImporter`, `SourceImportResult`, `TaxPipelineInput`, `IbkrImportInput`, and `IbkrImporter` were added. `mvn -B -DskipTests compile` succeeded. Task 3.1 remains unchecked because it also depends on support resolution and the wider source-assembly migration; this evidence does not claim end-to-end ACWI delivery.
+
+D001–D006 and D010 remain gates on affected logic; D007/D008 belong to the later CG work. Record fresh implementation verification here when each task is actually performed.
