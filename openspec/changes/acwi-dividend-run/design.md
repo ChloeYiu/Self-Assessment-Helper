@@ -25,19 +25,20 @@ flowchart TD
     TaxInput(["TaxPipelineInput.java (proposed)<br/>tax year and opening snapshots"])
 
     subgraph SourceAssembly["SourceAssemblyPipeline.java (proposed) — prepares reconciled source facts"]
+        Configs(["SecurityConfigs.java<br/>configured tax treatment by ISIN"])
         IbkrInput(["IbkrImportInput.java (proposed)<br/>IBKR config path and requested import range"])
         Ibkr["IbkrImporter.java (proposed)<br/>imports and normalizes IBKR source data"]
         FutureImporter["ProviderImporter.java (proposed)<br/>future source-specific importer"]
         Facts(["SourceImportResult.java (proposed)<br/>securities, trades, and requested coverage"])
-        Support["SecuritySupportResolver.java (proposed)<br/>matches imported securities to SecurityConfigs.java"]
-        Configs(["SecurityConfigs.java<br/>configured tax treatment by ISIN"])
-        SupportResult(["SecuritySupportResult.java (proposed)<br/>support decisions by security and category"])
+        Support["SecuritySupportResolver.java<br/>matches imported securities to SecurityConfigs.java"]
+        SupportResult(["SecuritySupportResult.java<br/>support decisions by security and category"])
         Reconcile["TaxInputReconciler.java (proposed)<br/>reconciles imported facts and opening state"]
         Openings(["Opening holding state<br/>account- and security-scoped input"])
 
-        IbkrInput --> Ibkr --> Facts --> Support --> SupportResult --> Reconcile
-        FutureImporter -. future provider facts .-> Facts
         Configs --> Support
+        IbkrInput --> Ibkr --> Facts --> Support --> SupportResult --> Reconcile
+        Facts --> Reconcile
+        FutureImporter -. future provider facts .-> Facts
         Openings --> Reconcile
     end
 
@@ -64,7 +65,7 @@ flowchart TD
 
 ```
 
-`TaxPipelineInput` is the shared run request. It carries the tax year and the opening holding/CG snapshots; it does not carry IBKR credentials. `SourceAssemblyPipeline` derives the required import range from that tax year and selected categories, then constructs provider-specific input. For the first implementation, `IbkrImportInput` carries an IBKR config path and that requested date range. `IbkrImporter` returns source facts and the requested coverage; it does not decide whether a security is tax-supported or which calculations should run. Retrieval, HTTP, API-status, parsing, and extraction failures propagate rather than being converted to review issues. `TaxInputReconciler` validates the combined account context, duplicate imports, identity conflicts, and coverage before category calculations consume those facts. An incomplete source is a review or incomplete outcome, not proof of empty activity. D003 must settle how an imported source demonstrates holdings without in-window activity.
+`TaxPipelineInput` is the shared run request. It carries the tax year and the opening holding/CG snapshots; it does not carry IBKR credentials. `SourceAssemblyPipeline` derives the required import range from that tax year and selected categories, then constructs provider-specific input. For the first implementation, `IbkrImportInput` carries an IBKR config path and that requested date range. `IbkrImporter` returns source facts and the requested coverage; it does not decide whether a security is tax-supported or which calculations should run. Retrieval, HTTP, API-status, parsing, and extraction failures propagate rather than being converted to review issues. `SecuritySupportResolver` produces support decisions and review issues from one import's securities; `SourceAssemblyPipeline` retains the corresponding `SourceImportResult` separately. `TaxInputReconciler` receives both the imported facts and their support decisions, then combines imports, validates duplicate imports, identity conflicts, and coverage before category calculations consume those facts. An incomplete source is a review or incomplete outcome, not proof of empty activity. D003 must settle how an imported source demonstrates holdings without in-window activity.
 
 `DividendPipeline` wraps dividend input assembly and the existing dividend aggregate. It creates a separate calculation for each applicable `(security ISIN, ERI report)` pair. The assembler selects only that security's facts in the report's required window. If one pair lacks required coverage, its review outcome does not prevent another fully covered security/report pair from producing a result. Multiple reports for one security run in distribution-date order, carrying each closing holding into the next calculation's opening holding.
 
@@ -138,7 +139,7 @@ Names below are proposed contracts. Final signatures depend on task 1.1; no new 
 | `SourceAssemblyPipeline` | Shared run request, one or more importers, loaded configuration, support capabilities, and scoped opening state → `TaxInputBundle` plus preparation issues | Derive each provider import range, coordinate importer output, support resolution, and `TaxInputReconciler`. Category pipelines receive its output rather than raw importer results. |
 | `TaxPipelineInput` | Tax year and scoped opening state → shared run request | Data only. The first version contains the tax year and holding/CG snapshots; category selection and account ownership remain under D010. |
 | `SourceImportResult` | Imported securities, trades, and requested start/end dates | Data only. The first version does not claim to prove inactive holdings or attach per-trade account provenance; those remain under D003/D010. Review issues begin in support resolution and later preparation, rather than raw import. |
-| `SecuritySupportResolver` | Normalized securities/source references, loaded configs, implemented category capabilities → `SecuritySupportResult` | No broker I/O. Distinguish missing configuration from unimplemented methods; configured metadata alone must not advertise executable support. |
+| `SecuritySupportResolver` | Securities from one `SourceImportResult`, loaded configs, and the set of executable dividend methods → one `SecuritySupportResult` | No broker I/O. The result contains supported securities/configuration and distinct review issues for missing configuration, an explicitly unsupported method, or a configured method absent from the executable set. `SourceAssemblyPipeline` keeps the associated import facts for reconciliation. Configured metadata alone must not advertise executable support. |
 | `TaxInputReconciler` | Import results, support decisions, and scoped opening state → `TaxInputBundle` plus preparation issues | In-memory reconciliation. Check identity conflicts, duplicate imports, and coverage before final calculation; preserve account ownership/wrappers. Exact duplicate/transfer/error policies remain under D006/D010. |
 | `DividendPipeline` | Shared inputs, support decisions, prepared reports and FX → dividend results, artifacts, and preparation issues | Wrap `DividendInputAssembler` and `DividendIncome`. Coordinate one calculation per applicable security/report pair in distribution-date order. Report/FX loaders own I/O; domain calculators receive explicit objects/rates. Avoid counting report preparation and dividend computation as separate income events. |
 | `DividendInputAssembler` | Relevant normalized movements, report, opening holdings, rates, tax year → `DividendInputAssemblyResult` | No broker access. Validate security/report identity, distribution year, opening boundary, movement coverage, and required FX before constructing domain inputs. |
