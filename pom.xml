@@ -4,7 +4,7 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.helper.core</groupId>
+    <groupId>com.helper</groupId>
     <artifactId>self-assessment-helper</artifactId>
     <version>1.0.0</version>
     <name>Self Assessment Helper</name>
@@ -32,12 +32,18 @@
             <version>4.11.0</version>
             <scope>test</scope>
         </dependency>
-
-        <!-- JSON processing for data import/export -->
         <dependency>
-            <groupId>com.google.code.gson</groupId>
-            <artifactId>gson</artifactId>
-            <version>2.10.1</version>
+            <groupId>de.vandermeer</groupId>
+            <artifactId>asciitable</artifactId>
+            <version>0.3.2</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Local PDF text extraction -->
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>3.0.3</version>
         </dependency>
 
         <!-- Logging -->
