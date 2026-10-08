@@ -18,9 +18,27 @@ import java.util.Objects;
  * Imports normalized IBKR securities and trades for an explicit requested range.
  */
 public class IbkrImporter implements SourceImporter<IbkrImportInput> {
-    private final IbkrTradeMapper tradeMapper = new IbkrTradeMapper();
-    private final IbkrSecurityExtractor securityExtractor = new IbkrSecurityExtractor();
-    private final IbkrTradeExtractor tradeExtractor = new IbkrTradeExtractor();
+    private final IbkrApiProvider apiProvider;
+    private final IbkrTradeMapper tradeMapper;
+    private final IbkrSecurityExtractor securityExtractor;
+    private final IbkrTradeExtractor tradeExtractor;
+
+    /** Creates an importer that builds its provider from the supplied import input. */
+    public IbkrImporter() {
+        this(null, new IbkrTradeMapper(), new IbkrSecurityExtractor(), new IbkrTradeExtractor());
+    }
+
+    IbkrImporter(
+            IbkrApiProvider apiProvider,
+            IbkrTradeMapper tradeMapper,
+            IbkrSecurityExtractor securityExtractor,
+            IbkrTradeExtractor tradeExtractor
+    ) {
+        this.apiProvider = apiProvider;
+        this.tradeMapper = Objects.requireNonNull(tradeMapper, "tradeMapper");
+        this.securityExtractor = Objects.requireNonNull(securityExtractor, "securityExtractor");
+        this.tradeExtractor = Objects.requireNonNull(tradeExtractor, "tradeExtractor");
+    }
 
     /**
      * Retrieves one IBKR Flex statement and converts its detected securities and trades.
@@ -28,8 +46,10 @@ public class IbkrImporter implements SourceImporter<IbkrImportInput> {
     @Override
     public SourceImportResult importSource(IbkrImportInput input) throws IOException, InterruptedException {
         IbkrImportInput importInput = Objects.requireNonNull(input, "input");
-        IbkrApiProvider apiProvider = createApiProvider(importInput);
-        String flexStatementXml = apiProvider.getFlexStatementXml(
+        IbkrApiProvider provider = apiProvider == null
+                ? createApiProvider(importInput)
+                : apiProvider;
+        String flexStatementXml = provider.getFlexStatementXml(
                 importInput.getRequestedStartDate(),
                 importInput.getRequestedEndDate());
         TabularDocument document = tradeMapper.extractFlexStatementDocument(flexStatementXml);
@@ -45,7 +65,7 @@ public class IbkrImporter implements SourceImporter<IbkrImportInput> {
                 importInput.getRequestedEndDate());
     }
 
-    private IbkrApiProvider createApiProvider(IbkrImportInput input) {
+    private static IbkrApiProvider createApiProvider(IbkrImportInput input) {
         if (input.getConfigPath() == null) {
             return new IbkrApiProvider();
         }
