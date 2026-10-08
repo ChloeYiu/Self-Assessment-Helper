@@ -1,4 +1,4 @@
-package com.helper.pipeline.security;
+package com.helper.pipeline.support;
 
 import com.helper.income.config.SecurityConfig;
 import com.helper.income.implementation.Security;

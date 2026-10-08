@@ -1,4 +1,4 @@
-package com.helper.pipeline.ibkr;
+package com.helper.pipeline.importer.ibkr;
 
 import java.nio.file.Path;
 import java.time.LocalDate;

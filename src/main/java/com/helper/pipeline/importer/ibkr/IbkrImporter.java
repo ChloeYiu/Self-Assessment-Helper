@@ -1,4 +1,4 @@
-package com.helper.pipeline.ibkr;
+package com.helper.pipeline.importer.ibkr;
 
 import com.helper.income.implementation.Security;
 import com.helper.income.implementation.Trade;
@@ -6,8 +6,8 @@ import com.helper.ingestion.trade.ibkr.IbkrApiProvider;
 import com.helper.ingestion.trade.ibkr.IbkrSecurityExtractor;
 import com.helper.ingestion.trade.ibkr.IbkrTradeExtractor;
 import com.helper.ingestion.trade.ibkr.IbkrTradeMapper;
-import com.helper.pipeline.SourceImportResult;
-import com.helper.pipeline.SourceImporter;
+import com.helper.pipeline.importer.SourceImportResult;
+import com.helper.pipeline.importer.SourceImporter;
 import com.helper.util.table.TabularDocument;
 import java.io.IOException;
 import java.util.ArrayList;
