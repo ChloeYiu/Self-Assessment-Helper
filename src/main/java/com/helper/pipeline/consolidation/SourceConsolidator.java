@@ -5,6 +5,8 @@ import com.helper.income.implementation.Security;
 import com.helper.income.implementation.Trade;
 import com.helper.income.implementation.capitalgain.model.CarryForwardSnapshot;
 import com.helper.income.implementation.dividend.model.SecurityHoldingSnapshot;
+import com.helper.income.issue.IncomeIssue;
+import com.helper.income.issue.IncomeIssueCode;
 import com.helper.pipeline.TaxPipelineInput;
 import com.helper.pipeline.importer.SourceImportResult;
 import com.helper.pipeline.support.SecuritySupportResult;
@@ -37,9 +39,12 @@ public class SourceConsolidator {
         Objects.requireNonNull(preparedSources, "preparedSources");
         Objects.requireNonNull(taxInput, "taxInput");
         Map<String, ConsolidatedSecurity.Builder> buildersByIsin = new LinkedHashMap<>();
+        Map<IssueKey, IncomeIssue> issuesByKey = new LinkedHashMap<>();
 
         for (PreparedSource preparedSource : preparedSources) {
-            addSource(Objects.requireNonNull(preparedSource, "preparedSource"), buildersByIsin);
+            PreparedSource source = Objects.requireNonNull(preparedSource, "preparedSource");
+            addIssues(source.securitySupportResult().getIssues(), issuesByKey);
+            addSource(source, buildersByIsin);
         }
 
         addHoldingSnapshots(taxInput.getOpeningHoldingSnapshots(), buildersByIsin);
@@ -48,7 +53,22 @@ public class SourceConsolidator {
         List<ConsolidatedSecurity> securities = buildersByIsin.values().stream()
                 .map(ConsolidatedSecurity.Builder::build)
                 .toList();
-        return new SourceConsolidationResult(taxInput.getTaxYear(), securities);
+        return new SourceConsolidationResult(
+                taxInput.getTaxYear(),
+                securities,
+                List.copyOf(issuesByKey.values()));
+    }
+
+    private void addIssues(
+            List<IncomeIssue> issues,
+            Map<IssueKey, IncomeIssue> issuesByKey
+    ) {
+        for (IncomeIssue issue : issues) {
+            IncomeIssue value = Objects.requireNonNull(issue, "issue");
+            issuesByKey.putIfAbsent(
+                    new IssueKey(value.getCode(), value.getSource(), value.getAttributes()),
+                    value);
+        }
     }
 
     private void addSource(
@@ -107,5 +127,12 @@ public class SourceConsolidator {
                 builder.addCarryForwardSnapshot(snapshot);
             }
         }
+    }
+
+    private record IssueKey(
+            IncomeIssueCode code,
+            String source,
+            Map<String, String> attributes
+    ) {
     }
 }
