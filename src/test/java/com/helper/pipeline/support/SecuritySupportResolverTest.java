@@ -1,0 +1,51 @@
+package com.helper.pipeline.support;
+
+import static org.junit.Assert.assertEquals;
+
+import com.helper.config.CurrencyCode;
+import com.helper.income.config.CapitalGainCalculationMethod;
+import com.helper.income.config.DividendCalculationMethod;
+import com.helper.income.config.SecurityConfig;
+import com.helper.income.config.SecurityConfigEnums.CapitalGainCalculationMethodType;
+import com.helper.income.config.SecurityConfigEnums.DividendCalculationMethodType;
+import com.helper.income.config.SecurityConfigEnums.EriReportFormat;
+import com.helper.income.config.SecurityConfigs;
+import com.helper.income.implementation.Security;
+import com.helper.income.issue.IncomeIssueCode;
+import java.util.List;
+import java.util.Set;
+import org.junit.Test;
+
+public class SecuritySupportResolverTest {
+    @Test
+    public void resolveDividendSupport_returnsConfiguredSecurityAndReportsMissingConfiguration() {
+        Security supportedSecurity = security("IE00B44Z5B48", "ACWI");
+        Security missingConfigSecurity = security("IE00MISSING", "MISSING");
+        SecurityConfigs configs = new SecurityConfigs(List.of(config("IE00B44Z5B48")));
+
+        SecuritySupportResult result = new SecuritySupportResolver().resolveDividendSupport(
+                List.of(supportedSecurity, missingConfigSecurity),
+                configs,
+                Set.of(DividendCalculationMethodType.NON_UK_ACCUMULATING_FUND));
+
+        assertEquals(List.of(supportedSecurity), result.getSupportedDividendSecurities());
+        assertEquals(DividendCalculationMethodType.NON_UK_ACCUMULATING_FUND,
+                result.findSupportedDividendConfig(supportedSecurity).orElseThrow()
+                        .getDividendCalculationMethod().getType());
+        assertEquals(1, result.getIssues().size());
+        assertEquals(IncomeIssueCode.MISSING_SECURITY_CONFIGURATION, result.getIssues().get(0).getCode());
+    }
+
+    private static Security security(String isin, String ticker) {
+        return new Security(isin, ticker, ticker + " fund", CurrencyCode.USD);
+    }
+
+    static SecurityConfig config(String isin) {
+        return new SecurityConfig(
+                isin,
+                new DividendCalculationMethod(
+                        DividendCalculationMethodType.NON_UK_ACCUMULATING_FUND,
+                        EriReportFormat.SSGA_SPDR_UK_REPORTABLE_INCOME),
+                new CapitalGainCalculationMethod(CapitalGainCalculationMethodType.STANDARD_SECURITY_POOLING));
+    }
+}
