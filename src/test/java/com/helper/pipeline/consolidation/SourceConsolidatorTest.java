@@ -29,26 +29,33 @@ import org.junit.Test;
 
 public class SourceConsolidatorTest {
     @Test
-    public void consolidate_combinesSupportedSecurityFactsAndDeduplicatesIssuesAcrossSources() {
+    public void consolidate_combinesSupportedFactsAndReviewIssuesAcrossSources() {
         Security acwi = security("IE00B44Z5B48", "ACWI");
         Security unsupported = security("IE00UNSUPPORTED", "OTHER");
+        Security unimplemented = security("IE00UNIMPLEMENTED", "FUTURE");
         SecurityConfig acwiConfig = config(acwi.getIdentifier());
         PreparedSource firstSource = source(
-                List.of(acwi, unsupported),
+                List.of(acwi, unsupported, unimplemented),
                 List.of(trade("BUY_1", acwi), trade("OTHER_1", unsupported)),
                 acwi,
                 acwiConfig,
-                List.of(missingConfigIssue(unsupported)));
+                List.of(
+                        missingConfigIssue(unsupported),
+                        unimplementedMethodIssue(unimplemented)));
         PreparedSource secondSource = source(
-                List.of(acwi, unsupported),
+                List.of(acwi, unsupported, unimplemented),
                 List.of(trade("SELL_1", acwi)),
                 acwi,
                 acwiConfig,
                 List.of(missingConfigIssue(unsupported)));
         TaxPipelineInput input = new TaxPipelineInput(
                 TaxYear.of(2025),
-                List.of(new SecurityHoldingSnapshot(LocalDate.of(2024, 10, 6), acwi, new BigDecimal("10"))),
-                List.of(new CarryForwardSnapshot(TaxYear.of(2025), acwi, new BigDecimal("10"), new BigDecimal("100"))));
+                List.of(
+                        new SecurityHoldingSnapshot(LocalDate.of(2024, 10, 6), acwi, new BigDecimal("10")),
+                        new SecurityHoldingSnapshot(LocalDate.of(2024, 10, 6), unsupported, new BigDecimal("5"))),
+                List.of(
+                        new CarryForwardSnapshot(TaxYear.of(2025), acwi, new BigDecimal("10"), new BigDecimal("100")),
+                        new CarryForwardSnapshot(TaxYear.of(2025), unsupported, new BigDecimal("5"), new BigDecimal("50"))));
 
         SourceConsolidationResult result = new SourceConsolidator().consolidate(
                 List.of(firstSource, secondSource), input);
@@ -60,8 +67,10 @@ public class SourceConsolidatorTest {
         assertEquals(List.of("BUY_1", "SELL_1"), consolidated.trades().stream().map(Trade::getTradeId).toList());
         assertEquals(1, consolidated.holdingSnapshots().size());
         assertEquals(1, consolidated.carryForwardSnapshots().size());
-        assertEquals(1, result.issues().size());
-        assertEquals(IncomeIssueCode.MISSING_SECURITY_CONFIGURATION, result.issues().get(0).getCode());
+        assertEquals(List.of(
+                        IncomeIssueCode.MISSING_SECURITY_CONFIGURATION,
+                        IncomeIssueCode.UNIMPLEMENTED_DIVIDEND_METHOD),
+                result.issues().stream().map(IncomeIssue::getCode).toList());
     }
 
     private static PreparedSource source(
@@ -108,6 +117,14 @@ public class SourceConsolidatorTest {
     private static IncomeIssue missingConfigIssue(Security security) {
         return new IncomeIssue(
                 IncomeIssueCode.MISSING_SECURITY_CONFIGURATION,
+                IncomeIssueSeverity.WARNING,
+                "security-support",
+                Map.of("isin", security.getIdentifier()));
+    }
+
+    private static IncomeIssue unimplementedMethodIssue(Security security) {
+        return new IncomeIssue(
+                IncomeIssueCode.UNIMPLEMENTED_DIVIDEND_METHOD,
                 IncomeIssueSeverity.WARNING,
                 "security-support",
                 Map.of("isin", security.getIdentifier()));

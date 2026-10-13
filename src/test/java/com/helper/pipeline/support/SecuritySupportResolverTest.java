@@ -1,6 +1,7 @@
 package com.helper.pipeline.support;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import com.helper.config.CurrencyCode;
 import com.helper.income.config.CapitalGainCalculationMethod;
@@ -24,7 +25,7 @@ public class SecuritySupportResolverTest {
         SecurityConfigs configs = new SecurityConfigs(List.of(config("IE00B44Z5B48")));
 
         SecuritySupportResult result = new SecuritySupportResolver().resolveDividendSupport(
-                List.of(supportedSecurity, missingConfigSecurity),
+                List.of(supportedSecurity, missingConfigSecurity, missingConfigSecurity),
                 configs,
                 Set.of(DividendCalculationMethodType.NON_UK_ACCUMULATING_FUND));
 
@@ -36,16 +37,50 @@ public class SecuritySupportResolverTest {
         assertEquals(IncomeIssueCode.MISSING_SECURITY_CONFIGURATION, result.getIssues().get(0).getCode());
     }
 
+    @Test
+    public void resolveDividendSupport_reportsConfiguredUnsupportedMethod() {
+        Security security = security("IE00UNSUPPORTED", "UNSUPPORTED");
+        SecurityConfigs configs = new SecurityConfigs(List.of(config(
+                security.getIdentifier(),
+                DividendCalculationMethodType.UNSUPPORTED)));
+
+        SecuritySupportResult result = new SecuritySupportResolver().resolveDividendSupport(
+                List.of(security),
+                configs,
+                Set.of(DividendCalculationMethodType.NON_UK_ACCUMULATING_FUND));
+
+        assertTrue(result.getSupportedDividendSecurities().isEmpty());
+        assertEquals(IncomeIssueCode.UNSUPPORTED_DIVIDEND_METHOD, result.getIssues().get(0).getCode());
+    }
+
+    @Test
+    public void resolveDividendSupport_reportsConfiguredMethodThatIsNotExecutable() {
+        Security security = security("IE00UNIMPLEMENTED", "UNIMPLEMENTED");
+        SecurityConfigs configs = new SecurityConfigs(List.of(config(security.getIdentifier())));
+
+        SecuritySupportResult result = new SecuritySupportResolver().resolveDividendSupport(
+                List.of(security), configs, Set.of());
+
+        assertTrue(result.getSupportedDividendSecurities().isEmpty());
+        assertEquals(IncomeIssueCode.UNIMPLEMENTED_DIVIDEND_METHOD, result.getIssues().get(0).getCode());
+    }
+
     private static Security security(String isin, String ticker) {
         return new Security(isin, ticker, ticker + " fund", CurrencyCode.USD);
     }
 
     static SecurityConfig config(String isin) {
+        return config(isin, DividendCalculationMethodType.NON_UK_ACCUMULATING_FUND);
+    }
+
+    private static SecurityConfig config(String isin, DividendCalculationMethodType dividendMethod) {
         return new SecurityConfig(
                 isin,
                 new DividendCalculationMethod(
-                        DividendCalculationMethodType.NON_UK_ACCUMULATING_FUND,
-                        EriReportFormat.SSGA_SPDR_UK_REPORTABLE_INCOME),
+                        dividendMethod,
+                        dividendMethod == DividendCalculationMethodType.NON_UK_ACCUMULATING_FUND
+                                ? EriReportFormat.SSGA_SPDR_UK_REPORTABLE_INCOME
+                                : null),
                 new CapitalGainCalculationMethod(CapitalGainCalculationMethodType.STANDARD_SECURITY_POOLING));
     }
 }
