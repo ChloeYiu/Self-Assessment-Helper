@@ -4,7 +4,6 @@ import com.helper.util.table.TabularDocument;
 import com.helper.util.table.TabularColumn;
 import com.helper.util.table.TabularTable;
 import de.vandermeer.asciitable.AsciiTable;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
@@ -33,10 +32,9 @@ public class IbkrProviderExtractorFlow {
         IbkrApiProvider provider = new IbkrApiProvider(DEFAULT_CONFIG_PATH);
         IbkrTradeMapper mapper = new IbkrTradeMapper();
 
-        try (InputStream statementXml = provider.getFlexStatement(dateRange.fromDate(), dateRange.toDate())) {
-            TabularDocument document = mapper.extractFlexStatementDocument(statementXml);
-            printSummary(document, dateRange);
-        }
+        TabularDocument document = mapper.extractFlexStatementDocument(
+                provider.getFlexStatementsXml(dateRange.fromDate(), dateRange.toDate()));
+        printSummary(document, dateRange);
     }
 
     private static DateRange parseDateRange(String[] args) {

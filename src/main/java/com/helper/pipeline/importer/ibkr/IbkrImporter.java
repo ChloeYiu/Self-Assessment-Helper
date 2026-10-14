@@ -40,24 +40,22 @@ public class IbkrImporter implements SourceImporter<IbkrImportInput> {
         this.tradeExtractor = Objects.requireNonNull(tradeExtractor, "tradeExtractor");
     }
 
-    /**
-     * Retrieves one IBKR Flex statement and converts its detected securities and trades.
-     */
+    /** Retrieves, maps, and normalizes IBKR Flex statements into securities and trades. */
     @Override
     public SourceImportResult importSource(IbkrImportInput input) throws IOException, InterruptedException {
         IbkrImportInput importInput = Objects.requireNonNull(input, "input");
         IbkrApiProvider provider = apiProvider == null
                 ? createApiProvider(importInput)
                 : apiProvider;
-        String flexStatementXml = provider.getFlexStatementXml(
-                importInput.getRequestedStartDate(),
-                importInput.getRequestedEndDate());
-        TabularDocument document = tradeMapper.extractFlexStatementDocument(flexStatementXml);
+        TabularDocument document = tradeMapper.extractFlexStatementDocument(provider.getFlexStatementsXml(
+                importInput.getRequestedStartDate(), importInput.getRequestedEndDate()));
         List<Security> securities = securityExtractor.extractSecurities(document);
         List<Trade> trades = new ArrayList<>();
+
         for (Security security : securities) {
             trades.addAll(tradeExtractor.extractTrades(document, security));
         }
+
         return new SourceImportResult(
                 securities,
                 trades,

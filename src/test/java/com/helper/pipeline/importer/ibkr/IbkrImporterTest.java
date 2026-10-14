@@ -11,6 +11,7 @@ import com.helper.pipeline.importer.SourceImportResult;
 import com.helper.util.api.MockHttpClient;
 import com.helper.util.table.TabularDocument;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Properties;
 import org.junit.Test;
 
@@ -52,7 +53,7 @@ public class IbkrImporterTest {
 
     private static class StubIbkrTradeMapper extends IbkrTradeMapper {
         @Override
-        public TabularDocument extractFlexStatementDocument(String flexXml) {
+        public TabularDocument extractFlexStatementDocument(List<String> flexXmls) {
             return IbkrTestFixtures.acwiBuyDocument();
         }
     }

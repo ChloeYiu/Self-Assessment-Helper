@@ -4,16 +4,15 @@ import com.helper.util.api.ApiRequest;
 import com.helper.util.api.DateRangeValidator;
 import com.helper.util.api.PropertiesConfig;
 import com.helper.util.api.XmlDocumentParser;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
@@ -78,13 +77,33 @@ public class IbkrApiProvider {
         this.version = PropertiesConfig.requireProperty(properties, VERSION_PROPERTY);
     }
 
-    public InputStream getFlexStatement(LocalDate fromDate, LocalDate toDate) throws IOException, InterruptedException {
-        return new ByteArrayInputStream(getFlexStatementXml(fromDate, toDate).getBytes(StandardCharsets.UTF_8));
+    /**
+     * Retrieves every Flex statement needed for the requested inclusive date range.
+     *
+     * <p>IBKR limits one Flex request to 365 days. This method hides that transport limit
+     * by issuing adjacent requests and returning their statements in chronological order.</p>
+     */
+    public List<String> getFlexStatementsXml(LocalDate fromDate, LocalDate toDate)
+            throws IOException, InterruptedException {
+        DateRangeValidator.requireValidRange(fromDate, toDate);
+        List<String> statements = new ArrayList<>();
+        LocalDate requestStart = fromDate;
+
+        while (!requestStart.isAfter(toDate)) {
+            LocalDate requestEnd = requestStart.plusDays(MAX_DATE_RANGE_DAYS - 1);
+            if (requestEnd.isAfter(toDate)) {
+                requestEnd = toDate;
+            }
+            statements.add(getFlexStatementXmlForRequest(requestStart, requestEnd));
+            requestStart = requestEnd.plusDays(1);
+        }
+
+        return List.copyOf(statements);
     }
 
-    public String getFlexStatementXml(LocalDate fromDate, LocalDate toDate) throws IOException, InterruptedException {
+    private String getFlexStatementXmlForRequest(LocalDate fromDate, LocalDate toDate)
+            throws IOException, InterruptedException {
         DateRangeValidator.requireMaxDays(fromDate, toDate, MAX_DATE_RANGE_DAYS);
-
         String statementReferenceCode = getRefCodeApi(fromDate, toDate);
         return getFlexStatementApi(statementReferenceCode);
     }

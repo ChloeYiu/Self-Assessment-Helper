@@ -62,15 +62,31 @@ public class IbkrTradeMapper {
     private final XmlDocumentParser xmlDocumentParser = new XmlDocumentParser();
 
     public TabularDocument extractFlexStatementDocument(String flexXml) {
-        Objects.requireNonNull(flexXml, "flexXml");
-        return extractFlexStatementDocument(new ByteArrayInputStream(flexXml.getBytes(StandardCharsets.UTF_8)));
+        return extractFlexStatementDocument(List.of(Objects.requireNonNull(flexXml, "flexXml")));
+    }
+
+    /** Maps one or more Flex statement XML documents into one combined tabular document. */
+    public TabularDocument extractFlexStatementDocument(List<String> flexXmls) {
+        List<String> statements = List.copyOf(Objects.requireNonNull(flexXmls, "flexXmls"));
+        List<Element> tradeRows = new ArrayList<>();
+
+        for (String statement : statements) {
+            Document document = xmlDocumentParser.parse(new ByteArrayInputStream(
+                    Objects.requireNonNull(statement, "flexXml").getBytes(StandardCharsets.UTF_8)));
+            tradeRows.addAll(findTradeRows(document));
+        }
+
+        return createFlexStatementDocument(tradeRows);
     }
 
     public TabularDocument extractFlexStatementDocument(InputStream inputStream) {
         Objects.requireNonNull(inputStream, "inputStream");
 
         Document document = xmlDocumentParser.parse(inputStream);
-        List<Element> tradeRows = findTradeRows(document);
+        return createFlexStatementDocument(findTradeRows(document));
+    }
+
+    private TabularDocument createFlexStatementDocument(List<Element> tradeRows) {
         TabularTable tradesTable = extractTradesTable(tradeRows);
         TabularTable securitiesTable = extractSecuritiesTable(tradeRows);
 
