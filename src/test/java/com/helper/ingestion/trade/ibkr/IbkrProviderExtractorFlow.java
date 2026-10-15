@@ -1,5 +1,6 @@
 package com.helper.ingestion.trade.ibkr;
 
+import com.helper.issue.Issue;
 import com.helper.util.table.TabularDocument;
 import com.helper.util.table.TabularColumn;
 import com.helper.util.table.TabularTable;
@@ -31,10 +32,13 @@ public class IbkrProviderExtractorFlow {
 
         IbkrApiProvider provider = new IbkrApiProvider(DEFAULT_CONFIG_PATH);
         IbkrTradeMapper mapper = new IbkrTradeMapper();
+        LocalDate effectiveToDate = provider.truncateRequestedEndDate(
+                dateRange.fromDate(), dateRange.toDate());
 
-        TabularDocument document = mapper.extractFlexStatementDocument(
-                provider.getFlexStatementsXml(dateRange.fromDate(), dateRange.toDate()));
-        printSummary(document, dateRange);
+        IbkrApiProvider.IbkrApiResult download = provider.getFlexStatementsXml(
+                dateRange.fromDate(), effectiveToDate);
+        TabularDocument document = mapper.extractFlexStatementDocument(download.statementXmls());
+        printSummary(document, new DateRange(dateRange.fromDate(), effectiveToDate), download.issues());
     }
 
     private static DateRange parseDateRange(String[] args) {
@@ -45,7 +49,11 @@ public class IbkrProviderExtractorFlow {
         return new DateRange(LocalDate.parse(args[0]), LocalDate.parse(args[1]));
     }
 
-    private static void printSummary(TabularDocument document, DateRange dateRange) {
+    private static void printSummary(
+            TabularDocument document,
+            DateRange dateRange,
+            List<Issue> issues
+    ) {
         if (dateRange.isEmpty()) {
             System.out.println("effectiveDateRange=empty");
         } else {
@@ -54,6 +62,7 @@ public class IbkrProviderExtractorFlow {
         }
         System.out.println("source=" + document.getSourceName().orElse("unknown"));
         System.out.println("tables=" + document.getTables().size());
+        System.out.println("issues=" + issues);
 
         for (TabularTable table : document.getTables()) {
             printTableSummary(table);

@@ -43,6 +43,7 @@ public class SourceConsolidator {
 
         for (PreparedSource preparedSource : preparedSources) {
             PreparedSource source = Objects.requireNonNull(preparedSource, "preparedSource");
+            addIssues(source.sourceImportResult().getIssues(), issuesByKey);
             addIssues(source.securitySupportResult().getIssues(), issuesByKey);
             addSource(source, buildersByIsin);
         }

@@ -6,7 +6,9 @@ import static org.junit.Assert.assertThrows;
 
 import com.helper.util.api.MockHttpClient;
 import java.net.URI;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Properties;
 import org.junit.Test;
@@ -23,13 +25,13 @@ public class IbkrApiProviderTest {
 
         IbkrApiProvider provider = new IbkrApiProvider(httpClient, createProperties());
 
-        List<String> statementXmls = provider.getFlexStatementsXml(
+        IbkrApiProvider.IbkrApiResult download = provider.getFlexStatementsXml(
                 LocalDate.of(2025, 4, 6),
                 LocalDate.of(2026, 4, 5));
 
         assertEquals(
                 List.of("<FlexQueryResponse><FlexStatements count=\"1\" /></FlexQueryResponse>"),
-                statementXmls);
+                download.statementXmls());
 
         URI referenceCodeUri = httpClient.getRequestedUris().get(0);
         URI statementUri = httpClient.getRequestedUris().get(1);
@@ -54,11 +56,11 @@ public class IbkrApiProviderTest {
                 .respondWith(200, "<FlexQueryResponse><FlexStatements count=\"1\" /></FlexQueryResponse>");
         IbkrApiProvider provider = new IbkrApiProvider(httpClient, createProperties());
 
-        List<String> statementXmls = provider.getFlexStatementsXml(
+        IbkrApiProvider.IbkrApiResult download = provider.getFlexStatementsXml(
                 LocalDate.of(2023, 10, 6),
                 LocalDate.of(2025, 5, 5));
 
-        assertEquals(2, statementXmls.size());
+        assertEquals(2, download.statementXmls().size());
         assertTrue(httpClient.getRequestedUris().get(0).toString().contains("fd=20231006"));
         assertTrue(httpClient.getRequestedUris().get(0).toString().contains("td=20241004"));
         assertTrue(httpClient.getRequestedUris().get(2).toString().contains("fd=20241005"));
@@ -79,6 +81,42 @@ public class IbkrApiProviderTest {
                 () -> provider.getFlexStatementsXml(LocalDate.of(2025, 4, 6), LocalDate.of(2025, 4, 7)));
 
         assertEquals("IBKR Flex SendRequest failed: error code 101 - Bad request", exception.getMessage());
+    }
+
+    @Test
+    public void getFlexStatementsXml_truncatesFutureEndDateToPreviousNewYorkBusinessDay() throws Exception {
+        MockHttpClient httpClient = new MockHttpClient()
+                .respondWith(200,
+                        "<FlexStatementResponse><Status>Success</Status><ReferenceCode>abc-123</ReferenceCode>"
+                                + "</FlexStatementResponse>")
+                .respondWith(200, "<FlexQueryResponse><FlexStatements count=\"1\" /></FlexQueryResponse>");
+        IbkrApiProvider provider = new IbkrApiProvider(httpClient, createProperties());
+        LocalDate cutoff = previousNewYorkBusinessDay();
+
+        provider.getFlexStatementsXml(cutoff.minusDays(1), cutoff.plusDays(7));
+
+        assertTrue(httpClient.getRequestedUris().get(0).toString()
+                .contains("td=" + cutoff.format(java.time.format.DateTimeFormatter.BASIC_ISO_DATE)));
+    }
+
+    @Test
+    public void getFlexStatementsXml_rejectsRangeWhollyAfterPreviousNewYorkBusinessDay() {
+        IbkrApiProvider provider = new IbkrApiProvider(new MockHttpClient(), createProperties());
+        LocalDate cutoff = previousNewYorkBusinessDay();
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> provider.getFlexStatementsXml(cutoff.plusDays(1), cutoff.plusDays(7)));
+
+        assertEquals("IBKR Flex reports are available only through " + cutoff, exception.getMessage());
+    }
+
+    private static LocalDate previousNewYorkBusinessDay() {
+        LocalDate date = LocalDate.now(ZoneId.of("America/New_York")).minusDays(1);
+        while (date.getDayOfWeek() == DayOfWeek.SATURDAY || date.getDayOfWeek() == DayOfWeek.SUNDAY) {
+            date = date.minusDays(1);
+        }
+        return date;
     }
 
     private static Properties createProperties() {

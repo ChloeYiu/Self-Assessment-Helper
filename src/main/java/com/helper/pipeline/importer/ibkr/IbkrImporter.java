@@ -10,6 +10,7 @@ import com.helper.pipeline.importer.SourceImportResult;
 import com.helper.pipeline.importer.SourceImporter;
 import com.helper.util.table.TabularDocument;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -47,8 +48,11 @@ public class IbkrImporter implements SourceImporter<IbkrImportInput> {
         IbkrApiProvider provider = apiProvider == null
                 ? createApiProvider(importInput)
                 : apiProvider;
-        TabularDocument document = tradeMapper.extractFlexStatementDocument(provider.getFlexStatementsXml(
-                importInput.getRequestedStartDate(), importInput.getRequestedEndDate()));
+        LocalDate effectiveEndDate = provider.truncateRequestedEndDate(
+                importInput.getRequestedStartDate(), importInput.getRequestedEndDate());
+        IbkrApiProvider.IbkrApiResult apiResult = provider.getFlexStatementsXml(
+                importInput.getRequestedStartDate(), effectiveEndDate);
+        TabularDocument document = tradeMapper.extractFlexStatementDocument(apiResult.statementXmls());
         List<Security> securities = securityExtractor.extractSecurities(document);
         List<Trade> trades = new ArrayList<>();
 
@@ -60,7 +64,8 @@ public class IbkrImporter implements SourceImporter<IbkrImportInput> {
                 securities,
                 trades,
                 importInput.getRequestedStartDate(),
-                importInput.getRequestedEndDate());
+                effectiveEndDate,
+                apiResult.issues());
     }
 
     private static IbkrApiProvider createApiProvider(IbkrImportInput input) {

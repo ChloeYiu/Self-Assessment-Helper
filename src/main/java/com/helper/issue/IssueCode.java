@@ -4,7 +4,8 @@ package com.helper.issue;
 public enum IssueCode {
     MISSING_SECURITY_CONFIGURATION("No security configuration exists for this ISIN"),
     UNSUPPORTED_DIVIDEND_METHOD("The configured dividend method is unsupported"),
-    UNIMPLEMENTED_DIVIDEND_METHOD("The configured dividend method is not executable in this run");
+    UNIMPLEMENTED_DIVIDEND_METHOD("The configured dividend method is not executable in this run"),
+    IBKR_STATEMENT_UNAVAILABLE("IBKR could not provide a statement for the requested date range");
 
     private final String debugReason;
 

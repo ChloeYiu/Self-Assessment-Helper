@@ -2,6 +2,7 @@ package com.helper.pipeline.importer;
 
 import com.helper.income.implementation.Security;
 import com.helper.income.implementation.Trade;
+import com.helper.issue.Issue;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
@@ -17,6 +18,7 @@ public class SourceImportResult {
     private final List<Trade> trades;
     private final LocalDate requestedStartDate;
     private final LocalDate requestedEndDate;
+    private final List<Issue> issues;
 
     /**
      * Creates imported source facts for a requested provider date range.
@@ -27,10 +29,24 @@ public class SourceImportResult {
             LocalDate requestedStartDate,
             LocalDate requestedEndDate
     ) {
+        this(securities, trades, requestedStartDate, requestedEndDate, List.of());
+    }
+
+    /**
+     * Creates imported source facts and non-fatal provider issues for a requested provider date range.
+     */
+    public SourceImportResult(
+            List<Security> securities,
+            List<Trade> trades,
+            LocalDate requestedStartDate,
+            LocalDate requestedEndDate,
+            List<Issue> issues
+    ) {
         this.securities = List.copyOf(Objects.requireNonNull(securities, "securities"));
         this.trades = List.copyOf(Objects.requireNonNull(trades, "trades"));
         this.requestedStartDate = Objects.requireNonNull(requestedStartDate, "requestedStartDate");
         this.requestedEndDate = Objects.requireNonNull(requestedEndDate, "requestedEndDate");
+        this.issues = List.copyOf(Objects.requireNonNull(issues, "issues"));
         if (requestedEndDate.isBefore(requestedStartDate)) {
             throw new IllegalArgumentException("requestedEndDate must not be before requestedStartDate");
         }
@@ -54,5 +70,10 @@ public class SourceImportResult {
     /** Returns the last date requested from the provider. */
     public LocalDate getRequestedEndDate() {
         return requestedEndDate;
+    }
+
+    /** Returns non-fatal conditions encountered while importing this source. */
+    public List<Issue> getIssues() {
+        return issues;
     }
 }
