@@ -8,7 +8,7 @@ After the investment flows, the product needs bank/manual source support, explic
 
 - Add planned bank/JPMPI/manual ingestion paths.
 - Select among multiple available source pipelines explicitly.
-- Plan product access, exports, storage, amendments, and tax-year configuration.
+- Plan product access, exports, storage, amendments, and tax-year configuration, including review checkpoints between source assembly and calculation.
 
 ## Capabilities
 

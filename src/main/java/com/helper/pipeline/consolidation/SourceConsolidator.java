@@ -5,8 +5,8 @@ import com.helper.income.implementation.Security;
 import com.helper.income.implementation.Trade;
 import com.helper.income.implementation.capitalgain.model.CarryForwardSnapshot;
 import com.helper.income.implementation.dividend.model.SecurityHoldingSnapshot;
-import com.helper.income.issue.IncomeIssue;
-import com.helper.income.issue.IncomeIssueCode;
+import com.helper.issue.Issue;
+import com.helper.issue.IssueCode;
 import com.helper.pipeline.TaxPipelineInput;
 import com.helper.pipeline.importer.SourceImportResult;
 import com.helper.pipeline.support.SecuritySupportResult;
@@ -39,7 +39,7 @@ public class SourceConsolidator {
         Objects.requireNonNull(preparedSources, "preparedSources");
         Objects.requireNonNull(taxInput, "taxInput");
         Map<String, ConsolidatedSecurity.Builder> buildersByIsin = new LinkedHashMap<>();
-        Map<IssueKey, IncomeIssue> issuesByKey = new LinkedHashMap<>();
+        Map<IssueKey, Issue> issuesByKey = new LinkedHashMap<>();
 
         for (PreparedSource preparedSource : preparedSources) {
             PreparedSource source = Objects.requireNonNull(preparedSource, "preparedSource");
@@ -60,11 +60,11 @@ public class SourceConsolidator {
     }
 
     private void addIssues(
-            List<IncomeIssue> issues,
-            Map<IssueKey, IncomeIssue> issuesByKey
+            List<Issue> issues,
+            Map<IssueKey, Issue> issuesByKey
     ) {
-        for (IncomeIssue issue : issues) {
-            IncomeIssue value = Objects.requireNonNull(issue, "issue");
+        for (Issue issue : issues) {
+            Issue value = Objects.requireNonNull(issue, "issue");
             issuesByKey.putIfAbsent(
                     new IssueKey(value.getCode(), value.getSource(), value.getAttributes()),
                     value);
@@ -130,7 +130,7 @@ public class SourceConsolidator {
     }
 
     private record IssueKey(
-            IncomeIssueCode code,
+            IssueCode code,
             String source,
             Map<String, String> attributes
     ) {

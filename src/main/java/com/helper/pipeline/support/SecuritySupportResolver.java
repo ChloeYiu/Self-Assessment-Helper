@@ -4,9 +4,9 @@ import com.helper.income.config.SecurityConfig;
 import com.helper.income.config.SecurityConfigEnums.DividendCalculationMethodType;
 import com.helper.income.config.SecurityConfigs;
 import com.helper.income.implementation.Security;
-import com.helper.income.issue.IncomeIssue;
-import com.helper.income.issue.IncomeIssueCode;
-import com.helper.income.issue.IncomeIssueSeverity;
+import com.helper.issue.Issue;
+import com.helper.issue.IssueCode;
+import com.helper.issue.IssueSeverity;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -42,7 +42,7 @@ public class SecuritySupportResolver {
 
         List<Security> supportedSecurities = new ArrayList<>();
         Map<String, SecurityConfig> supportedConfigs = new LinkedHashMap<>();
-        List<IncomeIssue> issues = new ArrayList<>();
+        List<Issue> issues = new ArrayList<>();
         Set<String> resolvedIsins = new LinkedHashSet<>();
 
         for (Security security : importedSecurities) {
@@ -53,17 +53,17 @@ public class SecuritySupportResolver {
 
             Optional<SecurityConfig> config = configs.findByIsin(security.getIdentifier());
             if (config.isEmpty()) {
-                issues.add(issue(IncomeIssueCode.MISSING_SECURITY_CONFIGURATION, security));
+                issues.add(issue(IssueCode.MISSING_SECURITY_CONFIGURATION, security));
                 continue;
             }
 
             DividendCalculationMethodType method = config.get().getDividendCalculationMethod().getType();
             if (method == DividendCalculationMethodType.UNSUPPORTED) {
-                issues.add(issue(IncomeIssueCode.UNSUPPORTED_DIVIDEND_METHOD, security));
+                issues.add(issue(IssueCode.UNSUPPORTED_DIVIDEND_METHOD, security));
                 continue;
             }
             if (!executableMethods.contains(method)) {
-                issues.add(issue(IncomeIssueCode.UNIMPLEMENTED_DIVIDEND_METHOD, security));
+                issues.add(issue(IssueCode.UNIMPLEMENTED_DIVIDEND_METHOD, security));
                 continue;
             }
 
@@ -74,10 +74,10 @@ public class SecuritySupportResolver {
         return new SecuritySupportResult(supportedSecurities, supportedConfigs, issues);
     }
 
-    private IncomeIssue issue(IncomeIssueCode code, Security security) {
-        return new IncomeIssue(
+    private Issue issue(IssueCode code, Security security) {
+        return new Issue(
                 code,
-                IncomeIssueSeverity.WARNING,
+                IssueSeverity.WARNING,
                 ISSUE_SOURCE,
                 Map.of(
                         "isin", security.getIdentifier(),

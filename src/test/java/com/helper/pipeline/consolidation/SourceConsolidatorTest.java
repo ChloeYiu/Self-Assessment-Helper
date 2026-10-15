@@ -15,9 +15,9 @@ import com.helper.income.implementation.Trade;
 import com.helper.income.implementation.TradeType;
 import com.helper.income.implementation.capitalgain.model.CarryForwardSnapshot;
 import com.helper.income.implementation.dividend.model.SecurityHoldingSnapshot;
-import com.helper.income.issue.IncomeIssue;
-import com.helper.income.issue.IncomeIssueCode;
-import com.helper.income.issue.IncomeIssueSeverity;
+import com.helper.issue.Issue;
+import com.helper.issue.IssueCode;
+import com.helper.issue.IssueSeverity;
 import com.helper.pipeline.TaxPipelineInput;
 import com.helper.pipeline.importer.SourceImportResult;
 import com.helper.pipeline.support.SecuritySupportResult;
@@ -68,9 +68,9 @@ public class SourceConsolidatorTest {
         assertEquals(1, consolidated.holdingSnapshots().size());
         assertEquals(1, consolidated.carryForwardSnapshots().size());
         assertEquals(List.of(
-                        IncomeIssueCode.MISSING_SECURITY_CONFIGURATION,
-                        IncomeIssueCode.UNIMPLEMENTED_DIVIDEND_METHOD),
-                result.issues().stream().map(IncomeIssue::getCode).toList());
+                        IssueCode.MISSING_SECURITY_CONFIGURATION,
+                        IssueCode.UNIMPLEMENTED_DIVIDEND_METHOD),
+                result.issues().stream().map(Issue::getCode).toList());
     }
 
     private static PreparedSource source(
@@ -78,7 +78,7 @@ public class SourceConsolidatorTest {
             List<Trade> trades,
             Security supportedSecurity,
             SecurityConfig config,
-            List<IncomeIssue> issues
+            List<Issue> issues
     ) {
         return new PreparedSource(
                 new SourceImportResult(
@@ -114,18 +114,18 @@ public class SourceConsolidatorTest {
                 BigDecimal.ZERO);
     }
 
-    private static IncomeIssue missingConfigIssue(Security security) {
-        return new IncomeIssue(
-                IncomeIssueCode.MISSING_SECURITY_CONFIGURATION,
-                IncomeIssueSeverity.WARNING,
+    private static Issue missingConfigIssue(Security security) {
+        return new Issue(
+                IssueCode.MISSING_SECURITY_CONFIGURATION,
+                IssueSeverity.WARNING,
                 "security-support",
                 Map.of("isin", security.getIdentifier()));
     }
 
-    private static IncomeIssue unimplementedMethodIssue(Security security) {
-        return new IncomeIssue(
-                IncomeIssueCode.UNIMPLEMENTED_DIVIDEND_METHOD,
-                IncomeIssueSeverity.WARNING,
+    private static Issue unimplementedMethodIssue(Security security) {
+        return new Issue(
+                IssueCode.UNIMPLEMENTED_DIVIDEND_METHOD,
+                IssueSeverity.WARNING,
                 "security-support",
                 Map.of("isin", security.getIdentifier()));
     }

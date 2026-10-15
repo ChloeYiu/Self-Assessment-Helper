@@ -1,7 +1,7 @@
 package com.helper.pipeline.consolidation;
 
 import com.helper.config.TaxYear;
-import com.helper.income.issue.IncomeIssue;
+import com.helper.issue.Issue;
 import java.util.List;
 import java.util.Objects;
 
@@ -11,7 +11,7 @@ import java.util.Objects;
 public record SourceConsolidationResult(
         TaxYear taxYear,
         List<ConsolidatedSecurity> securities,
-        List<IncomeIssue> issues
+        List<Issue> issues
 ) {
     /** Creates an immutable result for the requested tax year. */
     public SourceConsolidationResult {

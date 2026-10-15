@@ -1,14 +1,14 @@
-package com.helper.income.issue;
+package com.helper.issue;
 
-/** Stable machine-readable income issue codes. */
-public enum IncomeIssueCode {
+/** Stable machine-readable issue codes. */
+public enum IssueCode {
     MISSING_SECURITY_CONFIGURATION("No security configuration exists for this ISIN"),
     UNSUPPORTED_DIVIDEND_METHOD("The configured dividend method is unsupported"),
     UNIMPLEMENTED_DIVIDEND_METHOD("The configured dividend method is not executable in this run");
 
     private final String debugReason;
 
-    IncomeIssueCode(String debugReason) {
+    IssueCode(String debugReason) {
         this.debugReason = debugReason;
     }
 

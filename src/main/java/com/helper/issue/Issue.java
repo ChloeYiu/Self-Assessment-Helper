@@ -1,19 +1,19 @@
-package com.helper.income.issue;
+package com.helper.issue;
 
 import java.util.Map;
 import java.util.Objects;
 
-/** Structured non-fatal issue produced while detecting or calculating income sources. */
-public class IncomeIssue {
-    private final IncomeIssueCode code;
-    private final IncomeIssueSeverity severity;
+/** Structured non-fatal condition retained by an application stage. */
+public class Issue {
+    private final IssueCode code;
+    private final IssueSeverity severity;
     private final String source;
     private final Map<String, String> attributes;
 
-    /** Creates an income issue. */
-    public IncomeIssue(
-            IncomeIssueCode code,
-            IncomeIssueSeverity severity,
+    /** Creates an issue. */
+    public Issue(
+            IssueCode code,
+            IssueSeverity severity,
             String source,
             Map<String, String> attributes
     ) {
@@ -24,12 +24,12 @@ public class IncomeIssue {
     }
 
     /** Returns the stable machine-readable issue code. */
-    public IncomeIssueCode getCode() {
+    public IssueCode getCode() {
         return code;
     }
 
     /** Returns the issue severity. */
-    public IncomeIssueSeverity getSeverity() {
+    public IssueSeverity getSeverity() {
         return severity;
     }
 

@@ -12,7 +12,7 @@ import com.helper.income.config.SecurityConfigEnums.DividendCalculationMethodTyp
 import com.helper.income.config.SecurityConfigEnums.EriReportFormat;
 import com.helper.income.config.SecurityConfigs;
 import com.helper.income.implementation.Security;
-import com.helper.income.issue.IncomeIssueCode;
+import com.helper.issue.IssueCode;
 import java.util.List;
 import java.util.Set;
 import org.junit.Test;
@@ -34,7 +34,7 @@ public class SecuritySupportResolverTest {
                 result.findSupportedDividendConfig(supportedSecurity).orElseThrow()
                         .getDividendCalculationMethod().getType());
         assertEquals(1, result.getIssues().size());
-        assertEquals(IncomeIssueCode.MISSING_SECURITY_CONFIGURATION, result.getIssues().get(0).getCode());
+        assertEquals(IssueCode.MISSING_SECURITY_CONFIGURATION, result.getIssues().get(0).getCode());
     }
 
     @Test
@@ -50,7 +50,7 @@ public class SecuritySupportResolverTest {
                 Set.of(DividendCalculationMethodType.NON_UK_ACCUMULATING_FUND));
 
         assertTrue(result.getSupportedDividendSecurities().isEmpty());
-        assertEquals(IncomeIssueCode.UNSUPPORTED_DIVIDEND_METHOD, result.getIssues().get(0).getCode());
+        assertEquals(IssueCode.UNSUPPORTED_DIVIDEND_METHOD, result.getIssues().get(0).getCode());
     }
 
     @Test
@@ -62,7 +62,7 @@ public class SecuritySupportResolverTest {
                 List.of(security), configs, Set.of());
 
         assertTrue(result.getSupportedDividendSecurities().isEmpty());
-        assertEquals(IncomeIssueCode.UNIMPLEMENTED_DIVIDEND_METHOD, result.getIssues().get(0).getCode());
+        assertEquals(IssueCode.UNIMPLEMENTED_DIVIDEND_METHOD, result.getIssues().get(0).getCode());
     }
 
     private static Security security(String isin, String ticker) {

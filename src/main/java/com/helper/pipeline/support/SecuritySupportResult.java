@@ -2,7 +2,7 @@ package com.helper.pipeline.support;
 
 import com.helper.income.config.SecurityConfig;
 import com.helper.income.implementation.Security;
-import com.helper.income.issue.IncomeIssue;
+import com.helper.issue.Issue;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -14,7 +14,7 @@ import java.util.Optional;
 public class SecuritySupportResult {
     private final List<Security> supportedDividendSecurities;
     private final Map<String, SecurityConfig> supportedDividendConfigsByIsin;
-    private final List<IncomeIssue> issues;
+    private final List<Issue> issues;
 
     /**
      * Creates support decisions and review issues for imported securities.
@@ -22,7 +22,7 @@ public class SecuritySupportResult {
     public SecuritySupportResult(
             List<Security> supportedDividendSecurities,
             Map<String, SecurityConfig> supportedDividendConfigsByIsin,
-            List<IncomeIssue> issues
+            List<Issue> issues
     ) {
         this.supportedDividendSecurities = List.copyOf(
                 Objects.requireNonNull(supportedDividendSecurities, "supportedDividendSecurities"));
@@ -43,7 +43,7 @@ public class SecuritySupportResult {
     }
 
     /** Returns review issues for unsupported or unconfigured securities. */
-    public List<IncomeIssue> getIssues() {
+    public List<Issue> getIssues() {
         return issues;
     }
 }
