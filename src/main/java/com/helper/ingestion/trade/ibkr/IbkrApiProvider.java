@@ -33,6 +33,7 @@ public class IbkrApiProvider {
     private static final String GET_STATEMENT_PATH = "/GetStatement";
     private static final DateTimeFormatter FLEX_DATE_FORMATTER = DateTimeFormatter.BASIC_ISO_DATE;
     private static final int MAX_DATE_RANGE_DAYS = 365;
+    private static final long SEND_REQUEST_DELAY_MILLIS = 1_100L;
     private static final ZoneId IBKR_REPORTING_TIME_ZONE = ZoneId.of("America/New_York");
     private static final String TOKEN_PROPERTY = "ibkr.flex.token";
     private static final String QUERY_ID_PROPERTY = "ibkr.flex.query-id";
@@ -101,25 +102,47 @@ public class IbkrApiProvider {
             if (requestEnd.isAfter(effectiveToDate)) {
                 requestEnd = effectiveToDate;
             }
+            LocalDate chunkStart = requestStart;
+            LocalDate chunkEnd = requestEnd;
             try {
-                statements.add(getFlexStatementXmlForRequest(requestStart, requestEnd));
+                statements.add(downloadFlexStatementForSplitRange(
+                        chunkStart,
+                        chunkEnd,
+                        chunkStart.equals(fromDate)));
             } catch (IbkrFlexApiException exception) {
-                if (!"1003".equals(exception.errorCode())) {
-                    throw exception;
-                }
-                issues.add(unavailableStatementIssue(requestStart, requestEnd, exception.errorCode()));
+                issues.add(handleIbkrFlexApiException(exception, chunkStart, chunkEnd));
             }
             requestStart = requestEnd.plusDays(1);
         }
 
-        return new IbkrApiResult(statements, issues);
+        return new IbkrApiResult(statements, issues, effectiveToDate);
     }
 
-    /** Successful statement XML and non-fatal unavailable ranges from one Flex download. */
-    public record IbkrApiResult(List<String> statementXmls, List<Issue> issues) {
+    private String downloadFlexStatementForSplitRange(
+            LocalDate fromDate,
+            LocalDate toDate,
+            boolean isFirstChunk
+    ) throws IOException, InterruptedException {
+        if (!isFirstChunk) {
+            waitBeforeNextSendRequest();
+        }
+        return getFlexStatementXmlForRequest(fromDate, toDate);
+    }
+
+    private static void waitBeforeNextSendRequest() throws InterruptedException {
+        Thread.sleep(SEND_REQUEST_DELAY_MILLIS);
+    }
+
+    /** Successful statement XML, non-fatal unavailable ranges, and actual end-date coverage. */
+    public record IbkrApiResult(
+            List<String> statementXmls,
+            List<Issue> issues,
+            LocalDate effectiveEndDate
+    ) {
         public IbkrApiResult {
             statementXmls = List.copyOf(Objects.requireNonNull(statementXmls, "statementXmls"));
             issues = List.copyOf(Objects.requireNonNull(issues, "issues"));
+            effectiveEndDate = Objects.requireNonNull(effectiveEndDate, "effectiveEndDate");
         }
     }
 
@@ -210,23 +233,34 @@ public class IbkrApiProvider {
             String errorMessage = xmlDocumentParser.findText(document, "ErrorMessage").orElse(null);
             throw new IbkrFlexApiException(
                     failureMessage + formatIbkrError(errorCode, errorMessage),
-                    errorCode);
+                    errorCode,
+                    errorMessage);
         }
     }
 
-    private static Issue unavailableStatementIssue(
+    private static Issue handleIbkrFlexApiException(
+            IbkrFlexApiException exception,
             LocalDate fromDate,
-            LocalDate toDate,
-            String providerErrorCode
+            LocalDate toDate
     ) {
+        String errorCode = exception.errorCode();
+        if (!"1003".equals(errorCode)) {
+            throw exception;
+        }
+        Map<String, String> attributes = new LinkedHashMap<>();
+        attributes.put("fromDate", fromDate.toString());
+        attributes.put("toDate", toDate.toString());
+        if (!isBlank(errorCode)) {
+            attributes.put("providerErrorCode", errorCode);
+        }
+        if (!isBlank(exception.errorMessage())) {
+            attributes.put("providerErrorMessage", exception.errorMessage());
+        }
         return new Issue(
                 IssueCode.IBKR_STATEMENT_UNAVAILABLE,
                 IssueSeverity.INFO,
                 "ibkr-flex",
-                Map.of(
-                        "fromDate", fromDate.toString(),
-                        "toDate", toDate.toString(),
-                        "providerErrorCode", providerErrorCode));
+                attributes);
     }
 
     private static String formatIbkrError(String errorCode, String errorMessage) {
@@ -260,14 +294,21 @@ public class IbkrApiProvider {
 
     private static final class IbkrFlexApiException extends IllegalStateException {
         private final String errorCode;
+        private final String errorMessage;
 
-        private IbkrFlexApiException(String message, String errorCode) {
+        private IbkrFlexApiException(String message, String errorCode, String errorMessage) {
             super(message);
             this.errorCode = errorCode;
+            this.errorMessage = errorMessage;
         }
 
         private String errorCode() {
             return errorCode;
         }
+
+        private String errorMessage() {
+            return errorMessage;
+        }
     }
+
 }

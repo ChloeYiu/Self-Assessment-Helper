@@ -48,10 +48,8 @@ public class IbkrImporter implements SourceImporter<IbkrImportInput> {
         IbkrApiProvider provider = apiProvider == null
                 ? createApiProvider(importInput)
                 : apiProvider;
-        LocalDate effectiveEndDate = provider.truncateRequestedEndDate(
-                importInput.getRequestedStartDate(), importInput.getRequestedEndDate());
         IbkrApiProvider.IbkrApiResult apiResult = provider.getFlexStatementsXml(
-                importInput.getRequestedStartDate(), effectiveEndDate);
+                importInput.getRequestedStartDate(), importInput.getRequestedEndDate());
         TabularDocument document = tradeMapper.extractFlexStatementDocument(apiResult.statementXmls());
         List<Security> securities = securityExtractor.extractSecurities(document);
         List<Trade> trades = new ArrayList<>();
@@ -64,7 +62,7 @@ public class IbkrImporter implements SourceImporter<IbkrImportInput> {
                 securities,
                 trades,
                 importInput.getRequestedStartDate(),
-                effectiveEndDate,
+                apiResult.effectiveEndDate(),
                 apiResult.issues());
     }
 

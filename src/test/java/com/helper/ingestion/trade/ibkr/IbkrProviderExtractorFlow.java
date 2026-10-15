@@ -32,13 +32,10 @@ public class IbkrProviderExtractorFlow {
 
         IbkrApiProvider provider = new IbkrApiProvider(DEFAULT_CONFIG_PATH);
         IbkrTradeMapper mapper = new IbkrTradeMapper();
-        LocalDate effectiveToDate = provider.truncateRequestedEndDate(
-                dateRange.fromDate(), dateRange.toDate());
-
         IbkrApiProvider.IbkrApiResult download = provider.getFlexStatementsXml(
-                dateRange.fromDate(), effectiveToDate);
+                dateRange.fromDate(), dateRange.toDate());
         TabularDocument document = mapper.extractFlexStatementDocument(download.statementXmls());
-        printSummary(document, new DateRange(dateRange.fromDate(), effectiveToDate), download.issues());
+        printSummary(document, new DateRange(dateRange.fromDate(), download.effectiveEndDate()), download.issues());
     }
 
     private static DateRange parseDateRange(String[] args) {
