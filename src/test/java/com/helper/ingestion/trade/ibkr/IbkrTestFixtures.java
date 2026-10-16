@@ -17,21 +17,23 @@ public final class IbkrTestFixtures {
             "SPDR MSCI ACWI UCITS ETF",
             CurrencyCode.USD);
     private static final Map<String, String> ACWI_BUY = Map.of(
-            "identifier", "IE00B44Z5B48",
-            "tradeId", "BUY_1",
-            "transactionDate", "2025-04-07",
-            "tradeType", "BUY",
+            "isin", "IE00B44Z5B48",
+            "transactionID", "BUY_1",
+            "tradeDate", "20250407",
+            "buySell", "BUY",
             "quantity", "10",
-            "grossAmountGbp", "100.25",
-            "feeGbp", "1.25");
+            "proceeds", "-100.25",
+            "ibCommission", "-1.25",
+            "currency", "GBP");
     private static final Map<String, String> OTHER_SELL = Map.of(
-            "identifier", "DIFFERENT",
-            "tradeId", "SELL_1",
-            "transactionDate", "2025-04-08",
-            "tradeType", "SELL",
-            "quantity", "5",
-            "grossAmountGbp", "60.00",
-            "feeGbp", "1.00");
+            "isin", "DIFFERENT",
+            "transactionID", "SELL_1",
+            "tradeDate", "20250408",
+            "buySell", "SELL",
+            "quantity", "-5",
+            "proceeds", "60.00",
+            "ibCommission", "-1.00",
+            "currency", "GBP");
 
     private IbkrTestFixtures() {
     }
@@ -56,7 +58,7 @@ public final class IbkrTestFixtures {
     public static TabularTable acwiBuyTradesTable() {
         return new TabularTableBuilder<>(
                 "Trades",
-                List.of("identifier", "tradeId", "transactionDate", "tradeType", "quantity", "grossAmountGbp", "feeGbp"),
+                List.of("isin", "transactionID", "tradeDate", "buySell", "quantity", "proceeds", "ibCommission", "currency"),
                 List.of(ACWI_BUY),
                 (row, column, index) -> new TabularCell(row.get(column)))
                 .buildTable();
@@ -65,7 +67,7 @@ public final class IbkrTestFixtures {
     public static TabularDocument acwiBuyAndOtherSellDocument() {
         return new TabularDocument(List.of(new TabularTableBuilder<>(
                 "Trades",
-                List.of("identifier", "tradeId", "transactionDate", "tradeType", "quantity", "grossAmountGbp", "feeGbp"),
+                List.of("isin", "transactionID", "tradeDate", "buySell", "quantity", "proceeds", "ibCommission", "currency"),
                 List.of(ACWI_BUY, OTHER_SELL),
                 (row, column, index) -> new TabularCell(row.get(column)))
                 .buildTable()));

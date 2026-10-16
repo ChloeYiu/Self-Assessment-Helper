@@ -28,6 +28,7 @@ public final class IbkrNames {
         public static final String SECURITY_ID_TYPE = "securityIDType";
         public static final String FIGI = "figi";
         public static final String LISTING_EXCHANGE = "listingExchange";
+        public static final String TRANSACTION_ID = "transactionID";
         public static final String TRADE_DATE = "tradeDate";
         public static final String SETTLE_DATE_TARGET = "settleDateTarget";
         public static final String BUY_SELL = "buySell";
@@ -39,20 +40,6 @@ public final class IbkrNames {
         public static final String FIFO_PNL_REALIZED = "fifoPnlRealized";
 
         private RawTradeColumns() {
-        }
-    }
-
-    /** Column names used by the normalized IBKR Trades table consumed by domain extractors. */
-    public static final class NormalizedTradeColumns {
-        public static final String IDENTIFIER = "identifier";
-        public static final String TRADE_ID = "tradeId";
-        public static final String TRANSACTION_DATE = "transactionDate";
-        public static final String TRADE_TYPE = "tradeType";
-        public static final String QUANTITY = "quantity";
-        public static final String GROSS_AMOUNT_GBP = "grossAmountGbp";
-        public static final String FEE_GBP = "feeGbp";
-
-        private NormalizedTradeColumns() {
         }
     }
 

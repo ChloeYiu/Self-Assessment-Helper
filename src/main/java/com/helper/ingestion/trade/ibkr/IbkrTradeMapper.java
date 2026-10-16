@@ -36,6 +36,7 @@ public class IbkrTradeMapper {
             IbkrNames.RawTradeColumns.SECURITY_ID_TYPE,
             IbkrNames.RawTradeColumns.FIGI,
             IbkrNames.RawTradeColumns.LISTING_EXCHANGE,
+            IbkrNames.RawTradeColumns.TRANSACTION_ID,
             IbkrNames.RawTradeColumns.TRADE_DATE,
             IbkrNames.RawTradeColumns.SETTLE_DATE_TARGET,
             IbkrNames.RawTradeColumns.BUY_SELL,
