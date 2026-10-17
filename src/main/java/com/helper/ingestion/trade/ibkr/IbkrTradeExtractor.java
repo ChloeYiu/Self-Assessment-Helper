@@ -3,6 +3,7 @@ package com.helper.ingestion.trade.ibkr;
 import com.helper.income.implementation.Security;
 import com.helper.income.implementation.Trade;
 import com.helper.income.implementation.TradeType;
+import com.helper.util.table.TabularCell;
 import com.helper.util.table.TabularDocument;
 import com.helper.util.table.TabularRow;
 import com.helper.util.table.TabularTable;
@@ -26,7 +27,10 @@ public class IbkrTradeExtractor {
 
         return tradesTable.getRows()
                 .stream()
-                .filter(row -> targetSecurity.getIdentifier().equals(row.getText(IbkrNames.RawTradeColumns.ISIN)))
+                .filter(row -> targetSecurity.getIdentifier().equals(row
+                        .getCell(IbkrNames.RawTradeColumns.ISIN)
+                        .flatMap(TabularCell::getNormalizedText)
+                        .orElse("")))
                 .map(row -> extractTrade(row, targetSecurity))
                 .toList();
     }

@@ -34,6 +34,15 @@ public final class IbkrTestFixtures {
             "proceeds", "60.00",
             "ibCommission", "-1.00",
             "currency", "GBP");
+    private static final Map<String, String> CASH_BUY = Map.of(
+            "isin", "",
+            "transactionID", "CASH_1",
+            "tradeDate", "20250407",
+            "buySell", "BUY",
+            "quantity", "100",
+            "proceeds", "-100.00",
+            "ibCommission", "0",
+            "currency", "GBP");
 
     private IbkrTestFixtures() {
     }
@@ -64,11 +73,11 @@ public final class IbkrTestFixtures {
                 .buildTable();
     }
 
-    public static TabularDocument acwiBuyAndOtherSellDocument() {
+    public static TabularDocument acwiBuyWithOtherSecurityAndCashDocument() {
         return new TabularDocument(List.of(new TabularTableBuilder<>(
                 "Trades",
                 List.of("isin", "transactionID", "tradeDate", "buySell", "quantity", "proceeds", "ibCommission", "currency"),
-                List.of(ACWI_BUY, OTHER_SELL),
+                List.of(ACWI_BUY, OTHER_SELL, CASH_BUY),
                 (row, column, index) -> new TabularCell(row.get(column)))
                 .buildTable()));
     }

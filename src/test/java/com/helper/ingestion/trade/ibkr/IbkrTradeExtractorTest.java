@@ -28,8 +28,8 @@ public class IbkrTradeExtractorTest {
     }
 
     @Test
-    public void extractTrades_returnsOnlyTradesForRequestedSecurity() {
-        TabularDocument document = IbkrTestFixtures.acwiBuyAndOtherSellDocument();
+    public void extractTrades_returnsOnlyTradesForRequestedSecurityAndSkipsCashRows() {
+        TabularDocument document = IbkrTestFixtures.acwiBuyWithOtherSecurityAndCashDocument();
 
         List<Trade> trades = new IbkrTradeExtractor().extractTrades(document, IbkrTestFixtures.ACWI);
 
