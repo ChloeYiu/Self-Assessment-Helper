@@ -12,7 +12,7 @@ import java.util.Objects;
 /**
  * Consolidated source facts and opening state for one supported security.
  */
-public record ConsolidatedSecurity(
+public record ConsolidatedSecurityFacts(
         Security security,
         SecurityConfig config,
         List<Trade> trades,
@@ -20,7 +20,7 @@ public record ConsolidatedSecurity(
         List<CarryForwardSnapshot> carryForwardSnapshots
 ) {
     /** Creates immutable facts for one configured security. */
-    public ConsolidatedSecurity {
+    public ConsolidatedSecurityFacts {
         security = Objects.requireNonNull(security, "security");
         config = Objects.requireNonNull(config, "config");
         trades = List.copyOf(Objects.requireNonNull(trades, "trades"));
@@ -56,8 +56,8 @@ public record ConsolidatedSecurity(
             carryForwardSnapshots.add(Objects.requireNonNull(snapshot, "snapshot"));
         }
 
-        ConsolidatedSecurity build() {
-            return new ConsolidatedSecurity(
+        ConsolidatedSecurityFacts build() {
+            return new ConsolidatedSecurityFacts(
                     security,
                     config,
                     trades,

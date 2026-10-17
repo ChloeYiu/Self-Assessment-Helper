@@ -38,7 +38,7 @@ public class SourceConsolidator {
     ) {
         Objects.requireNonNull(preparedSources, "preparedSources");
         Objects.requireNonNull(taxInput, "taxInput");
-        Map<String, ConsolidatedSecurity.Builder> buildersByIsin = new LinkedHashMap<>();
+        Map<String, ConsolidatedSecurityFacts.Builder> buildersByIsin = new LinkedHashMap<>();
         Map<IssueKey, Issue> issuesByKey = new LinkedHashMap<>();
 
         for (PreparedSource preparedSource : preparedSources) {
@@ -51,8 +51,8 @@ public class SourceConsolidator {
         addHoldingSnapshots(taxInput.getOpeningHoldingSnapshots(), buildersByIsin);
         addCarryForwardSnapshots(taxInput.getOpeningCapitalGainSnapshots(), buildersByIsin);
 
-        List<ConsolidatedSecurity> securities = buildersByIsin.values().stream()
-                .map(ConsolidatedSecurity.Builder::build)
+        List<ConsolidatedSecurityFacts> securities = buildersByIsin.values().stream()
+                .map(ConsolidatedSecurityFacts.Builder::build)
                 .toList();
         return new SourceConsolidationResult(
                 taxInput.getTaxYear(),
@@ -74,7 +74,7 @@ public class SourceConsolidator {
 
     private void addSource(
             PreparedSource preparedSource,
-            Map<String, ConsolidatedSecurity.Builder> buildersByIsin
+            Map<String, ConsolidatedSecurityFacts.Builder> buildersByIsin
     ) {
         SourceImportResult importResult = preparedSource.sourceImportResult();
         SecuritySupportResult supportResult = preparedSource.securitySupportResult();
@@ -85,9 +85,9 @@ public class SourceConsolidator {
                     .findSupportedDividendConfig(security)
                     .orElseThrow(() -> new IllegalArgumentException(
                             "Supported security has no configuration: " + isin));
-            ConsolidatedSecurity.Builder builder = buildersByIsin.computeIfAbsent(
+            ConsolidatedSecurityFacts.Builder builder = buildersByIsin.computeIfAbsent(
                     isin,
-                    ignored -> new ConsolidatedSecurity.Builder(security, config));
+                    ignored -> new ConsolidatedSecurityFacts.Builder(security, config));
             addMatchingTrades(importResult.getTrades(), isin, builder);
         }
     }
@@ -95,7 +95,7 @@ public class SourceConsolidator {
     private void addMatchingTrades(
             List<Trade> trades,
             String isin,
-            ConsolidatedSecurity.Builder destination
+            ConsolidatedSecurityFacts.Builder destination
     ) {
         for (Trade trade : trades) {
             if (trade.getSecurity().getIdentifier().equals(isin)) {
@@ -106,10 +106,10 @@ public class SourceConsolidator {
 
     private void addHoldingSnapshots(
             List<SecurityHoldingSnapshot> snapshots,
-            Map<String, ConsolidatedSecurity.Builder> buildersByIsin
+            Map<String, ConsolidatedSecurityFacts.Builder> buildersByIsin
     ) {
         for (SecurityHoldingSnapshot snapshot : snapshots) {
-            ConsolidatedSecurity.Builder builder = buildersByIsin.get(
+            ConsolidatedSecurityFacts.Builder builder = buildersByIsin.get(
                     snapshot.getSecurity().getIdentifier());
             if (builder != null) {
                 builder.addHoldingSnapshot(snapshot);
@@ -119,10 +119,10 @@ public class SourceConsolidator {
 
     private void addCarryForwardSnapshots(
             List<CarryForwardSnapshot> snapshots,
-            Map<String, ConsolidatedSecurity.Builder> buildersByIsin
+            Map<String, ConsolidatedSecurityFacts.Builder> buildersByIsin
     ) {
         for (CarryForwardSnapshot snapshot : snapshots) {
-            ConsolidatedSecurity.Builder builder = buildersByIsin.get(
+            ConsolidatedSecurityFacts.Builder builder = buildersByIsin.get(
                     snapshot.getSecurity().getIdentifier());
             if (builder != null) {
                 builder.addCarryForwardSnapshot(snapshot);

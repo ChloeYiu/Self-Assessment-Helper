@@ -10,7 +10,7 @@ import java.util.Objects;
  */
 public record SourceConsolidationResult(
         TaxYear taxYear,
-        List<ConsolidatedSecurity> securities,
+        List<ConsolidatedSecurityFacts> securities,
         List<Issue> issues
 ) {
     /** Creates an immutable result for the requested tax year. */

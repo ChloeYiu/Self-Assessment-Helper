@@ -61,7 +61,7 @@ public class SourceConsolidatorTest {
                 List.of(firstSource, secondSource), input);
 
         assertEquals(1, result.securities().size());
-        ConsolidatedSecurity consolidated = result.securities().get(0);
+        ConsolidatedSecurityFacts consolidated = result.securities().get(0);
         assertEquals("IE00B44Z5B48", consolidated.security().getIdentifier());
         assertEquals(acwiConfig, consolidated.config());
         assertEquals(List.of("BUY_1", "SELL_1"), consolidated.trades().stream().map(Trade::getTradeId).toList());
