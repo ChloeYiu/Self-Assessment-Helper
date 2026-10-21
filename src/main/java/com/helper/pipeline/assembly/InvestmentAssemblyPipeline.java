@@ -18,7 +18,7 @@ import java.util.Objects;
 import java.util.Set;
 
 /** Coordinates one IBKR source import, support resolution, and consolidation for one tax run. */
-public class SourceAssemblyPipeline {
+public class InvestmentAssemblyPipeline {
     private final Path ibkrConfigPath;
     private final IbkrImporter ibkrImporter;
     private final SecurityConfigs securityConfigs;
@@ -27,7 +27,7 @@ public class SourceAssemblyPipeline {
     private final SourceConsolidator sourceConsolidator;
 
     /**
-     * Creates the source-assembly coordinator for one configured IBKR source.
+     * Creates the investment-assembly coordinator for one configured IBKR source.
      *
      * @param ibkrConfigPath optional IBKR Flex configuration path
      * @param ibkrImporter IBKR provider importer
@@ -36,7 +36,7 @@ public class SourceAssemblyPipeline {
      * @param securitySupportResolver security support resolver
      * @param sourceConsolidator source fact consolidator
      */
-    public SourceAssemblyPipeline(
+    public InvestmentAssemblyPipeline(
             Path ibkrConfigPath,
             IbkrImporter ibkrImporter,
             SecurityConfigs securityConfigs,

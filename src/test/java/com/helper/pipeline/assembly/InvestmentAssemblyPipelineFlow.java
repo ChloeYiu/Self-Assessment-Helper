@@ -18,15 +18,15 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Manual live flow for inspecting the IBKR source-assembly result for one UK tax year.
+ * Manual live flow for inspecting the IBKR investment-assembly result for one UK tax year.
  *
  * <p>Uses {@code config/ibkr-flex.properties} and {@code config/security-configs.yaml}.
  * Pass the tax-year start year, for example {@code 2024} for 2024/25. The flow requests
  * the shared account horizon from six months before the tax-year start through one month
  * after the tax-year end. It supplies no opening holding or capital-gain snapshots, so it
- * stops after source assembly and does not calculate a tax result.</p>
+ * stops after investment assembly and does not calculate a tax result.</p>
  */
-public class SourceAssemblyPipelineFlow {
+public class InvestmentAssemblyPipelineFlow {
     private static final Path IBKR_CONFIG_PATH = Path.of("config/ibkr-flex.properties");
     private static final Path SECURITY_CONFIG_PATH = Path.of("config/security-configs.yaml");
 
@@ -34,7 +34,7 @@ public class SourceAssemblyPipelineFlow {
         TaxYear taxYear = parseTaxYear(args);
         requireConfigFiles();
 
-        SourceAssemblyPipeline pipeline = new SourceAssemblyPipeline(
+        InvestmentAssemblyPipeline pipeline = new InvestmentAssemblyPipeline(
                 IBKR_CONFIG_PATH,
                 new IbkrImporter(),
                 SecurityConfigs.load(SECURITY_CONFIG_PATH),
@@ -51,7 +51,7 @@ public class SourceAssemblyPipelineFlow {
 
     private static TaxYear parseTaxYear(String[] args) {
         if (args.length != 1) {
-            throw new IllegalArgumentException("Usage: SourceAssemblyPipelineFlow <tax-year-start-year>");
+            throw new IllegalArgumentException("Usage: InvestmentAssemblyPipelineFlow <tax-year-start-year>");
         }
         return TaxYear.of(Integer.parseInt(args[0]));
     }

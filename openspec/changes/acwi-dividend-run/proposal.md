@@ -9,7 +9,7 @@ The first supported end-to-end delivery is an IBKR import for SPDR ACWI accumula
 - Add the supported ACWI dividend source-to-result path.
 - Report only operations that are executable.
 - Preserve local credential handling and explicit report/holding windows.
-- Refine the ACWI delivery around `SourceAssemblyPipeline`, provider-specific importers, and dividend orchestration. Reuse existing extraction and domain calculation components.
+- Refine the ACWI delivery around `InvestmentAssemblyPipeline`, provider-specific importers, and dividend orchestration. Reuse existing extraction and domain calculation components.
 - Plan the class migration described in I007; preserve unresolved contract and coverage decisions under D010.
 
 ## Capabilities
@@ -30,6 +30,7 @@ The affected boundaries are the existing `pipeline` classes and their connection
 
 ## Idea and decision index
 
-- **I007 — Proposed:** `SourceAssemblyPipeline` coordinates provider-specific importers, shared support resolution, and reconciliation before category workflows consume shared inputs. Source: pipeline discussion on 2–3 October 2026; the class migration is detailed in [design.md](design.md). Tasks 1.1–1.10 and 2.1–3.3 describe the ACWI portion. This planning revision does not resolve every contract or authorize implementation.
+- **I007 — Decided for the initial wrapper:** `InvestmentAssemblyPipeline` coordinates one configured `IbkrImporter`, shared support resolution, and consolidation before category workflows consume shared inputs. It derives the shared horizon from the tax input and creates one `IbkrImportInput` with its stored optional configuration path. `IbkrApiProvider` hides the Flex request-size limit by splitting longer ranges into adjacent requests. Source: pipeline discussion on 2–3 and 13 October 2026; the class migration is detailed in [design.md](design.md). Tasks 1.1–1.10 and 2.1–3.3 describe the ACWI portion. A provider-neutral source-selection boundary is deferred until a second provider is onboarded. This decision does not resolve every coverage or ownership policy.
+- **D003 — Decided for the initial IBKR path:** an Activity Flex Query configured with the Open Positions section supplies the security holding snapshot at the shared earliest dividend boundary: 6 October before the tax year. That imported snapshot replaces an externally supplied security holding snapshot for IBKR. The application persists the accepted snapshot as a tax-run artifact. An unavailable or insufficient boundary remains a review outcome; it is not proof of zero holdings. CG carry-forward state remains separately supplied and persisted. Source: pipeline discussion on 15 October 2026; details are in [design.md](design.md#shared-account-import-horizon).
 - **D010 — Open:** exact import/result contracts, account and pool ownership context, category selection, and coverage/reconciliation behavior. See [design.md](design.md#blocking-decisions).
 - Related requirements: R1 source-based entry, R2 honest capabilities, R3 preparation/calculation separation, R4 input windows, R5 reviewable imports, R6 category results, R7 reusable state, R8 local credentials. These are retained reference IDs; this change does not allocate new meanings to them.
