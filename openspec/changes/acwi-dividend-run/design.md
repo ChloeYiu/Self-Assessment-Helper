@@ -21,10 +21,9 @@ The ACWI run receives account configuration, tax year, CG carry-forward state, a
 ```mermaid
 %%{init: {"flowchart": {"curve": "linear"}} }%%
 flowchart TD
-    Run["TaxCalculator.java<br/>starts one tax calculation"]
     TaxInput(["TaxPipelineInput.java (proposed)<br/>tax year and opening snapshots"])
-    Savings["SavingsTaxPipeline.java (future)<br/>prepares savings income"]
 
+    subgraph TaxCalculator["TaxCalculator.java — coordinates one complete tax calculation"]
     subgraph InvestmentTax["InvestmentTaxPipeline.java (future) — coordinates investment income and gains"]
         subgraph InvestmentAssembly["InvestmentAssemblyPipeline.java — imports, resolves support, and consolidates one IBKR source"]
             Configs(["SecurityConfigs.java<br/>configured tax treatment by ISIN"])
@@ -42,53 +41,59 @@ flowchart TD
             SupportResult --> Prepared --> Consolidate
         end
 
-    SecurityFacts(["ConsolidatedSecurityFacts.java (proposed)<br/>config, trades, and snapshots for one ISIN"])
-    Bundle(["SourceConsolidationResult.java (proposed)<br/>tax year, per-security source facts, and review issues"])
+    subgraph Bundle["SourceConsolidationResult.java<br/>tax year and consolidated source output"]
+        SecurityFacts(["List&lt;ConsolidatedSecurityFacts&gt;<br/>config, trades, and snapshots for each supported ISIN"])
+        ConsolidationIssues(["List&lt;Issue&gt;<br/>source review issues"])
+    end
 
     subgraph InvestmentDividendPipeline["InvestmentDividendPipeline.java - proposed wrapper for investment dividend preparation"]
         Dispatcher["DividendMethodDispatcher.java - proposed<br/>routes each security by configured dividend method"]
-        Accumulating["NonUkAccumulatingFundInvestmentDividendPipeline.java - proposed<br/>prepares accumulating-fund inputs"]
-        ReportLoader["EriReportLoader.java - proposed<br/>fetches and parses ERI reports"]
+        subgraph Accumulating["NonUkAccumulatingFundDividendPipeline.java - proposed"]
+            ReportLoader["EriReportLoader.java<br/>fetches and parses ERI reports"]
+        end
         Other["OtherDividendMethodPipeline.java - future<br/>prepares another dividend method"]
-        Inputs["DividendInputAssembler.java - proposed<br/>creates one standard calculation input"]
-        DividendInput(["DividendInputAssemblyResult.java - proposed<br/>prepared inputs and issues"])
-        DividendSource(["Dividend.java<br/>one prepared investment dividend source"])
-        InvestmentDividendSources(["Investment dividend sources and review issues"])
 
-        Dispatcher --> Accumulating
-        Dispatcher --> Other
-        Accumulating --> ReportLoader --> Inputs
-        Other --> Inputs
-        Inputs --> DividendInput --> DividendSource --> InvestmentDividendSources
+        Dispatcher -->|selected method| ReportLoader
+        Dispatcher -->|selected method| Other
     end
 
         InvestmentCapitalGain["InvestmentCapitalGainPipeline.java (future)<br/>prepares investment capital gains"]
     end
 
-    DividendResult(["Dividend category result<br/>GBP income, closing holding, and review information"])
+    Savings["SavingsTaxPipeline.java (future)<br/>prepares savings income"]
+
     DividendIncome["DividendIncome.java<br/>aggregates sources from every dividend pipeline"]
+    CapitalGainIncome["CapitalGainIncome.java (future)<br/>aggregates sources from every CG pipeline"]
+    InvestmentDividendResult(["InvestmentDividendResult.java<br/>prepared Dividend sources and review issues"])
+    end
+
     Result(["TaxCalculationResult.java<br/>combined category results and review information"])
 
-    Run --> TaxInput
-    Run -. future .-> Savings
-    Run --> DividendIncome
-    TaxInput --> IbkrInput
-    TaxInput --> Consolidate
-    Consolidate --> SecurityFacts --> Bundle
+    TaxInput -->|tax year and opening snapshots| InvestmentTax
+    TaxInput -. future savings input .-> Savings
+    Consolidate --> Bundle
     Bundle --> Dispatcher
     Bundle --> InvestmentCapitalGain
-    InvestmentDividendSources --> DividendIncome --> DividendResult --> Result
+    InvestmentDividendPipeline -->|one combined result| InvestmentDividendResult
+    InvestmentDividendResult -->|Dividend sources| DividendIncome
+    InvestmentDividendResult -->|review issues| Result
+    DividendIncome -->|DIVIDENDS IncomeResult| Result
+    InvestmentCapitalGain -. future CapitalGain sources .-> CapitalGainIncome
+    CapitalGainIncome -. CAPITAL_GAIN IncomeResult .-> Result
+    Savings -. future savings category result .-> Result
 
+    style TaxCalculator fill:#1f2937,stroke:#111827,color:#ffffff
+    style Bundle rx:16,ry:16
     style InvestmentTax fill:#374151,stroke:#1f2937,color:#ffffff
     style InvestmentAssembly fill:#6b7280,stroke:#4b5563,color:#ffffff
     style InvestmentDividendPipeline fill:#6b7280,stroke:#4b5563,color:#ffffff
-    linkStyle 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 stroke:#ffffff
+    linkStyle 0,1,2,3,4,5,6,7,8,9,10,16,18 stroke:#ffffff
 
 ```
 
 `TaxPipelineInput` is the shared runtime request. It carries the tax year and CG snapshots; it does not carry provider configuration, credentials, or a manually supplied security holding snapshot. For the initial ACWI delivery, `InvestmentAssemblyPipeline` stores one optional IBKR configuration path plus its `IbkrImporter`, `SecurityConfigs`, executable dividend methods, `SecuritySupportResolver`, and `SourceConsolidator`. It derives the shared import horizon directly from the tax year: 6 October before the tax year through 5 May after it, then creates one `IbkrImportInput`. It also requests an Activity Flex statement ending on the shared earliest dividend boundary, 6 October before the tax year, from a template that includes Open Positions; the imported account/ISIN units form the security holding snapshot. `IbkrApiProvider` partitions a longer horizon into adjacent requests of at most 365 days and returns their raw statements in chronological order. Before issuing requests, it truncates a requested end date to the previous New York weekday because Activity Flex Query data is available only through the previous business day. A wholly future range fails locally; a past `1003` skips only that statement range and becomes a reviewable issue rather than an empty statement. The weekday rule does not model IBKR holidays. A direct Flex request successfully retrieved a 1 December 2025–31 May 2026 report on 14 October 2026, verifying the configured query and explicit-date override. Earlier 1003 responses for older chunks establish only that those statement requests were unavailable; they do not establish a transport range limit. `IbkrTradeMapper` maps that statement list into one combined `TabularDocument`, with one Trades table and one deduplicated Securities table. `IbkrImporter` then extracts securities, trades, and boundary Open Positions once and returns one `SourceImportResult` whose `requestedStartDate` and `requestedEndDate` identify the effective range sent to IBKR. Those dates do not establish complete provider coverage. It does not decide whether a security is tax-supported or which calculations should run. The recoverable `1003` Flex API status becomes a local issue; other Flex API-status failures, retrieval, HTTP, parsing, and extraction failures propagate as exceptions. `SecuritySupportResolver` produces support decisions and review issues from the aggregated import. `PreparedSource` is a tuple-like internal input that pairs unchanged provider facts with its support decision. `SourceConsolidator` groups all supported facts by ISIN and returns `SourceConsolidationResult`; it does not return prepared sources downstream. Each `ConsolidatedSecurityFacts` contains its security, configured tax treatment, all matching source trades, and its imported holding/CG snapshots. `SourceConsolidationResult` also contains the consolidated review issues. Unsupported securities stay outside the calculation input. Duplicate-import, identity-conflict, coverage, and account policies remain under D005/D006/D010. An incomplete source is a review or incomplete outcome, not proof of empty activity. When a second provider is actually onboarded, replace this IBKR-specific edge with user-selected source requests and a provider router; the normalized result, support, and consolidation stages remain unchanged.
 
-`InvestmentDividendPipeline` is the wrapper for investment dividend-method preparation. It passes `ConsolidatedSecurityFacts` entries from `SourceConsolidationResult` to `DividendMethodDispatcher`, which reads each security's configured dividend method and sends it to the matching method-specific pipeline. `NonUkAccumulatingFundDividendPipeline` is the ACWI path: it asks `EriReportLoader` to resolve, fetch, and parse each applicable ERI report before invoking `DividendInputAssembler`. Other investment dividend methods use their own preparation pipeline and do not load ERI reports. Every method pipeline reaches the shared assembler and produces one or more `Dividend` sources plus review issues. The assembler selects only that security's facts in the report's required window. If one pair lacks required coverage, its review outcome does not prevent another fully covered security/report pair from producing a result. Multiple reports for one security run in distribution-date order, carrying each closing holding into the next calculation's opening holding. `TaxCalculator` owns the tax-year `DividendIncome` aggregate and adds the sources returned by each dividend pipeline; pipelines do not retrieve or mutate that aggregate through `Registry`. D002 still decides how the loader finds the report path or URI for an ISIN and tax year.
+`InvestmentDividendPipeline` is the wrapper for investment dividend-method preparation. It groups `ConsolidatedSecurityFacts` entries from `SourceConsolidationResult` by configured dividend method, then uses `DividendMethodDispatcher` to send each group to the matching method-specific pipeline. `DividendMethodPipeline` is the strategy contract; each implementation declares its one `DividendCalculationMethodType` and returns an `InvestmentDividendResult` for its assigned securities. The dispatcher receives registered strategies once, builds an unmodifiable `EnumMap` keyed by that type, and rejects duplicate registrations. Its lookup returns an empty result when the configured type has no implementation. The outer investment pipeline turns that absence into `UNIMPLEMENTED_DIVIDEND_METHOD` review issues; the dispatcher does not create issues, fetch reports, or calculate income. `NonUkAccumulatingFundDividendPipeline` is the ACWI path: it wraps `EriReportLoader`, resolves, fetches, and parses each applicable ERI report, then prepares its dividend sources and review issues. Other investment dividend methods prepare their own results and do not load ERI reports. `InvestmentDividendPipeline` merges the method-pipeline results into one `InvestmentDividendResult`, containing all prepared `Dividend` sources and the investment-dividend review issues. `TaxCalculator` adds those sources to its tax-year `DividendIncome` and carries the result's issues to the final result. Source-consolidation issues remain on `SourceConsolidationResult` and are merged once by `TaxCalculator`, so they are not duplicated in the dividend result. Pipelines do not retrieve or mutate `DividendIncome` through `Registry`. Extract a shared `DividendInputAssembler` only when two or more methods demonstrably repeat the same preparation logic. D002 still decides how the loader finds the report path or URI for an ISIN and tax year.
 
 `IbkrApiProvider` waits 1.1 seconds between adjacent `SendRequest` calls, satisfying IBKR's one-request-per-second pacing rule for the initial two-year import scope. It does not yet enforce IBKR's broader ten-requests-per-minute limit, so a token already rate-limited by other calls can still return `1018`. The provider maps a private `IbkrFlexApiException` at its date-range boundary into a local issue only when the error is recoverable. Error `1003` produces `IBKR_STATEMENT_UNAVAILABLE` at severity `INFO`, then the provider continues with adjacent ranges. Rate-limit error `1018` and every other Flex API failure propagate as exceptions because the import cannot safely continue. The `1003` issue records its failed start date, end date, provider code, and provider message. Network, HTTP, and XML parsing failures also propagate as exceptions because no valid Flex failure response exists to map. `IbkrImporter` places local issues in `SourceImportResult`; `SourceConsolidator` merges them with support issues into `SourceConsolidationResult`. No global registry or issue plumbing through unrelated stages is required.
 
@@ -116,6 +121,10 @@ pipeline/
 │   ├── SourceConsolidationResult.java
 │   └── ConsolidatedSecurityFacts.java
 └── dividend/
+    ├── DividendMethodDispatcher.java
+    ├── DividendMethodPipeline.java
+    ├── InvestmentDividendPipeline.java
+    ├── InvestmentDividendResult.java
     └── future dividend-stage classes
 ```
 
@@ -170,8 +179,8 @@ Names below are proposed contracts. Final signatures depend on task 1.1; no new 
 | `ibkr/IbkrPipelineResult` | `SourceImportResult` | Replace `extractedDividends` calculator inputs with imported securities, trades, `requestedStartDate`, and `requestedEndDate`. The dates record the request; they do not prove coverage. |
 | `ibkr/IbkrSupportedSecurityExtractor` | Split between `IbkrImporter` and `security/SecuritySupportResolver` | Keep fetching/extraction provider-specific; move configuration matching and support decisions into `InvestmentAssemblyPipeline`. |
 | `ibkr/result/IbkrSupportedSecurityExtractionResult` | `security/SecuritySupportResult` | Describe support per category, with reasons and source references. |
-| `ibkr/dividend/IbkrDividendExtractor` | `dividend/DividendInputAssembler` | Assemble dividend calculation inputs from shared normalized facts, validated report/opening state, and rates. |
-| `ibkr/result/IbkrDividendExtractionResult` | `dividend/DividendInputAssemblyResult` | Carry assembled dividend inputs and preparation issues. |
+| `ibkr/dividend/IbkrDividendExtractor` | `dividend/NonUkAccumulatingFundDividendPipeline` | Prepare accumulating-fund dividend inputs from shared normalized facts, validated report/opening state, and rates. |
+| `ibkr/result/IbkrDividendExtractionResult` | `dividend/InvestmentDividendResult` | Carry prepared dividend sources and review issues. |
 
 ### Method ownership in the supported-security split
 
@@ -194,12 +203,13 @@ Names below are proposed contracts. Final signatures depend on task 1.1; no new 
 | `SourceConsolidator` | `List<PreparedSource>` and `TaxPipelineInput` → `SourceConsolidationResult` | In-memory consolidation. For each supported ISIN, combine matching imported trades with its config and holding/CG snapshots into one `ConsolidatedSecurityFacts`. Combine issues from every `SecuritySupportResult`, retaining one of each logical issue identified by code, source, and attributes. Do not include unsupported securities. Duplicate-import, transfer, identity-conflict, coverage, and account policies remain under D003/D005/D006/D010. |
 | `SourceConsolidationResult` | Tax year, `List<ConsolidatedSecurityFacts>`, and `List<Issue>` → category-pipeline input | Data only. It is the consolidated result for the tax run and keeps non-fatal source-assembly review issues for later result aggregation. `Issue` is the application-wide non-fatal condition type: its code, severity, source, and attributes identify the issue without tying it to a tax category or pipeline stage. |
 | `ConsolidatedSecurityFacts` | Security, config, trades, holding snapshots, and CG snapshots for one ISIN → per-instrument category input | Data only. All facts are scoped to this instrument; a category pipeline selects only the fields it needs. |
-| `InvestmentDividendPipeline` | `SourceConsolidationResult` and FX → dividend results, artifacts, and preparation issues | Wrap `DividendMethodDispatcher`, all method-specific preparation pipelines, shared input assembly, and `DividendIncome`. Coordinate calculations in distribution-date order. Avoid counting preparation and dividend computation as separate income events. |
-| `DividendMethodDispatcher` | Supported securities/configurations → method-specific preparation pipeline | In-memory routing only. Select the configured executable dividend method for each security; unsupported or unimplemented methods remain review outcomes rather than being sent to an unrelated pipeline. |
-| `NonUkAccumulatingFundInvestmentDividendPipeline` | Accumulating-fund security/configuration and shared facts → `DividendInputAssemblyResult` records | Coordinates only the `NON_UK_ACCUMULATING_FUND` path. Uses `EriReportLoader`, then passes each selected security/report pair to the shared assembler. |
+| `InvestmentDividendPipeline` | Registered `DividendMethodPipeline` instances, `SourceConsolidationResult`, and TaxCalculator's prefetched FX registry → `InvestmentDividendResult` | Construct and own its `DividendMethodDispatcher`, then wrap all investment method-specific preparation pipelines. Read the tax year from consolidated source facts, group securities by method, pass the tax year and shared registry to each method, merge their results, and return one combined investment dividend result; it does not own or mutate the tax-year aggregate. |
+| `DividendMethodDispatcher` | Registered `DividendMethodPipeline` strategies and one configured method type → matching strategy, when registered | In-memory routing only. Build an unmodifiable `EnumMap` once, reject duplicate method registrations, and return an empty lookup for an absent strategy. It does not create issues or invoke preparation. |
+| `DividendMethodPipeline` | One configured method type, tax year, prefetched FX registry, and `List<ConsolidatedSecurityFacts>` → `InvestmentDividendResult` | Interface contract. Each implementation declares exactly one method type and prepares all securities assigned to it. |
+| `NonUkAccumulatingFundDividendPipeline` | Accumulating-fund security/configuration and shared facts → `InvestmentDividendResult` | Coordinates only the `NON_UK_ACCUMULATING_FUND` path. Wraps `EriReportLoader`, validates each selected security/report pair, and prepares dividend sources plus review issues. |
 | `EriReportLoader` | Supported security configuration and tax year → parsed `AccumulatingFundReport` records with provenance | Network/file I/O. Resolve each report path or URI, fetch and parse it, and validate it belongs to the configured ISIN before returning it. D002 defines the source lookup rule and the outcome when a report cannot be found. |
-| `DividendInputAssembler` | Relevant normalized movements, report, opening holdings, rates, tax year → `DividendInputAssemblyResult` | No broker access. Validate security/report identity, distribution year, opening boundary, movement coverage, and required FX before constructing domain inputs. |
-| `TaxCalculator` | Run request → `TaxCalculationResult` | Own shared initialization, invoke `InvestmentAssemblyPipeline`, and run category pipelines. Merge issue provenance without hiding partial or fatal outcomes. |
+| `InvestmentDividendResult` | `List<Dividend>` and `List<Issue>` → one investment-dividend output | Data only. It carries all prepared dividend sources and non-fatal investment-dividend preparation issues for one tax calculation. |
+| `TaxCalculator` | Run request → `TaxCalculationResult` | Own shared initialization, invoke category pipelines, retain detailed preparation items, flatten successful dividend sources into one `DividendIncome`, and merge issues without hiding partial or fatal outcomes. |
 
 `SourceConsolidationResult` is a typed collection of per-instrument facts, not a single Section 104 pool. `ConsolidatedSecurityFacts` groups matching facts by ISIN but does not deduplicate provider records or blindly sum account-level CG snapshots. Retain `Registry` for shared run resources such as FX documents. Provider/account context must accompany trade IDs before duplicate-import and transfer policies can be implemented.
 
@@ -212,7 +222,7 @@ The later `CapitalGainPipeline` builds final `TradeBook` instances from relevant
 ### ACWI execution details retained
 
 1. Run `InvestmentAssemblyPipeline`: derive the shared import horizon from `TaxPipelineInput`, ask its configured `IbkrImporter` to import it, retain detected securities, movements, `requestedStartDate`, and `requestedEndDate`, then resolve support and consolidate the inputs. `IbkrApiProvider` partitions a horizon longer than 365 days into adjacent Flex requests before the importer aggregates their normalized facts.
-2. `DividendMethodDispatcher` routes each configured security to its method pipeline. For ACWI, `NonUkAccumulatingFundInvestmentDividendPipeline` asks `EriReportLoader` to resolve and fetch the matching ERI report, then validates its ISIN and distribution date.
+2. `DividendMethodDispatcher` routes each configured security to its method pipeline. For ACWI, `NonUkAccumulatingFundDividendPipeline` asks `EriReportLoader` to resolve and fetch the matching ERI report, then validates its ISIN and distribution date.
 3. For each security/report pair, check that the reconciled coverage and opening state are sufficient for the report period and opening boundary. Any permitted zero fallback must produce an explicit assumption identifying the security and boundary; it must not conceal missing imported activity.
 4. Let `InvestmentDividendPipeline` select the pair's facts, assemble `NonUkDomicileAccumulatingDividend` inputs with report-currency FX, and invoke the existing dividend aggregate. For repeated reports on one security, use the earlier closing holding as the later opening holding.
 5. Return GBP income, closing holding artifacts, and calculated/ignored/review/assumption information with source traceability.
@@ -246,7 +256,7 @@ The user's 3 October request authorizes documenting this migration and tasks; it
 1. Resolve affected contracts in task 1.1; scaffold shells, then empty signatures only when requested (tasks 2.1–2.4).
 2. Build `InvestmentAssemblyPipeline` around provider import, support resolution, and reconciliation (tasks 1.2, 3.1, and 3.2), retaining existing IBKR extractors.
 3. Complete normalized source-assembly outputs and ERI/report validation (tasks 1.3–1.5), then opening selection (1.6).
-4. Build shared dividend assembly and orchestration (1.7 and 3.3), then connect the coordinator and result/report boundaries (1.8–1.9).
+4. Build method-specific dividend preparation and orchestration (1.7 and 3.3), then connect the coordinator and result/report boundaries (1.8–1.9). Extract shared preparation only when future methods demonstrate repeated logic.
 5. Verify integrated behavior under 1.10; only then complete parent task 1.
 
 Keep old callers compiling until their replacement contracts are wired; retire obsolete wrappers and references with the corresponding migration step. If a migration fails, restore the affected step's changes while preserving unrelated work. No deployment or persistent-data migration is included.
