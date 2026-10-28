@@ -65,8 +65,8 @@ public class SourceConsolidatorTest {
         assertEquals("IE00B44Z5B48", consolidated.security().getIdentifier());
         assertEquals(acwiConfig, consolidated.config());
         assertEquals(List.of("BUY_1", "SELL_1"), consolidated.trades().stream().map(Trade::getTradeId).toList());
-        assertEquals(1, consolidated.holdingSnapshots().size());
-        assertEquals(1, consolidated.carryForwardSnapshots().size());
+        assertEquals(0, new BigDecimal("10").compareTo(consolidated.holdingSnapshot().getQuantity()));
+        assertEquals(0, new BigDecimal("10").compareTo(consolidated.carryForwardSnapshot().getQuantity()));
         assertEquals(List.of(
                         IssueCode.MISSING_SECURITY_CONFIGURATION,
                         IssueCode.UNIMPLEMENTED_DIVIDEND_METHOD),

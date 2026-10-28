@@ -79,8 +79,8 @@ public class InvestmentAssemblyPipelineFlow {
             System.out.println("security=" + security.security().getIdentifier()
                     + " ticker=" + security.security().getTicker()
                     + " trades=" + security.trades().size()
-                    + " holdingSnapshots=" + security.holdingSnapshots().size()
-                    + " carryForwardSnapshots=" + security.carryForwardSnapshots().size());
+                    + " holdingSnapshot=" + security.holdingSnapshot()
+                    + " carryForwardSnapshot=" + security.carryForwardSnapshot());
             for (Trade trade : security.trades()) {
                 System.out.println("trade=" + trade.getTradeId()
                         + " date=" + trade.getTransactionDate()

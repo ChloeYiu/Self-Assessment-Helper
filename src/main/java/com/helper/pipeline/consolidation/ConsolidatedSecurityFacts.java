@@ -16,17 +16,14 @@ public record ConsolidatedSecurityFacts(
         Security security,
         SecurityConfig config,
         List<Trade> trades,
-        List<SecurityHoldingSnapshot> holdingSnapshots,
-        List<CarryForwardSnapshot> carryForwardSnapshots
+        SecurityHoldingSnapshot holdingSnapshot,
+        CarryForwardSnapshot carryForwardSnapshot
 ) {
     /** Creates immutable facts for one configured security. */
     public ConsolidatedSecurityFacts {
         security = Objects.requireNonNull(security, "security");
         config = Objects.requireNonNull(config, "config");
         trades = List.copyOf(Objects.requireNonNull(trades, "trades"));
-        holdingSnapshots = List.copyOf(Objects.requireNonNull(holdingSnapshots, "holdingSnapshots"));
-        carryForwardSnapshots = List.copyOf(
-                Objects.requireNonNull(carryForwardSnapshots, "carryForwardSnapshots"));
     }
 
     /**
@@ -36,8 +33,8 @@ public record ConsolidatedSecurityFacts(
         private final Security security;
         private final SecurityConfig config;
         private final List<Trade> trades = new ArrayList<>();
-        private final List<SecurityHoldingSnapshot> holdingSnapshots = new ArrayList<>();
-        private final List<CarryForwardSnapshot> carryForwardSnapshots = new ArrayList<>();
+        private SecurityHoldingSnapshot holdingSnapshot;
+        private CarryForwardSnapshot carryForwardSnapshot;
 
         Builder(Security security, SecurityConfig config) {
             this.security = Objects.requireNonNull(security, "security");
@@ -48,12 +45,18 @@ public record ConsolidatedSecurityFacts(
             trades.add(Objects.requireNonNull(trade, "trade"));
         }
 
-        void addHoldingSnapshot(SecurityHoldingSnapshot snapshot) {
-            holdingSnapshots.add(Objects.requireNonNull(snapshot, "snapshot"));
+        void setHoldingSnapshot(SecurityHoldingSnapshot snapshot) {
+            if (holdingSnapshot != null) {
+                throw new IllegalArgumentException("security can have only one holding snapshot");
+            }
+            holdingSnapshot = Objects.requireNonNull(snapshot, "snapshot");
         }
 
-        void addCarryForwardSnapshot(CarryForwardSnapshot snapshot) {
-            carryForwardSnapshots.add(Objects.requireNonNull(snapshot, "snapshot"));
+        void setCarryForwardSnapshot(CarryForwardSnapshot snapshot) {
+            if (carryForwardSnapshot != null) {
+                throw new IllegalArgumentException("security can have only one carry-forward snapshot");
+            }
+            carryForwardSnapshot = Objects.requireNonNull(snapshot, "snapshot");
         }
 
         ConsolidatedSecurityFacts build() {
@@ -61,8 +64,8 @@ public record ConsolidatedSecurityFacts(
                     security,
                     config,
                     trades,
-                    holdingSnapshots,
-                    carryForwardSnapshots);
+                    holdingSnapshot,
+                    carryForwardSnapshot);
         }
     }
 }

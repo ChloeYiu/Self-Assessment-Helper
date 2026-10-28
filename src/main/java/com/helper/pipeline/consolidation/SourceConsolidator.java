@@ -24,7 +24,8 @@ public class SourceConsolidator {
      * matching imported trades, and supplied opening snapshots.
      *
      * <p>This method does not deduplicate overlapping imports, resolve conflicting security
-     * metadata, select an opening holding, or decide whether source coverage is sufficient.</p>
+     * metadata, or decide whether source coverage is sufficient. Each supported security can
+     * receive at most one holding snapshot and one carry-forward snapshot.</p>
      *
      * @param preparedSources provider facts paired with their support decisions
      * @param taxInput tax year and opening state for this run
@@ -42,10 +43,10 @@ public class SourceConsolidator {
         Map<IssueKey, Issue> issuesByKey = new LinkedHashMap<>();
 
         for (PreparedSource preparedSource : preparedSources) {
-            PreparedSource source = Objects.requireNonNull(preparedSource, "preparedSource");
-            addIssues(source.sourceImportResult().getIssues(), issuesByKey);
-            addIssues(source.securitySupportResult().getIssues(), issuesByKey);
-            addSource(source, buildersByIsin);
+            Objects.requireNonNull(preparedSource, "preparedSource");
+            addIssues(preparedSource.sourceImportResult().getIssues(), issuesByKey);
+            addIssues(preparedSource.securitySupportResult().getIssues(), issuesByKey);
+            addSource(preparedSource, buildersByIsin);
         }
 
         addHoldingSnapshots(taxInput.getOpeningHoldingSnapshots(), buildersByIsin);
@@ -65,10 +66,10 @@ public class SourceConsolidator {
             Map<IssueKey, Issue> issuesByKey
     ) {
         for (Issue issue : issues) {
-            Issue value = Objects.requireNonNull(issue, "issue");
+            Objects.requireNonNull(issue, "issue");
             issuesByKey.putIfAbsent(
-                    new IssueKey(value.getCode(), value.getSource(), value.getAttributes()),
-                    value);
+                    new IssueKey(issue.getCode(), issue.getSource(), issue.getAttributes()),
+                    issue);
         }
     }
 
@@ -112,7 +113,7 @@ public class SourceConsolidator {
             ConsolidatedSecurityFacts.Builder builder = buildersByIsin.get(
                     snapshot.getSecurity().getIdentifier());
             if (builder != null) {
-                builder.addHoldingSnapshot(snapshot);
+                builder.setHoldingSnapshot(snapshot);
             }
         }
     }
@@ -125,7 +126,7 @@ public class SourceConsolidator {
             ConsolidatedSecurityFacts.Builder builder = buildersByIsin.get(
                     snapshot.getSecurity().getIdentifier());
             if (builder != null) {
-                builder.addCarryForwardSnapshot(snapshot);
+                builder.setCarryForwardSnapshot(snapshot);
             }
         }
     }
