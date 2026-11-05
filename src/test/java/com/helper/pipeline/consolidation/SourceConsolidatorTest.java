@@ -14,11 +14,11 @@ import com.helper.income.implementation.Security;
 import com.helper.income.implementation.Trade;
 import com.helper.income.implementation.TradeType;
 import com.helper.income.implementation.capitalgain.model.CarryForwardSnapshot;
-import com.helper.income.implementation.dividend.model.SecurityHoldingSnapshot;
 import com.helper.issue.Issue;
 import com.helper.issue.IssueCode;
 import com.helper.issue.IssueSeverity;
 import com.helper.pipeline.TaxPipelineInput;
+import com.helper.pipeline.importer.Position;
 import com.helper.pipeline.importer.SourceImportResult;
 import com.helper.pipeline.support.SecuritySupportResult;
 import java.math.BigDecimal;
@@ -37,6 +37,7 @@ public class SourceConsolidatorTest {
         PreparedSource firstSource = source(
                 List.of(acwi, unsupported, unimplemented),
                 List.of(trade("BUY_1", acwi), trade("OTHER_1", unsupported)),
+                List.of(position("U123", acwi, "4")),
                 acwi,
                 acwiConfig,
                 List.of(
@@ -45,14 +46,12 @@ public class SourceConsolidatorTest {
         PreparedSource secondSource = source(
                 List.of(acwi, unsupported, unimplemented),
                 List.of(trade("SELL_1", acwi)),
+                List.of(position("U456", acwi, "6")),
                 acwi,
                 acwiConfig,
                 List.of(missingConfigIssue(unsupported)));
         TaxPipelineInput input = new TaxPipelineInput(
                 TaxYear.of(2025),
-                List.of(
-                        new SecurityHoldingSnapshot(LocalDate.of(2024, 10, 6), acwi, new BigDecimal("10")),
-                        new SecurityHoldingSnapshot(LocalDate.of(2024, 10, 6), unsupported, new BigDecimal("5"))),
                 List.of(
                         new CarryForwardSnapshot(TaxYear.of(2025), acwi, new BigDecimal("10"), new BigDecimal("100")),
                         new CarryForwardSnapshot(TaxYear.of(2025), unsupported, new BigDecimal("5"), new BigDecimal("50"))));
@@ -73,9 +72,46 @@ public class SourceConsolidatorTest {
                 result.issues().stream().map(Issue::getCode).toList());
     }
 
+    @Test
+    public void consolidate_createsZeroSnapshotAndInfoIssueWhenPositionStatementHasNoSecurityRow() {
+        Security acwi = security("IE00B44Z5B48", "ACWI");
+        SourceConsolidationResult result = new SourceConsolidator().consolidate(
+                List.of(source(
+                        List.of(acwi),
+                        List.of(),
+                        List.of(),
+                        acwi,
+                        config(acwi.getIdentifier()),
+                        List.of())),
+                new TaxPipelineInput(TaxYear.of(2025), List.of()));
+
+        ConsolidatedSecurityFacts consolidated = result.securities().get(0);
+        assertEquals(0, BigDecimal.ZERO.compareTo(consolidated.holdingSnapshot().getQuantity()));
+        assertEquals(List.of(IssueCode.ZERO_DIVIDEND_OPENING_HOLDING),
+                result.issues().stream().map(Issue::getCode).toList());
+    }
+
+    @Test
+    public void consolidate_createsZeroSnapshotWhenPositionStatementWasUnavailable() {
+        Security acwi = security("IE00B44Z5B48", "ACWI");
+        SourceConsolidationResult result = new SourceConsolidator().consolidate(
+                List.of(source(
+                        List.of(acwi),
+                        List.of(),
+                        List.of(),
+                        acwi,
+                        config(acwi.getIdentifier()),
+                        List.of())),
+                new TaxPipelineInput(TaxYear.of(2025), List.of()));
+
+        assertEquals(0, BigDecimal.ZERO.compareTo(result.securities().get(0)
+                .holdingSnapshot().getQuantity()));
+    }
+
     private static PreparedSource source(
             List<Security> securities,
             List<Trade> trades,
+            List<Position> positions,
             Security supportedSecurity,
             SecurityConfig config,
             List<Issue> issues
@@ -84,7 +120,7 @@ public class SourceConsolidatorTest {
                 new SourceImportResult(
                         securities,
                         trades,
-                        List.of(),
+                        positions,
                         LocalDate.of(2024, 10, 6),
                         LocalDate.of(2026, 5, 5),
                         List.of()),
@@ -114,6 +150,16 @@ public class SourceConsolidatorTest {
                 BigDecimal.ONE,
                 new BigDecimal("10"),
                 BigDecimal.ZERO);
+    }
+
+    private static Position position(String accountId, Security security, String quantity) {
+        return new Position(
+                "ibkr-flex",
+                accountId,
+                security.getIdentifier(),
+                security.getTicker(),
+                new BigDecimal(quantity),
+                LocalDate.of(2024, 10, 6));
     }
 
     private static Issue missingConfigIssue(Security security) {

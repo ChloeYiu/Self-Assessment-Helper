@@ -43,7 +43,6 @@ public class InvestmentAssemblyPipelineFlow {
                 new SourceConsolidator());
         SourceConsolidationResult result = pipeline.assemble(new TaxPipelineInput(
                 taxYear,
-                List.of(),
                 List.of()));
 
         printSummary(taxYear, result);
@@ -71,7 +70,7 @@ public class InvestmentAssemblyPipelineFlow {
         System.out.println("taxYear=" + taxYear.getStartYear() + "/" + (taxYear.getStartYear() + 1));
         System.out.println("requestedStartDate=" + requestedStartDate);
         System.out.println("requestedEndDate=" + requestedEndDate);
-        System.out.println("openingHoldingSnapshots=0");
+        System.out.println("openingHoldingSnapshots=derived from imported positions");
         System.out.println("openingCapitalGainSnapshots=0");
         System.out.println("supportedSecurities=" + result.securities().size());
 
