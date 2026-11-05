@@ -51,6 +51,11 @@ public final class IbkrTestFixtures {
         return new TabularDocument(List.of(acwiSecuritiesTable(), acwiBuyTradesTable()));
     }
 
+    public static TabularDocument acwiBuyWithOpenPositionsDocument() {
+        return new TabularDocument(List.of(
+                acwiSecuritiesTable(), acwiBuyTradesTable(), acwiOpenPositionsTable()));
+    }
+
     public static TabularTable acwiSecuritiesTable() {
         return new TabularTableBuilder<>(
                 "Securities",
@@ -80,5 +85,35 @@ public final class IbkrTestFixtures {
                 List.of(ACWI_BUY, OTHER_SELL, CASH_BUY),
                 (row, column, index) -> new TabularCell(row.get(column)))
                 .buildTable()));
+    }
+
+    public static TabularDocument acwiOpenPositionsDocument() {
+        return new TabularDocument(List.of(acwiOpenPositionsTable()));
+    }
+
+    private static TabularTable acwiOpenPositionsTable() {
+        return new TabularTableBuilder<>(
+                IbkrNames.Tables.OPEN_POSITIONS,
+                List.of(
+                        IbkrNames.OpenPositionColumns.ACCOUNT_ID,
+                        IbkrNames.OpenPositionColumns.ISIN,
+                        IbkrNames.OpenPositionColumns.SYMBOL,
+                        IbkrNames.OpenPositionColumns.POSITION,
+                        IbkrNames.OpenPositionColumns.REPORT_DATE),
+                List.of(
+                        Map.of(
+                                "accountId", "U123",
+                                "isin", "IE00B44Z5B48",
+                                "symbol", "ACWI",
+                                "position", "10",
+                                "reportDate", "2025-10-06"),
+                        Map.of(
+                                "accountId", "U123",
+                                "isin", "",
+                                "symbol", "GBP",
+                                "position", "100",
+                                "reportDate", "2025-10-06")),
+                (row, column, index) -> new TabularCell(row.get(column)))
+                .buildTable();
     }
 }

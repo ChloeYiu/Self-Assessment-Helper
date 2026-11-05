@@ -16,34 +16,23 @@ import java.util.Objects;
 public class SourceImportResult {
     private final List<Security> securities;
     private final List<Trade> trades;
+    private final List<Position> positions;
     private final LocalDate requestedStartDate;
     private final LocalDate requestedEndDate;
     private final List<Issue> issues;
 
-    /**
-     * Creates imported source facts for a requested provider date range.
-     */
+    /** Creates imported source facts, positions, and non-fatal provider issues. */
     public SourceImportResult(
             List<Security> securities,
             List<Trade> trades,
-            LocalDate requestedStartDate,
-            LocalDate requestedEndDate
-    ) {
-        this(securities, trades, requestedStartDate, requestedEndDate, List.of());
-    }
-
-    /**
-     * Creates imported source facts and non-fatal provider issues for a requested provider date range.
-     */
-    public SourceImportResult(
-            List<Security> securities,
-            List<Trade> trades,
+            List<Position> positions,
             LocalDate requestedStartDate,
             LocalDate requestedEndDate,
             List<Issue> issues
     ) {
         this.securities = List.copyOf(Objects.requireNonNull(securities, "securities"));
         this.trades = List.copyOf(Objects.requireNonNull(trades, "trades"));
+        this.positions = List.copyOf(Objects.requireNonNull(positions, "positions"));
         this.requestedStartDate = Objects.requireNonNull(requestedStartDate, "requestedStartDate");
         this.requestedEndDate = Objects.requireNonNull(requestedEndDate, "requestedEndDate");
         this.issues = List.copyOf(Objects.requireNonNull(issues, "issues"));
@@ -60,6 +49,11 @@ public class SourceImportResult {
     /** Returns normalized trades detected in the provider source. */
     public List<Trade> getTrades() {
         return trades;
+    }
+
+    /** Returns normalized provider-reported positions at requested cutoff dates. */
+    public List<Position> getPositions() {
+        return positions;
     }
 
     /** Returns the first date requested from the provider. */

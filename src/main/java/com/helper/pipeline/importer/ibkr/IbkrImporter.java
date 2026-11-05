@@ -3,10 +3,13 @@ package com.helper.pipeline.importer.ibkr;
 import com.helper.income.implementation.Security;
 import com.helper.income.implementation.Trade;
 import com.helper.ingestion.trade.ibkr.IbkrApiProvider;
+import com.helper.ingestion.trade.ibkr.IbkrFlexStatementMapper;
 import com.helper.ingestion.trade.ibkr.IbkrSecurityExtractor;
+import com.helper.ingestion.trade.ibkr.IbkrPositionExtractor;
 import com.helper.ingestion.trade.ibkr.IbkrTradeExtractor;
-import com.helper.ingestion.trade.ibkr.IbkrTradeMapper;
+import com.helper.issue.Issue;
 import com.helper.pipeline.importer.SourceImportResult;
+import com.helper.pipeline.importer.Position;
 import com.helper.pipeline.importer.SourceImporter;
 import com.helper.util.table.TabularDocument;
 import java.io.IOException;
@@ -20,25 +23,29 @@ import java.util.Objects;
  */
 public class IbkrImporter implements SourceImporter<IbkrImportInput> {
     private final IbkrApiProvider apiProvider;
-    private final IbkrTradeMapper tradeMapper;
+    private final IbkrFlexStatementMapper flexStatementMapper;
     private final IbkrSecurityExtractor securityExtractor;
     private final IbkrTradeExtractor tradeExtractor;
+    private final IbkrPositionExtractor positionExtractor;
 
     /** Creates an importer that builds its provider from the supplied import input. */
     public IbkrImporter() {
-        this(null, new IbkrTradeMapper(), new IbkrSecurityExtractor(), new IbkrTradeExtractor());
+        this(null, new IbkrFlexStatementMapper(), new IbkrSecurityExtractor(), new IbkrTradeExtractor(),
+                new IbkrPositionExtractor());
     }
 
     IbkrImporter(
             IbkrApiProvider apiProvider,
-            IbkrTradeMapper tradeMapper,
+            IbkrFlexStatementMapper flexStatementMapper,
             IbkrSecurityExtractor securityExtractor,
-            IbkrTradeExtractor tradeExtractor
+            IbkrTradeExtractor tradeExtractor,
+            IbkrPositionExtractor positionExtractor
     ) {
         this.apiProvider = apiProvider;
-        this.tradeMapper = Objects.requireNonNull(tradeMapper, "tradeMapper");
+        this.flexStatementMapper = Objects.requireNonNull(flexStatementMapper, "flexStatementMapper");
         this.securityExtractor = Objects.requireNonNull(securityExtractor, "securityExtractor");
         this.tradeExtractor = Objects.requireNonNull(tradeExtractor, "tradeExtractor");
+        this.positionExtractor = Objects.requireNonNull(positionExtractor, "positionExtractor");
     }
 
     /** Retrieves, maps, and normalizes IBKR Flex statements into securities and trades. */
@@ -48,22 +55,29 @@ public class IbkrImporter implements SourceImporter<IbkrImportInput> {
         IbkrApiProvider provider = apiProvider == null
                 ? createApiProvider(importInput)
                 : apiProvider;
-        IbkrApiProvider.IbkrApiResult apiResult = provider.getFlexStatementsXml(
+        IbkrApiProvider.IbkrApiResult activityResult = provider.getActivityStatementsXml(
                 importInput.getRequestedStartDate(), importInput.getRequestedEndDate());
-        TabularDocument document = tradeMapper.extractFlexStatementDocument(apiResult.statementXmls());
+        List<Issue> issues = new ArrayList<>(activityResult.issues());
+        IbkrApiProvider.IbkrApiResult positionsResult = provider.getPositionStatementXml(
+                importInput.getRequestedStartDate());
+        issues.addAll(positionsResult.issues());
+        TabularDocument document = flexStatementMapper.extractFlexStatementDocument(
+                activityResult.statementXmls(), positionsResult.statementXmls());
         List<Security> securities = securityExtractor.extractSecurities(document);
         List<Trade> trades = new ArrayList<>();
-
         for (Security security : securities) {
             trades.addAll(tradeExtractor.extractTrades(document, security));
         }
+        List<Position> positions = positionExtractor.extractPositions(
+                document, importInput.getRequestedStartDate());
 
         return new SourceImportResult(
                 securities,
                 trades,
+                positions,
                 importInput.getRequestedStartDate(),
-                apiResult.effectiveEndDate(),
-                apiResult.issues());
+                activityResult.effectiveEndDate(),
+                issues);
     }
 
     private static IbkrApiProvider createApiProvider(IbkrImportInput input) {

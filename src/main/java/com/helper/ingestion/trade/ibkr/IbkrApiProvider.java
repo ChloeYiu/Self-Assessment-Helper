@@ -37,13 +37,16 @@ public class IbkrApiProvider {
     private static final ZoneId IBKR_REPORTING_TIME_ZONE = ZoneId.of("America/New_York");
     private static final String TOKEN_PROPERTY = "ibkr.flex.token";
     private static final String QUERY_ID_PROPERTY = "ibkr.flex.query-id";
+    private static final String POSITIONS_QUERY_ID_PROPERTY = "ibkr.flex.positions-query-id";
     private static final String VERSION_PROPERTY = "ibkr.flex.version";
 
     private final HttpClient httpClient;
     private final XmlDocumentParser xmlDocumentParser;
     private final String token;
-    private final String queryId;
+    private final String activityQueryId;
+    private final String positionsQueryId;
     private final String version;
+    private boolean hasSentFlexRequest;
 
     /**
      * Creates a provider using the default local config file at
@@ -80,18 +83,37 @@ public class IbkrApiProvider {
         this.xmlDocumentParser = new XmlDocumentParser();
         Objects.requireNonNull(properties, "properties");
         this.token = PropertiesConfig.requireProperty(properties, TOKEN_PROPERTY);
-        this.queryId = PropertiesConfig.requireProperty(properties, QUERY_ID_PROPERTY);
+        this.activityQueryId = PropertiesConfig.requireProperty(properties, QUERY_ID_PROPERTY);
+        this.positionsQueryId = PropertiesConfig.requireProperty(properties, POSITIONS_QUERY_ID_PROPERTY);
         this.version = PropertiesConfig.requireProperty(properties, VERSION_PROPERTY);
     }
 
     /**
-     * Retrieves every Flex statement needed for the requested inclusive date range.
+     * Retrieves every Activity Flex statement needed for the requested inclusive date range.
      *
      * <p>IBKR limits one Flex request to 365 days. This method hides that transport limit
      * by issuing adjacent requests and returning their statements in chronological order.</p>
      */
-    public IbkrApiResult getFlexStatementsXml(LocalDate fromDate, LocalDate toDate)
+    /** Retrieves Activity Flex statement XML for an inclusive date range. */
+    public IbkrApiResult getActivityStatementsXml(
+            LocalDate fromDate,
+            LocalDate toDate
+    ) throws IOException, InterruptedException {
+        return getFlexStatementsXml(activityQueryId, fromDate, toDate);
+    }
+
+    /** Retrieves Open Positions Flex statement XML for one reporting date. */
+    public IbkrApiResult getPositionStatementXml(LocalDate positionDate)
             throws IOException, InterruptedException {
+        return getFlexStatementsXml(positionsQueryId, positionDate, positionDate);
+    }
+
+    private IbkrApiResult getFlexStatementsXml(
+            String selectedQueryId,
+            LocalDate fromDate,
+            LocalDate toDate
+    ) throws IOException, InterruptedException {
+        String requestQueryId = requireQueryId(selectedQueryId);
         LocalDate effectiveToDate = truncateRequestedEndDate(fromDate, toDate);
         List<String> statements = new ArrayList<>();
         List<Issue> issues = new ArrayList<>();
@@ -106,9 +128,9 @@ public class IbkrApiProvider {
             LocalDate chunkEnd = requestEnd;
             try {
                 statements.add(downloadFlexStatementForSplitRange(
+                        requestQueryId,
                         chunkStart,
-                        chunkEnd,
-                        chunkStart.equals(fromDate)));
+                        chunkEnd));
             } catch (IbkrFlexApiException exception) {
                 issues.add(handleIbkrFlexApiException(exception, chunkStart, chunkEnd));
             }
@@ -119,14 +141,15 @@ public class IbkrApiProvider {
     }
 
     private String downloadFlexStatementForSplitRange(
+            String selectedQueryId,
             LocalDate fromDate,
-            LocalDate toDate,
-            boolean isFirstChunk
+            LocalDate toDate
     ) throws IOException, InterruptedException {
-        if (!isFirstChunk) {
+        if (hasSentFlexRequest) {
             waitBeforeNextSendRequest();
         }
-        return getFlexStatementXmlForRequest(fromDate, toDate);
+        hasSentFlexRequest = true;
+        return getFlexStatementXmlForRequest(selectedQueryId, fromDate, toDate);
     }
 
     private static void waitBeforeNextSendRequest() throws InterruptedException {
@@ -174,18 +197,18 @@ public class IbkrApiProvider {
         return latestAvailableDate;
     }
 
-    private String getFlexStatementXmlForRequest(LocalDate fromDate, LocalDate toDate)
+    private String getFlexStatementXmlForRequest(String selectedQueryId, LocalDate fromDate, LocalDate toDate)
             throws IOException, InterruptedException {
         DateRangeValidator.requireMaxDays(fromDate, toDate, MAX_DATE_RANGE_DAYS);
-        String statementReferenceCode = getRefCodeApi(fromDate, toDate);
+        String statementReferenceCode = getRefCodeApi(selectedQueryId, fromDate, toDate);
         return getFlexStatementApi(statementReferenceCode);
     }
 
-    private String getRefCodeApi(LocalDate fromDate, LocalDate toDate)
+    private String getRefCodeApi(String selectedQueryId, LocalDate fromDate, LocalDate toDate)
             throws IOException, InterruptedException {
         String responseXml = ApiRequest.sendGet(
                 httpClient,
-                createRefCodeUri(fromDate, toDate),
+                createRefCodeUri(selectedQueryId, fromDate, toDate),
                 "IBKR Flex request failed");
         requireSuccess(responseXml, "IBKR Flex SendRequest failed");
         Document response = xmlDocumentParser.parse(responseXml);
@@ -194,10 +217,10 @@ public class IbkrApiProvider {
                 .orElseThrow(() -> missingReferenceCode(response));
     }
 
-    private URI createRefCodeUri(LocalDate fromDate, LocalDate toDate) {
+    private URI createRefCodeUri(String selectedQueryId, LocalDate fromDate, LocalDate toDate) {
         Map<String, String> queryParameters = new LinkedHashMap<>();
         queryParameters.put("t", token);
-        queryParameters.put("q", queryId);
+        queryParameters.put("q", selectedQueryId);
         queryParameters.put("v", version);
         queryParameters.put("fd", ApiRequest.formatDate(fromDate, FLEX_DATE_FORMATTER));
         queryParameters.put("td", ApiRequest.formatDate(toDate, FLEX_DATE_FORMATTER));
@@ -290,6 +313,13 @@ public class IbkrApiProvider {
 
     private static boolean isBlank(String value) {
         return value == null || value.isBlank();
+    }
+
+    private static String requireQueryId(String selectedQueryId) {
+        if (isBlank(selectedQueryId)) {
+            throw new IllegalArgumentException("selectedQueryId must not be blank");
+        }
+        return selectedQueryId.trim();
     }
 
     private static final class IbkrFlexApiException extends IllegalStateException {

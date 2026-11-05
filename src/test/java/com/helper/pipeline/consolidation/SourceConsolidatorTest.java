@@ -84,8 +84,10 @@ public class SourceConsolidatorTest {
                 new SourceImportResult(
                         securities,
                         trades,
+                        List.of(),
                         LocalDate.of(2024, 10, 6),
-                        LocalDate.of(2026, 5, 5)),
+                        LocalDate.of(2026, 5, 5),
+                        List.of()),
                 new SecuritySupportResult(List.of(supportedSecurity), Map.of(
                         supportedSecurity.getIdentifier(), config), issues));
     }

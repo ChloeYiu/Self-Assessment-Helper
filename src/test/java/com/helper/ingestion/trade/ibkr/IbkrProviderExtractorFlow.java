@@ -1,6 +1,7 @@
 package com.helper.ingestion.trade.ibkr;
 
 import com.helper.issue.Issue;
+import com.helper.pipeline.importer.Position;
 import com.helper.util.table.TabularDocument;
 import com.helper.util.table.TabularColumn;
 import com.helper.util.table.TabularTable;
@@ -17,7 +18,8 @@ import java.util.stream.Collectors;
  *
  * <p>
  * Uses {@code config/ibkr-flex.properties}. Pass explicit from/to dates as
- * arguments, for example {@code 2025-04-06 2026-05-05}.
+ * arguments, for example {@code 2025-10-06 2026-05-05}. The first date is also the
+ * Open Positions cutoff.
  */
 public class IbkrProviderExtractorFlow {
     private static final Path DEFAULT_CONFIG_PATH = Path.of("config/ibkr-flex.properties");
@@ -31,11 +33,23 @@ public class IbkrProviderExtractorFlow {
         }
 
         IbkrApiProvider provider = new IbkrApiProvider(DEFAULT_CONFIG_PATH);
-        IbkrTradeMapper mapper = new IbkrTradeMapper();
-        IbkrApiProvider.IbkrApiResult download = provider.getFlexStatementsXml(
+        IbkrFlexStatementMapper mapper = new IbkrFlexStatementMapper();
+        IbkrApiProvider.IbkrApiResult activityResult = provider.getActivityStatementsXml(
                 dateRange.fromDate(), dateRange.toDate());
-        TabularDocument document = mapper.extractFlexStatementDocument(download.statementXmls());
-        printSummary(document, new DateRange(dateRange.fromDate(), download.effectiveEndDate()), download.issues());
+        IbkrApiProvider.IbkrApiResult positionsResult = provider.getPositionStatementXml(
+                dateRange.fromDate());
+        TabularDocument document = mapper.extractFlexStatementDocument(
+                activityResult.statementXmls(), positionsResult.statementXmls());
+        List<Issue> issues = new ArrayList<>(activityResult.issues());
+        issues.addAll(positionsResult.issues());
+        List<Position> positions = new IbkrPositionExtractor().extractPositions(
+                document, dateRange.fromDate());
+        printSummary(
+                document,
+                new DateRange(dateRange.fromDate(), activityResult.effectiveEndDate()),
+                dateRange.fromDate(),
+                positions,
+                issues);
     }
 
     private static DateRange parseDateRange(String[] args) {
@@ -49,6 +63,8 @@ public class IbkrProviderExtractorFlow {
     private static void printSummary(
             TabularDocument document,
             DateRange dateRange,
+            LocalDate openingPositionDate,
+            List<Position> positions,
             List<Issue> issues
     ) {
         if (dateRange.isEmpty()) {
@@ -57,6 +73,8 @@ public class IbkrProviderExtractorFlow {
             System.out.println("fromDate=" + dateRange.fromDate());
             System.out.println("toDate=" + dateRange.toDate());
         }
+        System.out.println("openingPositionDate=" + openingPositionDate);
+        System.out.println("positions=" + positions);
         System.out.println("source=" + document.getSourceName().orElse("unknown"));
         System.out.println("tables=" + document.getTables().size());
         System.out.println("issues=" + issues);

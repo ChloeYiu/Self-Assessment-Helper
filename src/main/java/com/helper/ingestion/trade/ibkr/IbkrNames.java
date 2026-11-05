@@ -11,6 +11,7 @@ public final class IbkrNames {
     public static final class Tables {
         public static final String TRADES = "Trades";
         public static final String SECURITIES = "Securities";
+        public static final String OPEN_POSITIONS = "OpenPositions";
 
         private Tables() {
         }
@@ -59,6 +60,19 @@ public final class IbkrNames {
         public static final String CURRENCY = "currency";
 
         private SecurityColumns() {
+        }
+    }
+
+    /** Raw attribute names copied from IBKR Flex Open Position XML rows. */
+    public static final class OpenPositionColumns {
+        public static final String ACCOUNT_ID = "accountId";
+        public static final String ASSET_CATEGORY = "assetCategory";
+        public static final String ISIN = "isin";
+        public static final String POSITION = "position";
+        public static final String REPORT_DATE = "reportDate";
+        public static final String SYMBOL = "symbol";
+
+        private OpenPositionColumns() {
         }
     }
 }

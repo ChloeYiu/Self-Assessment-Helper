@@ -16,7 +16,7 @@ import org.junit.Test;
 public class IbkrApiProviderTest {
 
     @Test
-    public void getFlexStatementsXml_usesReferenceCodeToFetchStatementXml() throws Exception {
+    public void getActivityStatementsXml_usesReferenceCodeToFetchStatementXml() throws Exception {
         MockHttpClient httpClient = new MockHttpClient()
                 .respondWith(200,
                         "<FlexStatementResponse><Status>Success</Status><ReferenceCode>abc-123</ReferenceCode>"
@@ -25,7 +25,7 @@ public class IbkrApiProviderTest {
 
         IbkrApiProvider provider = new IbkrApiProvider(httpClient, createProperties());
 
-        IbkrApiProvider.IbkrApiResult download = provider.getFlexStatementsXml(
+        IbkrApiProvider.IbkrApiResult download = provider.getActivityStatementsXml(
                 LocalDate.of(2025, 4, 6),
                 LocalDate.of(2026, 4, 5));
 
@@ -44,7 +44,26 @@ public class IbkrApiProviderTest {
     }
 
     @Test
-    public void getFlexStatementsXml_splitsRangesLongerThan365Days() throws Exception {
+    public void getPositionStatementXml_usesConfiguredPositionsQueryForOneDate() throws Exception {
+        MockHttpClient httpClient = new MockHttpClient()
+                .respondWith(200,
+                        "<FlexStatementResponse><Status>Success</Status><ReferenceCode>positions-123</ReferenceCode>"
+                                + "</FlexStatementResponse>")
+                .respondWith(200, "<FlexQueryResponse><FlexStatements count=\"1\" /></FlexQueryResponse>");
+        IbkrApiProvider provider = new IbkrApiProvider(httpClient, createProperties());
+        LocalDate positionDate = LocalDate.of(2025, 10, 6);
+
+        IbkrApiProvider.IbkrApiResult download = provider.getPositionStatementXml(positionDate);
+
+        assertEquals(1, download.statementXmls().size());
+        URI referenceCodeUri = httpClient.getRequestedUris().get(0);
+        assertTrue(referenceCodeUri.toString().contains("q=positions-query-id"));
+        assertTrue(referenceCodeUri.toString().contains("fd=20251006"));
+        assertTrue(referenceCodeUri.toString().contains("td=20251006"));
+    }
+
+    @Test
+    public void getActivityStatementsXml_splitsRangesLongerThan365Days() throws Exception {
         MockHttpClient httpClient = new MockHttpClient()
                 .respondWith(200,
                         "<FlexStatementResponse><Status>Success</Status><ReferenceCode>first</ReferenceCode>"
@@ -56,7 +75,7 @@ public class IbkrApiProviderTest {
                 .respondWith(200, "<FlexQueryResponse><FlexStatements count=\"1\" /></FlexQueryResponse>");
         IbkrApiProvider provider = new IbkrApiProvider(httpClient, createProperties());
 
-        IbkrApiProvider.IbkrApiResult download = provider.getFlexStatementsXml(
+        IbkrApiProvider.IbkrApiResult download = provider.getActivityStatementsXml(
                 LocalDate.of(2023, 10, 6),
                 LocalDate.of(2025, 5, 5));
 
@@ -68,7 +87,7 @@ public class IbkrApiProviderTest {
     }
 
     @Test
-    public void getFlexStatementsXml_throwsWhenIbkrReturnsFailureStatus() throws Exception {
+    public void getActivityStatementsXml_throwsWhenIbkrReturnsFailureStatus() throws Exception {
         MockHttpClient httpClient = new MockHttpClient()
                 .respondWith(200,
                         "<FlexStatementResponse><Status>Fail</Status><ErrorCode>101</ErrorCode>"
@@ -78,13 +97,15 @@ public class IbkrApiProviderTest {
 
         IllegalStateException exception = assertThrows(
                 IllegalStateException.class,
-                () -> provider.getFlexStatementsXml(LocalDate.of(2025, 4, 6), LocalDate.of(2025, 4, 7)));
+                () -> provider.getActivityStatementsXml(
+                        LocalDate.of(2025, 4, 6),
+                        LocalDate.of(2025, 4, 7)));
 
         assertEquals("IBKR Flex SendRequest failed: error code 101 - Bad request", exception.getMessage());
     }
 
     @Test
-    public void getFlexStatementsXml_truncatesFutureEndDateToPreviousNewYorkBusinessDay() throws Exception {
+    public void getActivityStatementsXml_truncatesFutureEndDateToPreviousNewYorkBusinessDay() throws Exception {
         MockHttpClient httpClient = new MockHttpClient()
                 .respondWith(200,
                         "<FlexStatementResponse><Status>Success</Status><ReferenceCode>abc-123</ReferenceCode>"
@@ -93,20 +114,20 @@ public class IbkrApiProviderTest {
         IbkrApiProvider provider = new IbkrApiProvider(httpClient, createProperties());
         LocalDate cutoff = previousNewYorkBusinessDay();
 
-        provider.getFlexStatementsXml(cutoff.minusDays(1), cutoff.plusDays(7));
+        provider.getActivityStatementsXml(cutoff.minusDays(1), cutoff.plusDays(7));
 
         assertTrue(httpClient.getRequestedUris().get(0).toString()
                 .contains("td=" + cutoff.format(java.time.format.DateTimeFormatter.BASIC_ISO_DATE)));
     }
 
     @Test
-    public void getFlexStatementsXml_rejectsRangeWhollyAfterPreviousNewYorkBusinessDay() {
+    public void getActivityStatementsXml_rejectsRangeWhollyAfterPreviousNewYorkBusinessDay() {
         IbkrApiProvider provider = new IbkrApiProvider(new MockHttpClient(), createProperties());
         LocalDate cutoff = previousNewYorkBusinessDay();
 
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class,
-                () -> provider.getFlexStatementsXml(cutoff.plusDays(1), cutoff.plusDays(7)));
+                () -> provider.getActivityStatementsXml(cutoff.plusDays(1), cutoff.plusDays(7)));
 
         assertEquals("IBKR Flex reports are available only through " + cutoff, exception.getMessage());
     }
@@ -123,6 +144,7 @@ public class IbkrApiProviderTest {
         Properties properties = new Properties();
         properties.setProperty("ibkr.flex.token", "test-token");
         properties.setProperty("ibkr.flex.query-id", "query-id");
+        properties.setProperty("ibkr.flex.positions-query-id", "positions-query-id");
         properties.setProperty("ibkr.flex.version", "3");
         return properties;
     }
