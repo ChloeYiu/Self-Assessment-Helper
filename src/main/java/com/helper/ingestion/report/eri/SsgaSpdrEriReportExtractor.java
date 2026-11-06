@@ -5,18 +5,22 @@ import com.helper.util.pdf.PdfTextDocument;
 import com.helper.util.pdf.PdfTextFilter;
 import com.helper.income.implementation.dividend.model.AccumulatingFundReport;
 import java.math.BigDecimal;
-import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Locale;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /** Extracts SSGA SPDR UK reportable income ERI PDF reports. */
-public class SsgaSpdrEriReportExtractor implements EriReportExtractor {
+public class SsgaSpdrEriReportExtractor extends EriReportExtractor {
+    private static final String REPORT_URI_PREFIX = "https://www.ssga.com/library-content/announcement/"
+            + "etfs/emea/uk-reportable-income/";
+    private static final int EARLIEST_SUPPORTED_REPORTING_YEAR = 2023;
+    private static final int LATEST_SUPPORTED_REPORTING_YEAR = 2025;
     private static final DateTimeFormatter REPORT_DATE_FORMATTER = DateTimeFormatter
             .ofPattern("d MMMM uuuu", Locale.ENGLISH);
     private static final Pattern REPORTING_PERIOD_ENDED_PATTERN = Pattern.compile(
@@ -27,19 +31,40 @@ public class SsgaSpdrEriReportExtractor implements EriReportExtractor {
             "^.*?%s\\s+\\S+\\s+([A-Z]{3})\\s+([0-9]+(?:\\.[0-9]+)?)(?:\\s+|$)(.*)$"
     );
 
-    /** Creates a deterministic ERI report extractor. */
+    /** Creates an extractor for SSGA SPDR Europe I reportable-income reports. */
     public SsgaSpdrEriReportExtractor() {
     }
 
-    /**
-     * Extracts the accumulating fund report row from a shared ERI report input.
-     */
+    /** Creates an extractor with an HTTP client supplied for transport or tests. */
+    SsgaSpdrEriReportExtractor(HttpClient httpClient) {
+        super(httpClient);
+    }
+
     @Override
-    public AccumulatingFundReport extractReport(EriReportInput input) throws IOException {
-        EriReportInput reportInput = Objects.requireNonNull(input, "input");
-        String fundIdentifier = requireNonBlank(reportInput.getIsin(), "isin");
-        PdfTextDocument document = reportInput.loadPdfTextDocument();
-        LocalDate reportingPeriodEndDate = extractReportingPeriodEndDate(document, reportInput.getReportingYear());
+    protected URI resolveReportUri(int reportingYear) {
+        if (reportingYear < EARLIEST_SUPPORTED_REPORTING_YEAR
+                || reportingYear > LATEST_SUPPORTED_REPORTING_YEAR) {
+            throw new IllegalArgumentException("SSGA Europe I report year is not supported: " + reportingYear);
+        }
+
+        if (reportingYear == 2023) {
+            return URI.create(REPORT_URI_PREFIX
+                    + "revised-ssga-spdr-i-excess-reportable-income-report-as-at-31-march-2023.pdf");
+        }
+
+        return URI.create(REPORT_URI_PREFIX
+                + "ssga-spdr-etfs-europe-i-plc-reportable-income-report-as-at-31-march-"
+                + reportingYear
+                + ".pdf");
+    }
+
+    @Override
+    protected AccumulatingFundReport parseReport(
+            PdfTextDocument document,
+            String fundIdentifier,
+            int reportingYear
+    ) {
+        LocalDate reportingPeriodEndDate = extractReportingPeriodEndDate(document, reportingYear);
         EriReportRow row = extractReportRow(document, fundIdentifier);
 
         LocalDate expectedDistributionDate = reportingPeriodEndDate.plusMonths(6);
@@ -115,14 +140,6 @@ public class SsgaSpdrEriReportExtractor implements EriReportExtractor {
         } catch (DateTimeParseException exception) {
             throw new IllegalArgumentException("invalid report date: " + text, exception);
         }
-    }
-
-    private static String requireNonBlank(String value, String name) {
-        String result = Objects.requireNonNull(value, name);
-        if (result.isBlank()) {
-            throw new IllegalArgumentException(name + " must not be blank");
-        }
-        return result;
     }
 
     private record EriReportRow(

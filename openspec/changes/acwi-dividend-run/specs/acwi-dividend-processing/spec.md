@@ -28,20 +28,35 @@ The system SHALL assemble source facts through one configured IBKR source before
 - **WHEN** one IBKR Flex statement request fails with provider error code `1003`
 - **THEN** the provider continues importing later adjacent ranges and the source result contains an `INFO` issue with the failed date range and provider code
 
-### Requirement: IBKR-derived security holding snapshot
-The system SHALL obtain the IBKR dividend opening holding snapshot from the Open Positions section of an Activity Flex statement ending on 6 October before the tax year.
+### Requirement: IBKR-derived opening holding snapshot
+The system SHALL obtain IBKR Open Positions at the shared earliest dividend boundary, 6 October before the tax year, and use the supported ISIN rows as the opening holding baseline for later ERI calculations.
 
 #### Scenario: Available opening boundary
-- **WHEN** the configured Activity Flex template includes Open Positions and IBKR makes the statement ending on 6 October before the tax year available
-- **THEN** the importer extracts the account, ISIN, units, timestamp, and source provenance into the security holding snapshot used for the dividend calculation
+- **WHEN** the configured IBKR Flex Positions query makes the statement ending on 6 October before the tax year available
+- **THEN** the importer retains the account-wide statement as source evidence, returns its normalized source positions, and the consolidator creates the opening security holding snapshot for each supported ISIN
+
+#### Scenario: Available statement has no supported security row
+- **WHEN** the configured IBKR Flex Positions query returns a valid statement but no row for a supported ISIN
+- **THEN** the consolidator creates a zero-quantity opening snapshot for that ISIN and records an `INFO` zero-opening-holding issue
 
 #### Scenario: Unavailable opening boundary
 - **WHEN** IBKR cannot provide the statement ending on 6 October before the tax year
-- **THEN** the system records incomplete input for that boundary and does not infer a zero holding
+- **THEN** the importer returns zero `Position` rows for that request and an `INFO` unavailable-range issue; consolidation creates a zero-quantity holding snapshot and continues
 
 ### Requirement: Reviewable ACWI import outcome
 The system SHALL distinguish calculated contributions, ignored unrelated activity, review items, and assumptions.
 
 #### Scenario: Missing opening holding
-- **WHEN** the permitted opening-zero fallback is used
-- **THEN** the import report identifies the security and boundary date as an assumption
+- **WHEN** no opening holding snapshot was created by source consolidation
+- **THEN** the non-UK accumulating-fund pipeline returns an `ERROR` issue for that ISIN and does not infer a zero holding or prepare its dividend source
+
+### Requirement: Non-UK accumulating-fund preparation
+The system SHALL prepare one non-UK accumulating-fund dividend source from the configured ERI format, the report applicable to the requested tax year, the opening holding snapshot, post-boundary report-period trades, and required FX rates.
+
+#### Scenario: Valid ERI preparation
+- **WHEN** a configured security has a registered ERI extractor, a valid report for the tax-year start year, exactly one 6 October opening snapshot, valid later trades through the report end, and monthly or yearly HMRC FX rates
+- **THEN** the system returns a prepared `NonUkDomicileAccumulatingDividend` source and does not return an issue for that security
+
+#### Scenario: Preparation prerequisite unavailable
+- **WHEN** the ERI format has no registered extractor, the report cannot be loaded or parsed, the boundary snapshot is missing or invalid, the FX input is unavailable, or the prepared source is invalid
+- **THEN** the system returns an `ERROR` issue with the ISIN and skips that security while continuing with other configured securities

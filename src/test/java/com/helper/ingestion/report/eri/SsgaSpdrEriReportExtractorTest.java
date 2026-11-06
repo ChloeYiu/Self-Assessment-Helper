@@ -1,6 +1,7 @@
 package com.helper.ingestion.report.eri;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 
 import com.helper.config.CurrencyCode;
 import com.helper.income.implementation.dividend.model.AccumulatingFundReport;
@@ -18,45 +19,48 @@ public class SsgaSpdrEriReportExtractorTest {
     private static final String ACWI_ISIN = "IE00B44Z5B48";
 
     @Test
+    public void extractReport_rejectsYearsOutsideSupportedRangeBeforeFetching() {
+        MockHttpClient httpClient = new MockHttpClient();
+        SsgaSpdrEriReportExtractor extractor = new SsgaSpdrEriReportExtractor(httpClient);
+
+        IllegalArgumentException beforeRange = assertThrows(IllegalArgumentException.class,
+                () -> extractor.extractReport(ACWI_ISIN, 2022));
+        IllegalArgumentException afterRange = assertThrows(IllegalArgumentException.class,
+                () -> extractor.extractReport(ACWI_ISIN, 2026));
+
+        assertEquals("SSGA Europe I report year is not supported: 2022", beforeRange.getMessage());
+        assertEquals("SSGA Europe I report year is not supported: 2026", afterRange.getMessage());
+        assertEquals(0, httpClient.getRequestedUris().size());
+    }
+
+    @Test
     public void extractReport_readsNewSsgaSpdrReportFormatForAcwi() throws Exception {
         Path pdfPath = resourcePath("ssga-spdr-europe-i-reportable-income-2025.pdf");
+        MockHttpClient httpClient = new MockHttpClient()
+                .respondWith(200, Files.readAllBytes(pdfPath));
 
-        AccumulatingFundReport report = new SsgaSpdrEriReportExtractor().extractReport(new EriReportInput(
-                ACWI_ISIN,
-                2025,
-                pdfPath
-        ));
+        AccumulatingFundReport report = new SsgaSpdrEriReportExtractor(httpClient)
+                .extractReport(ACWI_ISIN, 2025);
 
         assertReport(report, 2025, "3.4253", CurrencyCode.USD);
+        assertEquals(URI.create("https://www.ssga.com/library-content/announcement/etfs/emea/"
+                        + "uk-reportable-income/ssga-spdr-etfs-europe-i-plc-reportable-income-report-as-at-31-march-2025.pdf"),
+                httpClient.getRequestedUris().get(0));
     }
 
     @Test
     public void extractReport_readsLegacyRevisedSsgaSpdrReportFormatForAcwi() throws Exception {
         Path pdfPath = resourcePath("revised-ssga-spdr-i-excess-reportable-income-2023.pdf");
-
-        AccumulatingFundReport report = new SsgaSpdrEriReportExtractor().extractReport(new EriReportInput(
-                ACWI_ISIN,
-                2023,
-                pdfPath
-        ));
-
-        assertReport(report, 2023, "2.7449", CurrencyCode.USD);
-    }
-
-    @Test
-    public void extractReport_fetchesReportUri() throws Exception {
-        Path pdfPath = resourcePath("ssga-spdr-europe-i-reportable-income-2025.pdf");
         MockHttpClient httpClient = new MockHttpClient()
                 .respondWith(200, Files.readAllBytes(pdfPath));
 
-        AccumulatingFundReport report = new SsgaSpdrEriReportExtractor().extractReport(new EriReportInput(
-                ACWI_ISIN,
-                2025,
-                URI.create("https://example.com/report.pdf"),
-                httpClient
-        ));
+        AccumulatingFundReport report = new SsgaSpdrEriReportExtractor(httpClient)
+                .extractReport(ACWI_ISIN, 2023);
 
-        assertReport(report, 2025, "3.4253", CurrencyCode.USD);
+        assertReport(report, 2023, "2.7449", CurrencyCode.USD);
+        assertEquals(URI.create("https://www.ssga.com/library-content/announcement/etfs/emea/"
+                        + "uk-reportable-income/revised-ssga-spdr-i-excess-reportable-income-report-as-at-31-march-2023.pdf"),
+                httpClient.getRequestedUris().get(0));
     }
 
     private static Path resourcePath(String fileName) throws Exception {
