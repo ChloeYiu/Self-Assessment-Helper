@@ -26,7 +26,7 @@ None.
 
 Depends on unresolved D001–D006 and D010 where relevant. This is planning only; it does not authorize implementation.
 
-The affected boundaries are the existing `pipeline` classes and their connection to `TaxCalculator`. Capital-gain execution remains owned by [capital-gains-and-multi-year-state](../capital-gains-and-multi-year-state/proposal.md); new providers, savings delivery, and user-facing category selection remain owned by [other-sources-and-product-access](../other-sources-and-product-access/proposal.md).
+The affected boundaries are the existing `pipeline` classes and their connection to `TaxCalculator`. The initial ACWI run establishes a programmatic category-selection request boundary that a future CLI or UI can call; the CLI/UI screens, new providers, and savings delivery remain owned by [other-sources-and-product-access](../other-sources-and-product-access/proposal.md). Capital-gain execution remains owned by [capital-gains-and-multi-year-state](../capital-gains-and-multi-year-state/proposal.md).
 
 ## Idea and decision index
 

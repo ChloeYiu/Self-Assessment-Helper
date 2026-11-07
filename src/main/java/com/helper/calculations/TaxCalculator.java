@@ -1,52 +1,112 @@
 package com.helper.calculations;
 
-import com.helper.config.TaxYear;
+import com.helper.income.IncomeType;
+import com.helper.pipeline.IncomeAssembler;
+import com.helper.pipeline.investment.InvestmentPipeline;
+import com.helper.pipeline.TaxPipeline;
+import com.helper.pipeline.TaxPipelineFactory;
+import com.helper.pipeline.TaxPipelineResult;
 import com.helper.support.fx.FxRateProvider;
 import com.helper.support.registry.Registry;
 import com.helper.support.registry.RegistryKeys;
 
 import java.io.IOException;
+import java.nio.file.Path;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * Top-level backend coordinator for one tax calculation run.
  *
- * It owns the run registry and will later initialize shared upstream data before executing pipelines.
+ * It runs selected registered income categories with shared run resources.
  */
 public class TaxCalculator {
-    private final TaxYear taxYear;
-    private final Registry registry;
+    private static final Path DEFAULT_IBKR_CONFIG_PATH = Path.of("config/ibkr-flex.properties");
+    private static final Map<IncomeType, TaxPipelineFactory> PIPELINE_FACTORIES_BY_INCOME_TYPE = Map.of(
+            IncomeType.DIVIDENDS,
+            InvestmentPipeline::new);
 
-    /** Creates a tax calculator for one tax year with a fresh run registry. */
-    public TaxCalculator(TaxYear taxYear) {
-        this.taxYear = Objects.requireNonNull(taxYear, "taxYear");
-        this.registry = new Registry();
+    private final FxRateProvider fxRateProvider;
+    private final Map<IncomeType, TaxPipelineFactory> pipelineFactoriesByIncomeType;
+
+    /** Creates the calculator with the application's registered category factories. */
+    public TaxCalculator() {
+        this(new FxRateProvider());
     }
 
-    /** Runs the full tax calculation flow for this tax year. */
-    public TaxCalculationResult run() throws IOException, InterruptedException {
-        initializeRegistry();
-        return new TaxCalculationResult();
+    TaxCalculator(FxRateProvider fxRateProvider) {
+        this(fxRateProvider, PIPELINE_FACTORIES_BY_INCOME_TYPE);
     }
 
-    /** Initializes shared registry values needed by pipelines and calculators. */
-    private void initializeRegistry() throws IOException, InterruptedException {
-        FxRateProvider fxRateProvider = new FxRateProvider();
-        registry.put(
-                RegistryKeys.MONTHLY_FX_RATE_DOCUMENT,
-                fxRateProvider.fetchMonthlyRateDocument(taxYear));
-        registry.put(
-                RegistryKeys.YEARLY_FX_RATE_DOCUMENT,
-                fxRateProvider.fetchYearlyRateDocument(taxYear));
+    TaxCalculator(
+            FxRateProvider fxRateProvider,
+            Map<IncomeType, TaxPipelineFactory> pipelineFactoriesByIncomeType
+    ) {
+        this.fxRateProvider = Objects.requireNonNull(fxRateProvider, "fxRateProvider");
+        this.pipelineFactoriesByIncomeType = Map.copyOf(Objects.requireNonNull(
+                pipelineFactoriesByIncomeType, "pipelineFactoriesByIncomeType"));
     }
 
-    /** Returns the tax year being processed. */
-    public TaxYear getTaxYear() {
-        return taxYear;
+    /** Returns the income categories registered in this application instance. */
+    public Set<IncomeType> getAvailableIncomeTypes() {
+        return pipelineFactoriesByIncomeType.keySet();
     }
 
-    /** Returns this run's generic registry. */
-    public Registry getRegistry() {
-        return registry;
+    /** Runs every selected category with the local default IBKR Flex configuration. */
+    public TaxCalculationResult run(TaxCalculationRequest request)
+            throws IOException, InterruptedException {
+        Registry registry = new Registry();
+        registry.put(RegistryKeys.IBKR_CONFIG_PATH, DEFAULT_IBKR_CONFIG_PATH);
+        return run(request, registry);
+    }
+
+    /** Runs every selected category using the caller-supplied run registry. */
+    public TaxCalculationResult run(TaxCalculationRequest request, Registry registry)
+            throws IOException, InterruptedException {
+        Objects.requireNonNull(request, "request");
+        Objects.requireNonNull(registry, "registry");
+        validateRequestedIncomeTypes(request);
+        initializeRegistry(request, registry);
+        return runAndAssembleSelectedPipelines(request, registry, pipelineFactoriesByIncomeType);
+    }
+
+    private void validateRequestedIncomeTypes(TaxCalculationRequest request) {
+        for (IncomeType incomeType : request.selectedIncomeTypes()) {
+            if (!pipelineFactoriesByIncomeType.containsKey(incomeType)) {
+                throw new IllegalArgumentException("income type is not registered: " + incomeType);
+            }
+        }
+    }
+
+    private void initializeRegistry(TaxCalculationRequest request, Registry registry)
+            throws IOException, InterruptedException {
+        if (!registry.contains(RegistryKeys.MONTHLY_FX_RATE_DOCUMENT)) {
+            registry.put(
+                    RegistryKeys.MONTHLY_FX_RATE_DOCUMENT,
+                    fxRateProvider.fetchMonthlyRateDocument(request.taxYear()));
+        }
+        if (!registry.contains(RegistryKeys.YEARLY_FX_RATE_DOCUMENT)) {
+            registry.put(
+                    RegistryKeys.YEARLY_FX_RATE_DOCUMENT,
+                    fxRateProvider.fetchYearlyRateDocument(request.taxYear()));
+        }
+    }
+
+    private static TaxCalculationResult runAndAssembleSelectedPipelines(
+            TaxCalculationRequest request,
+            Registry registry,
+            Map<IncomeType, TaxPipelineFactory> pipelineFactoriesByIncomeType
+    ) throws IOException, InterruptedException {
+        IncomeAssembler assembler = new IncomeAssembler(request.taxYear());
+
+        for (IncomeType incomeType : request.selectedIncomeTypes()) {
+            TaxPipeline pipeline = Objects.requireNonNull(
+                    pipelineFactoriesByIncomeType.get(incomeType).create(registry),
+                    "taxPipeline");
+            TaxPipelineResult result = pipeline.run(request);
+            assembler.add(result);
+        }
+        return assembler.build();
     }
 }
