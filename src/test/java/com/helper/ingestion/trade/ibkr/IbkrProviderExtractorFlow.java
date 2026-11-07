@@ -1,7 +1,7 @@
 package com.helper.ingestion.trade.ibkr;
 
 import com.helper.issue.Issue;
-import com.helper.pipeline.importer.Position;
+import com.helper.pipeline.investment.importer.Position;
 import com.helper.util.table.TabularDocument;
 import com.helper.util.table.TabularColumn;
 import com.helper.util.table.TabularTable;
