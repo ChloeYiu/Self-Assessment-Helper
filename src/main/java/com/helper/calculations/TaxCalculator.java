@@ -1,11 +1,11 @@
 package com.helper.calculations;
 
-import com.helper.income.IncomeType;
 import com.helper.pipeline.IncomeAssembler;
 import com.helper.pipeline.investment.InvestmentPipeline;
 import com.helper.pipeline.TaxPipeline;
 import com.helper.pipeline.TaxPipelineFactory;
 import com.helper.pipeline.TaxPipelineResult;
+import com.helper.pipeline.TaxPipelineType;
 import com.helper.support.fx.FxRateProvider;
 import com.helper.support.registry.Registry;
 import com.helper.support.registry.RegistryKeys;
@@ -19,38 +19,34 @@ import java.util.Set;
 /**
  * Top-level backend coordinator for one tax calculation run.
  *
- * It runs selected registered income categories with shared run resources.
+ * It runs selected registered tax-pipeline domains with shared run resources.
  */
 public class TaxCalculator {
     private static final Path DEFAULT_IBKR_CONFIG_PATH = Path.of("config/ibkr-flex.properties");
-    private static final Map<IncomeType, TaxPipelineFactory> PIPELINE_FACTORIES_BY_INCOME_TYPE = Map.of(
-            IncomeType.DIVIDENDS,
+    private static final Map<TaxPipelineType, TaxPipelineFactory> PIPELINE_FACTORIES_BY_TYPE = Map.of(
+            TaxPipelineType.INVESTMENT,
             InvestmentPipeline::new);
 
     private final FxRateProvider fxRateProvider;
-    private final Map<IncomeType, TaxPipelineFactory> pipelineFactoriesByIncomeType;
+    private final Map<TaxPipelineType, TaxPipelineFactory> pipelineFactoriesByType;
 
     /** Creates the calculator with the application's registered category factories. */
     public TaxCalculator() {
-        this(new FxRateProvider());
-    }
-
-    TaxCalculator(FxRateProvider fxRateProvider) {
-        this(fxRateProvider, PIPELINE_FACTORIES_BY_INCOME_TYPE);
+        this(new FxRateProvider(), PIPELINE_FACTORIES_BY_TYPE);
     }
 
     TaxCalculator(
             FxRateProvider fxRateProvider,
-            Map<IncomeType, TaxPipelineFactory> pipelineFactoriesByIncomeType
+            Map<TaxPipelineType, TaxPipelineFactory> pipelineFactoriesByType
     ) {
         this.fxRateProvider = Objects.requireNonNull(fxRateProvider, "fxRateProvider");
-        this.pipelineFactoriesByIncomeType = Map.copyOf(Objects.requireNonNull(
-                pipelineFactoriesByIncomeType, "pipelineFactoriesByIncomeType"));
+        this.pipelineFactoriesByType = Map.copyOf(Objects.requireNonNull(
+                pipelineFactoriesByType, "pipelineFactoriesByType"));
     }
 
-    /** Returns the income categories registered in this application instance. */
-    public Set<IncomeType> getAvailableIncomeTypes() {
-        return pipelineFactoriesByIncomeType.keySet();
+    /** Returns the top-level pipeline domains registered in this application instance. */
+    public Set<TaxPipelineType> getAvailablePipelineTypes() {
+        return pipelineFactoriesByType.keySet();
     }
 
     /** Runs every selected category with the local default IBKR Flex configuration. */
@@ -66,15 +62,15 @@ public class TaxCalculator {
             throws IOException, InterruptedException {
         Objects.requireNonNull(request, "request");
         Objects.requireNonNull(registry, "registry");
-        validateRequestedIncomeTypes(request);
+        validateRequestedPipelineTypes(request);
         initializeRegistry(request, registry);
-        return runAndAssembleSelectedPipelines(request, registry, pipelineFactoriesByIncomeType);
+        return runAndAssembleSelectedPipelines(request, registry, pipelineFactoriesByType);
     }
 
-    private void validateRequestedIncomeTypes(TaxCalculationRequest request) {
-        for (IncomeType incomeType : request.selectedIncomeTypes()) {
-            if (!pipelineFactoriesByIncomeType.containsKey(incomeType)) {
-                throw new IllegalArgumentException("income type is not registered: " + incomeType);
+    private void validateRequestedPipelineTypes(TaxCalculationRequest request) {
+        for (TaxPipelineType pipelineType : request.selectedPipelineTypes()) {
+            if (!pipelineFactoriesByType.containsKey(pipelineType)) {
+                throw new IllegalArgumentException("pipeline type is not registered: " + pipelineType);
             }
         }
     }
@@ -96,13 +92,13 @@ public class TaxCalculator {
     private static TaxCalculationResult runAndAssembleSelectedPipelines(
             TaxCalculationRequest request,
             Registry registry,
-            Map<IncomeType, TaxPipelineFactory> pipelineFactoriesByIncomeType
+            Map<TaxPipelineType, TaxPipelineFactory> pipelineFactoriesByType
     ) throws IOException, InterruptedException {
         IncomeAssembler assembler = new IncomeAssembler(request.taxYear());
 
-        for (IncomeType incomeType : request.selectedIncomeTypes()) {
+        for (TaxPipelineType pipelineType : request.selectedPipelineTypes()) {
             TaxPipeline pipeline = Objects.requireNonNull(
-                    pipelineFactoriesByIncomeType.get(incomeType).create(registry),
+                    pipelineFactoriesByType.get(pipelineType).create(registry),
                     "taxPipeline");
             TaxPipelineResult result = pipeline.run(request);
             assembler.add(result);

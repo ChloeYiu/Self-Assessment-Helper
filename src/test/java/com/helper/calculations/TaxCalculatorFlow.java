@@ -2,21 +2,21 @@ package com.helper.calculations;
 
 import com.helper.config.TaxYear;
 import com.helper.income.IncomeResult;
-import com.helper.income.IncomeType;
 import com.helper.issue.Issue;
+import com.helper.pipeline.TaxPipelineType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.Set;
 
-/** Manual live flow for running one selected income category through {@link TaxCalculator}. */
+/** Manual live flow for running one selected top-level pipeline through {@link TaxCalculator}. */
 public class TaxCalculatorFlow {
     public static void main(String[] args) throws Exception {
         TaxYear taxYear = parseTaxYear(args);
         TaxCalculator calculator = new TaxCalculator();
-        IncomeType incomeType = selectIncomeType(calculator.getAvailableIncomeTypes());
+        TaxPipelineType pipelineType = selectPipelineType(calculator.getAvailablePipelineTypes());
         TaxCalculationResult result = calculator.run(
-                new TaxCalculationRequest(taxYear, Set.of(incomeType)));
+                new TaxCalculationRequest(taxYear, Set.of(pipelineType)));
 
         printResult(result);
     }
@@ -28,20 +28,20 @@ public class TaxCalculatorFlow {
         return TaxYear.of(Integer.parseInt(args[0]));
     }
 
-    private static IncomeType selectIncomeType(Set<IncomeType> availableIncomeTypes) {
-        List<IncomeType> incomeTypes = new ArrayList<>(availableIncomeTypes);
-        incomeTypes.sort(Enum::compareTo);
-        System.out.println("Select an income type:");
-        for (int index = 0; index < incomeTypes.size(); index++) {
-            System.out.println((index + 1) + ". " + incomeTypes.get(index));
+    private static TaxPipelineType selectPipelineType(Set<TaxPipelineType> availablePipelineTypes) {
+        List<TaxPipelineType> pipelineTypes = new ArrayList<>(availablePipelineTypes);
+        pipelineTypes.sort(Enum::compareTo);
+        System.out.println("Select a tax pipeline:");
+        for (int index = 0; index < pipelineTypes.size(); index++) {
+            System.out.println((index + 1) + ". " + pipelineTypes.get(index));
         }
 
         Scanner scanner = new Scanner(System.in);
         int selection = Integer.parseInt(scanner.nextLine());
-        if (selection < 1 || selection > incomeTypes.size()) {
-            throw new IllegalArgumentException("income type selection is out of range: " + selection);
+        if (selection < 1 || selection > pipelineTypes.size()) {
+            throw new IllegalArgumentException("tax pipeline selection is out of range: " + selection);
         }
-        return incomeTypes.get(selection - 1);
+        return pipelineTypes.get(selection - 1);
     }
 
     private static void printResult(TaxCalculationResult result) {

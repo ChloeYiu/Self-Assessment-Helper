@@ -14,6 +14,7 @@ import com.helper.pipeline.investment.InvestmentPipelineResult;
 import com.helper.pipeline.TaxPipeline;
 import com.helper.pipeline.TaxPipelineFactory;
 import com.helper.pipeline.TaxPipelineResult;
+import com.helper.pipeline.TaxPipelineType;
 import com.helper.support.fx.FxRateProvider;
 import com.helper.support.registry.Registry;
 import com.helper.support.registry.RegistryKeys;
@@ -26,14 +27,14 @@ import org.junit.Test;
 
 public class TaxCalculatorTest {
     @Test
-    public void run_returnsTheSelectedCategoryResultAndInitializesSharedFxDocuments() throws Exception {
+    public void run_selectedInvestmentPipelineReturnsDividendResultAndInitializesSharedFxDocuments() throws Exception {
         Dividend dividend = new FixedDividend(TaxYear.of(2025), new BigDecimal("12.34"));
         Issue issue = new Issue(
                 IssueCode.UNIMPLEMENTED_DIVIDEND_METHOD,
                 IssueSeverity.WARNING,
                 "test",
                 Map.of("isin", "IE00B44Z5B48"));
-        TaxPipelineFactory dividendFactory = registry -> new TaxPipeline() {
+        TaxPipelineFactory investmentPipelineFactory = registry -> new TaxPipeline() {
             @Override
             public TaxPipelineResult run(TaxCalculationRequest request) {
                 return new InvestmentPipelineResult(List.of(dividend), List.of(issue));
@@ -42,10 +43,10 @@ public class TaxCalculatorTest {
         Registry registry = new Registry();
         TaxCalculator calculator = new TaxCalculator(
                 new FixedFxRateProvider(),
-                Map.of(IncomeType.DIVIDENDS, dividendFactory));
+                Map.of(TaxPipelineType.INVESTMENT, investmentPipelineFactory));
 
         TaxCalculationResult result = calculator.run(
-                new TaxCalculationRequest(TaxYear.of(2025), Set.of(IncomeType.DIVIDENDS)),
+                new TaxCalculationRequest(TaxYear.of(2025), Set.of(TaxPipelineType.INVESTMENT)),
                 registry);
 
         assertEquals(new BigDecimal("12.34"), result.findIncomeResult(IncomeType.DIVIDENDS)
