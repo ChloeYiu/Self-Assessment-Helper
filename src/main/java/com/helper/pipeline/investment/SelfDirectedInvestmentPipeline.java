@@ -15,17 +15,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Prepares all investment sources from one shared investment assembly pass.
+ * Prepares self-directed investment sources from one shared investment assembly pass.
  *
  * <p>The current implementation prepares dividends. Future capital-gain preparation reuses the
  * same consolidated source result before this pipeline returns its result.</p>
  */
-public final class InvestmentPipeline implements TaxPipeline {
+public final class SelfDirectedInvestmentPipeline implements TaxPipeline {
     private final InvestmentAssemblyPipeline assemblyPipeline;
     private final InvestmentDividendPipeline dividendPipeline;
 
     /** Creates the registry-bound investment pipeline for the selected IBKR configuration. */
-    public InvestmentPipeline(Registry registry) throws IOException {
+    public SelfDirectedInvestmentPipeline(Registry registry) throws IOException {
         this.assemblyPipeline = new InvestmentAssemblyPipeline(
                 registry.require(RegistryKeys.IBKR_CONFIG_PATH));
         this.dividendPipeline = new InvestmentDividendPipeline(registry);

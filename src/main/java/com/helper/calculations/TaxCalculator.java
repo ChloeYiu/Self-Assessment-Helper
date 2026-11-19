@@ -1,7 +1,7 @@
 package com.helper.calculations;
 
 import com.helper.pipeline.IncomeAssembler;
-import com.helper.pipeline.investment.InvestmentPipeline;
+import com.helper.pipeline.investment.SelfDirectedInvestmentPipeline;
 import com.helper.pipeline.TaxPipeline;
 import com.helper.pipeline.TaxPipelineFactory;
 import com.helper.pipeline.TaxPipelineResult;
@@ -25,7 +25,7 @@ public class TaxCalculator {
     private static final Path DEFAULT_IBKR_CONFIG_PATH = Path.of("config/ibkr-flex.properties");
     private static final Map<TaxPipelineType, TaxPipelineFactory> PIPELINE_FACTORIES_BY_TYPE = Map.of(
             TaxPipelineType.INVESTMENT,
-            InvestmentPipeline::new);
+            SelfDirectedInvestmentPipeline::new);
 
     private final FxRateProvider fxRateProvider;
     private final Map<TaxPipelineType, TaxPipelineFactory> pipelineFactoriesByType;

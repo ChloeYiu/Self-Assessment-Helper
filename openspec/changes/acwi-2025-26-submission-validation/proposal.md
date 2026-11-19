@@ -23,4 +23,4 @@ None.
 
 ## Impact
 
-This is a future read-only validation exercise over the existing `InvestmentPipeline`, IBKR Flex configuration, SSGA ERI report source, and HMRC FX data. It originates from the deferred end-to-end evidence in archived `acwi-dividend-run` tasks 1.3, 1.5, 1.7, 1.9, and 1.10.
+This is a future read-only validation exercise over the existing `SelfDirectedInvestmentPipeline`, IBKR Flex configuration, SSGA ERI report source, and HMRC FX data. It originates from the deferred end-to-end evidence in archived `acwi-dividend-run` tasks 1.3, 1.5, 1.7, 1.9, and 1.10.
