@@ -6,7 +6,7 @@ import com.helper.income.IncomeResult;
 import com.helper.income.IncomeType;
 import com.helper.income.implementation.DividendIncome;
 import com.helper.issue.Issue;
-import com.helper.pipeline.investment.InvestmentPipelineResult;
+import com.helper.pipeline.selfdirectedinvestment.InvestmentPipelineResult;
 import com.helper.pipeline.TaxPipelineResult;
 import java.util.ArrayList;
 import java.util.EnumMap;

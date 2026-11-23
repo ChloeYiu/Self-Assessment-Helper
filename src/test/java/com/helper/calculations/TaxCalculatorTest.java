@@ -10,7 +10,7 @@ import com.helper.income.implementation.dividend.model.DividendResult;
 import com.helper.issue.Issue;
 import com.helper.issue.IssueCode;
 import com.helper.issue.IssueSeverity;
-import com.helper.pipeline.investment.InvestmentPipelineResult;
+import com.helper.pipeline.selfdirectedinvestment.InvestmentPipelineResult;
 import com.helper.pipeline.TaxPipeline;
 import com.helper.pipeline.TaxPipelineFactory;
 import com.helper.pipeline.TaxPipelineResult;

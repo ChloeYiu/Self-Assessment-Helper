@@ -9,7 +9,7 @@ import com.helper.income.implementation.dividend.model.DividendResult;
 import com.helper.issue.Issue;
 import com.helper.issue.IssueCode;
 import com.helper.issue.IssueSeverity;
-import com.helper.pipeline.investment.InvestmentPipelineResult;
+import com.helper.pipeline.selfdirectedinvestment.InvestmentPipelineResult;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;

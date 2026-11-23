@@ -2,7 +2,7 @@ package com.helper.ingestion.trade.ibkr;
 
 import static org.junit.Assert.assertEquals;
 
-import com.helper.pipeline.investment.importer.Position;
+import com.helper.pipeline.selfdirectedinvestment.importer.Position;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;

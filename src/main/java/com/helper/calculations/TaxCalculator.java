@@ -2,7 +2,7 @@ package com.helper.calculations;
 
 import com.helper.pipeline.IncomeAssembler;
 import com.helper.pipeline.investment.managed.ManagedInvestmentPipeline;
-import com.helper.pipeline.investment.SelfDirectedInvestmentPipeline;
+import com.helper.pipeline.selfdirectedinvestment.SelfDirectedInvestmentPipeline;
 import com.helper.pipeline.TaxPipeline;
 import com.helper.pipeline.TaxPipelineFactory;
 import com.helper.pipeline.TaxPipelineResult;
