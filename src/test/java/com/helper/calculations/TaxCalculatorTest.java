@@ -37,7 +37,7 @@ public class TaxCalculatorTest {
         TaxPipelineFactory investmentPipelineFactory = registry -> new TaxPipeline() {
             @Override
             public TaxPipelineResult run(TaxCalculationRequest request) {
-                return new SelfDirectedInvestmentPipelineResult(List.of(dividend), List.of(issue));
+                return new SelfDirectedInvestmentPipelineResult(List.of(), List.of(dividend), List.of(issue));
             }
         };
         Registry registry = new Registry();
@@ -49,7 +49,7 @@ public class TaxCalculatorTest {
                 new TaxCalculationRequest(TaxYear.of(2025), Set.of(TaxPipelineType.SELF_DIRECTED_INVESTMENT)),
                 registry);
 
-        assertEquals(new BigDecimal("12.34"), result.findIncomeResult(IncomeType.DIVIDENDS)
+        assertEquals(new BigDecimal("12.34"), result.findIncomeResult(IncomeType.FOREIGN_DIVIDENDS)
                 .orElseThrow().getGrossIncome());
         assertEquals(List.of(issue), result.getIssues());
         assertTrue(registry.contains(RegistryKeys.MONTHLY_FX_RATE_DOCUMENT));

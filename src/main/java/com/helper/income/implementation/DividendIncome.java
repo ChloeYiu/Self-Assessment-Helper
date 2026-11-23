@@ -16,11 +16,11 @@ import java.util.Objects;
 /**
  * Aggregate for dividend income sources.
  */
-public class DividendIncome implements IncomeWithSource<Dividend> {
+abstract class DividendIncome implements IncomeWithSource<Dividend> {
     private final TaxYear taxYear;
     private final List<Dividend> dividendSources;
 
-    public DividendIncome(TaxYear taxYear) {
+    protected DividendIncome(TaxYear taxYear) {
         this.taxYear = Objects.requireNonNull(taxYear, "taxYear");
         this.dividendSources = new ArrayList<>();
     }
@@ -35,9 +35,7 @@ public class DividendIncome implements IncomeWithSource<Dividend> {
     }
 
     @Override
-    public IncomeType getIncomeType() {
-        return IncomeType.DIVIDENDS;
-    }
+    public abstract IncomeType getIncomeType();
 
     @Override
     public IncomeResult calculateResult() {

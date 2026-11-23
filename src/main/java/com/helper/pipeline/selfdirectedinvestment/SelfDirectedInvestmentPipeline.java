@@ -38,6 +38,6 @@ public final class SelfDirectedInvestmentPipeline implements TaxPipeline {
         InvestmentDividendResult dividendResult = dividendPipeline.prepare(sourceResult);
         List<Issue> issues = new ArrayList<>(sourceResult.issues());
         issues.addAll(dividendResult.issues());
-        return new SelfDirectedInvestmentPipelineResult(dividendResult.dividendSources(), issues);
+        return new SelfDirectedInvestmentPipelineResult(List.of(), dividendResult.dividendSources(), issues);
     }
 }

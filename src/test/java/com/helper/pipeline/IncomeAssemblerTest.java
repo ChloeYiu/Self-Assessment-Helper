@@ -27,12 +27,14 @@ public class IncomeAssemblerTest {
         IncomeAssembler assembler = new IncomeAssembler(taxYear);
 
         assembler.add(new SelfDirectedInvestmentPipelineResult(
+                List.of(),
                 List.of(new FixedDividend(taxYear, new BigDecimal("12.34"))),
                 List.of(issue)));
 
         assertEquals(
                 new BigDecimal("12.34"),
-                assembler.build().findIncomeResult(IncomeType.DIVIDENDS).orElseThrow().getGrossIncome());
+                assembler.build().findIncomeResult(IncomeType.FOREIGN_DIVIDENDS)
+                        .orElseThrow().getGrossIncome());
         assertEquals(List.of(issue), assembler.build().getIssues());
     }
 

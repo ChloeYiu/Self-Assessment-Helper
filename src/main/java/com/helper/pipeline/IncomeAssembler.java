@@ -4,10 +4,12 @@ import com.helper.calculations.TaxCalculationResult;
 import com.helper.config.TaxYear;
 import com.helper.income.IncomeResult;
 import com.helper.income.IncomeType;
-import com.helper.income.implementation.DividendIncome;
+import com.helper.income.implementation.ForeignDividendIncome;
+import com.helper.income.implementation.ForeignSavingsIncome;
+import com.helper.income.implementation.UkDividendIncome;
+import com.helper.income.implementation.UkSavingsIncome;
 import com.helper.issue.Issue;
 import com.helper.pipeline.selfdirectedinvestment.SelfDirectedInvestmentPipelineResult;
-import com.helper.pipeline.TaxPipelineResult;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
@@ -25,12 +27,19 @@ public final class IncomeAssembler {
     private static final Map<Class<? extends TaxPipelineResult>, ResultHandler> RESULT_HANDLERS = Map.of(
             SelfDirectedInvestmentPipelineResult.class, IncomeAssembler::addSelfDirectedInvestmentResult);
 
-    private final DividendIncome dividendIncome;
+    private final UkDividendIncome ukDividendIncome;
+    private final ForeignDividendIncome foreignDividendIncome;
+    private final UkSavingsIncome ukSavingIncome;
+    private final ForeignSavingsIncome foreignSavingIncome;
     private final List<Issue> issues = new ArrayList<>();
 
     /** Creates an assembler and its tax-year-specific income aggregates. */
     public IncomeAssembler(TaxYear taxYear) {
-        this.dividendIncome = new DividendIncome(Objects.requireNonNull(taxYear, "taxYear"));
+        Objects.requireNonNull(taxYear, "taxYear");
+        this.ukDividendIncome = new UkDividendIncome(taxYear);
+        this.foreignDividendIncome = new ForeignDividendIncome(taxYear);
+        this.ukSavingIncome = new UkSavingsIncome(taxYear);
+        this.foreignSavingIncome = new ForeignSavingsIncome(taxYear);
     }
 
     /** Adds one registered pipeline result to its matching income aggregates. */
@@ -48,13 +57,17 @@ public final class IncomeAssembler {
     /** Returns the one completed tax-calculation result assembled so far. */
     public TaxCalculationResult build() {
         Map<IncomeType, IncomeResult> incomeResults = new EnumMap<>(IncomeType.class);
-        incomeResults.put(IncomeType.DIVIDENDS, dividendIncome.calculateResult());
-        return new TaxCalculationResult(dividendIncome.getTaxYear(), incomeResults, issues);
+        incomeResults.put(IncomeType.UK_DIVIDENDS, ukDividendIncome.calculateResult());
+        incomeResults.put(IncomeType.FOREIGN_DIVIDENDS, foreignDividendIncome.calculateResult());
+        incomeResults.put(IncomeType.UK_SAVINGS, ukSavingIncome.calculateResult());
+        incomeResults.put(IncomeType.FOREIGN_SAVINGS, foreignSavingIncome.calculateResult());
+        return new TaxCalculationResult(ukDividendIncome.getTaxYear(), incomeResults, issues);
     }
 
     private static void addSelfDirectedInvestmentResult(IncomeAssembler assembler, TaxPipelineResult result) {
         SelfDirectedInvestmentPipelineResult investmentResult = (SelfDirectedInvestmentPipelineResult) result;
-        investmentResult.dividendSources().forEach(assembler.dividendIncome::addSource);
+        investmentResult.ukDividendSources().forEach(assembler.ukDividendIncome::addSource);
+        investmentResult.foreignDividendSources().forEach(assembler.foreignDividendIncome::addSource);
     }
 
     @FunctionalInterface

@@ -14,22 +14,20 @@ import java.util.Objects;
 /**
  * Aggregate for storing multiple savings income sources.
  */
-public class SavingIncome implements IncomeWithSource<Saving> {
+abstract class SavingIncome implements IncomeWithSource<Saving> {
 
     public BigDecimal grossSavingIncome;
     public TaxYear taxYear;
     private final List<Saving> savingSources;
 
-    public SavingIncome(TaxYear taxYear) {
+    protected SavingIncome(TaxYear taxYear) {
         this.grossSavingIncome = BigDecimal.ZERO;
         this.taxYear = Objects.requireNonNull(taxYear, "taxYear");
         this.savingSources = new ArrayList<>();
     }
 
     @Override
-    public IncomeType getIncomeType() {
-        return IncomeType.SAVINGS;
-    }
+    public abstract IncomeType getIncomeType();
 
     @Override
     public IncomeResult calculateResult() {
