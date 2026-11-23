@@ -43,10 +43,10 @@ public class TaxCalculatorTest {
         Registry registry = new Registry();
         TaxCalculator calculator = new TaxCalculator(
                 new FixedFxRateProvider(),
-                Map.of(TaxPipelineType.INVESTMENT, investmentPipelineFactory));
+                Map.of(TaxPipelineType.SELF_DIRECTED_INVESTMENT, investmentPipelineFactory));
 
         TaxCalculationResult result = calculator.run(
-                new TaxCalculationRequest(TaxYear.of(2025), Set.of(TaxPipelineType.INVESTMENT)),
+                new TaxCalculationRequest(TaxYear.of(2025), Set.of(TaxPipelineType.SELF_DIRECTED_INVESTMENT)),
                 registry);
 
         assertEquals(new BigDecimal("12.34"), result.findIncomeResult(IncomeType.DIVIDENDS)
