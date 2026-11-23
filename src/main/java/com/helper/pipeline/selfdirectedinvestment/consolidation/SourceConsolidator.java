@@ -158,7 +158,7 @@ public class SourceConsolidator {
 
     private static Issue zeroHoldingIssue(String isin, LocalDate cutoffDate) {
         return new Issue(
-                IssueCode.ZERO_DIVIDEND_OPENING_HOLDING,
+                SourceConsolidationIssueCode.ZERO_DIVIDEND_OPENING_HOLDING,
                 IssueSeverity.INFO,
                 "source-consolidation",
                 Map.of("isin", isin, "cutoffDate", cutoffDate.toString()));

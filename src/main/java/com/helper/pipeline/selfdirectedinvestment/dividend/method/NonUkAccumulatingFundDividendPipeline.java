@@ -12,7 +12,9 @@ import com.helper.income.implementation.dividend.model.SecurityHoldingSnapshot;
 import com.helper.ingestion.report.eri.EriReportExtractor;
 import com.helper.ingestion.report.eri.EriReportExtractorDispatcher;
 import com.helper.issue.Issue;
+import com.helper.ingestion.report.eri.EriIssueCode;
 import com.helper.issue.IssueCode;
+import com.helper.pipeline.selfdirectedinvestment.dividend.DividendIssueCode;
 import com.helper.issue.IssueSeverity;
 import com.helper.pipeline.selfdirectedinvestment.consolidation.ConsolidatedSecurityFacts;
 import com.helper.pipeline.selfdirectedinvestment.dividend.DividendMethodPipeline;
@@ -121,7 +123,7 @@ public class NonUkAccumulatingFundDividendPipeline implements DividendMethodPipe
                 .getEriReportFormat();
         Optional<EriReportExtractor> extractor = extractorDispatcher.findExtractor(reportFormat);
         if (extractor.isEmpty()) {
-            issues.add(issue(IssueCode.UNSUPPORTED_ERI_REPORT_FORMAT, securityFacts, Map.of(
+            issues.add(issue(EriIssueCode.UNSUPPORTED_REPORT_FORMAT, securityFacts, Map.of(
                     "eriReportFormat", reportFormat.name())));
             return Optional.empty();
         }
@@ -130,7 +132,7 @@ public class NonUkAccumulatingFundDividendPipeline implements DividendMethodPipe
             return Optional.of(extractor.get().extractReport(
                     securityFacts.security().getIdentifier(), taxYear.getStartYear()));
         } catch (IOException | IllegalArgumentException exception) {
-            issues.add(issue(IssueCode.ERI_REPORT_LOAD_FAILED, securityFacts, Map.of(
+            issues.add(issue(EriIssueCode.REPORT_LOAD_FAILED, securityFacts, Map.of(
                     "reportingYear", String.valueOf(taxYear.getStartYear()),
                     "exceptionType", exception.getClass().getSimpleName())));
             return Optional.empty();
@@ -145,7 +147,7 @@ public class NonUkAccumulatingFundDividendPipeline implements DividendMethodPipe
         LocalDate boundaryDate = dividendBoundary(taxYear);
         SecurityHoldingSnapshot snapshot = securityFacts.holdingSnapshot();
         if (snapshot == null || !snapshot.getSnapshotDate().equals(boundaryDate)) {
-            issues.add(issue(IssueCode.MISSING_DIVIDEND_OPENING_HOLDING, securityFacts, Map.of(
+            issues.add(issue(DividendIssueCode.MISSING_OPENING_HOLDING, securityFacts, Map.of(
                     "boundaryDate", boundaryDate.toString())));
             return Optional.empty();
         }
@@ -199,7 +201,7 @@ public class NonUkAccumulatingFundDividendPipeline implements DividendMethodPipe
         Map<TaxYearPeriod, BigDecimal> monthlyRates = extractMonthlyRates(registry, report);
         BigDecimal yearlyRate = extractYearlyRate(registry, report);
         if (monthlyRates == null && yearlyRate == null) {
-            issues.add(issue(IssueCode.DIVIDEND_FX_RATE_UNAVAILABLE, securityFacts, Map.of(
+            issues.add(issue(DividendIssueCode.FX_RATE_UNAVAILABLE, securityFacts, Map.of(
                     "currencyCode", report.getCurrencyCode().name())));
             return false;
         }
@@ -251,7 +253,7 @@ public class NonUkAccumulatingFundDividendPipeline implements DividendMethodPipe
             ConsolidatedSecurityFacts securityFacts,
             RuntimeException exception
     ) {
-        return issue(IssueCode.DIVIDEND_PREPARATION_FAILED, securityFacts, Map.of(
+        return issue(DividendIssueCode.PREPARATION_FAILED, securityFacts, Map.of(
                 "exceptionType", exception.getClass().getSimpleName()));
     }
 

@@ -15,7 +15,8 @@ import com.helper.income.implementation.Trade;
 import com.helper.income.implementation.TradeType;
 import com.helper.income.implementation.capitalgain.model.CarryForwardSnapshot;
 import com.helper.issue.Issue;
-import com.helper.issue.IssueCode;
+import com.helper.pipeline.selfdirectedinvestment.dividend.DividendIssueCode;
+import com.helper.pipeline.selfdirectedinvestment.support.SecuritySupportIssueCode;
 import com.helper.issue.IssueSeverity;
 import com.helper.pipeline.selfdirectedinvestment.SelfDirectedInvestmentPipelineInput;
 import com.helper.pipeline.selfdirectedinvestment.importer.Position;
@@ -67,8 +68,8 @@ public class SourceConsolidatorTest {
         assertEquals(0, new BigDecimal("10").compareTo(consolidated.holdingSnapshot().getQuantity()));
         assertEquals(0, new BigDecimal("10").compareTo(consolidated.carryForwardSnapshot().getQuantity()));
         assertEquals(List.of(
-                        IssueCode.MISSING_SECURITY_CONFIGURATION,
-                        IssueCode.UNIMPLEMENTED_DIVIDEND_METHOD),
+                        SecuritySupportIssueCode.MISSING_CONFIGURATION,
+                        DividendIssueCode.UNIMPLEMENTED_METHOD),
                 result.issues().stream().map(Issue::getCode).toList());
     }
 
@@ -87,7 +88,7 @@ public class SourceConsolidatorTest {
 
         ConsolidatedSecurityFacts consolidated = result.securities().get(0);
         assertEquals(0, BigDecimal.ZERO.compareTo(consolidated.holdingSnapshot().getQuantity()));
-        assertEquals(List.of(IssueCode.ZERO_DIVIDEND_OPENING_HOLDING),
+        assertEquals(List.of(SourceConsolidationIssueCode.ZERO_DIVIDEND_OPENING_HOLDING),
                 result.issues().stream().map(Issue::getCode).toList());
     }
 
@@ -164,7 +165,7 @@ public class SourceConsolidatorTest {
 
     private static Issue missingConfigIssue(Security security) {
         return new Issue(
-                IssueCode.MISSING_SECURITY_CONFIGURATION,
+                SecuritySupportIssueCode.MISSING_CONFIGURATION,
                 IssueSeverity.WARNING,
                 "security-support",
                 Map.of("isin", security.getIdentifier()));
@@ -172,7 +173,7 @@ public class SourceConsolidatorTest {
 
     private static Issue unimplementedMethodIssue(Security security) {
         return new Issue(
-                IssueCode.UNIMPLEMENTED_DIVIDEND_METHOD,
+                DividendIssueCode.UNIMPLEMENTED_METHOD,
                 IssueSeverity.WARNING,
                 "security-support",
                 Map.of("isin", security.getIdentifier()));

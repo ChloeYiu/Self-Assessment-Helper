@@ -1,7 +1,6 @@
 package com.helper.ingestion.trade.ibkr;
 
 import com.helper.issue.Issue;
-import com.helper.issue.IssueCode;
 import com.helper.issue.IssueSeverity;
 import com.helper.util.api.ApiRequest;
 import com.helper.util.api.DateRangeValidator;
@@ -280,7 +279,7 @@ public class IbkrApiProvider {
             attributes.put("providerErrorMessage", exception.errorMessage());
         }
         return new Issue(
-                IssueCode.IBKR_STATEMENT_UNAVAILABLE,
+                IbkrIssueCode.STATEMENT_UNAVAILABLE,
                 IssueSeverity.INFO,
                 "ibkr-flex",
                 attributes);

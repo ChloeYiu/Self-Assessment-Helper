@@ -6,6 +6,7 @@ import com.helper.income.config.SecurityConfigs;
 import com.helper.income.implementation.Security;
 import com.helper.issue.Issue;
 import com.helper.issue.IssueCode;
+import com.helper.pipeline.selfdirectedinvestment.dividend.DividendIssueCode;
 import com.helper.issue.IssueSeverity;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -53,17 +54,17 @@ public class SecuritySupportResolver {
 
             Optional<SecurityConfig> config = configs.findByIsin(security.getIdentifier());
             if (config.isEmpty()) {
-                issues.add(issue(IssueCode.MISSING_SECURITY_CONFIGURATION, security));
+                issues.add(issue(SecuritySupportIssueCode.MISSING_CONFIGURATION, security));
                 continue;
             }
 
             DividendCalculationMethodType method = config.get().getDividendCalculationMethod().getType();
             if (method == DividendCalculationMethodType.UNSUPPORTED) {
-                issues.add(issue(IssueCode.UNSUPPORTED_DIVIDEND_METHOD, security));
+                issues.add(issue(SecuritySupportIssueCode.UNSUPPORTED_DIVIDEND_METHOD, security));
                 continue;
             }
             if (!executableMethods.contains(method)) {
-                issues.add(issue(IssueCode.UNIMPLEMENTED_DIVIDEND_METHOD, security));
+                issues.add(issue(DividendIssueCode.UNIMPLEMENTED_METHOD, security));
                 continue;
             }
 

@@ -7,7 +7,7 @@ import com.helper.income.IncomeType;
 import com.helper.income.implementation.dividend.Dividend;
 import com.helper.income.implementation.dividend.model.DividendResult;
 import com.helper.issue.Issue;
-import com.helper.issue.IssueCode;
+import com.helper.pipeline.selfdirectedinvestment.dividend.DividendIssueCode;
 import com.helper.issue.IssueSeverity;
 import com.helper.pipeline.selfdirectedinvestment.SelfDirectedInvestmentPipelineResult;
 import java.math.BigDecimal;
@@ -20,7 +20,7 @@ public class IncomeAssemblerTest {
     public void add_investmentResultAddsDividendSourcesAndIssuesToTheTaxCalculationResult() {
         TaxYear taxYear = TaxYear.of(2025);
         Issue issue = new Issue(
-                IssueCode.UNIMPLEMENTED_DIVIDEND_METHOD,
+                DividendIssueCode.UNIMPLEMENTED_METHOD,
                 IssueSeverity.WARNING,
                 "test",
                 Map.of("isin", "IE00B44Z5B48"));

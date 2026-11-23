@@ -3,7 +3,6 @@ package com.helper.pipeline.selfdirectedinvestment.dividend;
 import com.helper.income.config.SecurityConfigEnums.DividendCalculationMethodType;
 import com.helper.income.implementation.dividend.Dividend;
 import com.helper.issue.Issue;
-import com.helper.issue.IssueCode;
 import com.helper.issue.IssueSeverity;
 import com.helper.pipeline.selfdirectedinvestment.consolidation.ConsolidatedSecurityFacts;
 import com.helper.pipeline.selfdirectedinvestment.consolidation.SourceConsolidationResult;
@@ -96,7 +95,7 @@ public class InvestmentDividendPipeline {
             DividendCalculationMethodType methodType
     ) {
         return new Issue(
-                IssueCode.UNIMPLEMENTED_DIVIDEND_METHOD,
+                DividendIssueCode.UNIMPLEMENTED_METHOD,
                 IssueSeverity.WARNING,
                 "investment-dividend",
                 Map.of(

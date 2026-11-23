@@ -18,7 +18,6 @@ import com.helper.income.config.SecurityConfigEnums.EriReportFormat;
 import com.helper.income.implementation.Security;
 import com.helper.income.implementation.dividend.Dividend;
 import com.helper.issue.Issue;
-import com.helper.issue.IssueCode;
 import com.helper.issue.IssueSeverity;
 import com.helper.pipeline.selfdirectedinvestment.consolidation.ConsolidatedSecurityFacts;
 import com.helper.pipeline.selfdirectedinvestment.consolidation.SourceConsolidationResult;
@@ -46,7 +45,7 @@ public class InvestmentDividendPipelineTest {
                 DividendCalculationMethodType.NON_UK_ACCUMULATING_FUND);
         Dividend dividend = mock(Dividend.class);
         Issue issue = new Issue(
-                IssueCode.UNIMPLEMENTED_DIVIDEND_METHOD,
+                DividendIssueCode.UNIMPLEMENTED_METHOD,
                 IssueSeverity.WARNING,
                 "non-uk-accumulating-fund",
                 Map.of("isin", "IE00B44Z5B48"));
@@ -85,7 +84,7 @@ public class InvestmentDividendPipelineTest {
         assertTrue(result.dividendSources().isEmpty());
         assertEquals(1, result.issues().size());
         Issue issue = result.issues().get(0);
-        assertEquals(IssueCode.UNIMPLEMENTED_DIVIDEND_METHOD, issue.getCode());
+        assertEquals(DividendIssueCode.UNIMPLEMENTED_METHOD, issue.getCode());
         assertEquals(IssueSeverity.WARNING, issue.getSeverity());
         assertEquals("investment-dividend", issue.getSource());
         assertEquals("IE00UNSUPPORTED", issue.getAttributes().get("isin"));
