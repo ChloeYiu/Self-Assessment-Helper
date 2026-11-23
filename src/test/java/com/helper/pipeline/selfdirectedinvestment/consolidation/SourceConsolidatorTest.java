@@ -17,7 +17,7 @@ import com.helper.income.implementation.capitalgain.model.CarryForwardSnapshot;
 import com.helper.issue.Issue;
 import com.helper.issue.IssueCode;
 import com.helper.issue.IssueSeverity;
-import com.helper.pipeline.selfdirectedinvestment.TaxPipelineInput;
+import com.helper.pipeline.selfdirectedinvestment.SelfDirectedInvestmentPipelineInput;
 import com.helper.pipeline.selfdirectedinvestment.importer.Position;
 import com.helper.pipeline.selfdirectedinvestment.importer.SourceImportResult;
 import com.helper.pipeline.selfdirectedinvestment.support.SecuritySupportResult;
@@ -50,7 +50,7 @@ public class SourceConsolidatorTest {
                 acwi,
                 acwiConfig,
                 List.of(missingConfigIssue(unsupported)));
-        TaxPipelineInput input = new TaxPipelineInput(
+        SelfDirectedInvestmentPipelineInput input = new SelfDirectedInvestmentPipelineInput(
                 TaxYear.of(2025),
                 List.of(
                         new CarryForwardSnapshot(TaxYear.of(2025), acwi, new BigDecimal("10"), new BigDecimal("100")),
@@ -83,7 +83,7 @@ public class SourceConsolidatorTest {
                         acwi,
                         config(acwi.getIdentifier()),
                         List.of())),
-                new TaxPipelineInput(TaxYear.of(2025), List.of()));
+                new SelfDirectedInvestmentPipelineInput(TaxYear.of(2025), List.of()));
 
         ConsolidatedSecurityFacts consolidated = result.securities().get(0);
         assertEquals(0, BigDecimal.ZERO.compareTo(consolidated.holdingSnapshot().getQuantity()));
@@ -102,7 +102,7 @@ public class SourceConsolidatorTest {
                         acwi,
                         config(acwi.getIdentifier()),
                         List.of())),
-                new TaxPipelineInput(TaxYear.of(2025), List.of()));
+                new SelfDirectedInvestmentPipelineInput(TaxYear.of(2025), List.of()));
 
         assertEquals(0, BigDecimal.ZERO.compareTo(result.securities().get(0)
                 .holdingSnapshot().getQuantity()));

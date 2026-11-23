@@ -10,7 +10,7 @@ import com.helper.income.implementation.dividend.model.DividendResult;
 import com.helper.issue.Issue;
 import com.helper.issue.IssueCode;
 import com.helper.issue.IssueSeverity;
-import com.helper.pipeline.selfdirectedinvestment.InvestmentPipelineResult;
+import com.helper.pipeline.selfdirectedinvestment.SelfDirectedInvestmentPipelineResult;
 import com.helper.pipeline.TaxPipeline;
 import com.helper.pipeline.TaxPipelineFactory;
 import com.helper.pipeline.TaxPipelineResult;
@@ -37,7 +37,7 @@ public class TaxCalculatorTest {
         TaxPipelineFactory investmentPipelineFactory = registry -> new TaxPipeline() {
             @Override
             public TaxPipelineResult run(TaxCalculationRequest request) {
-                return new InvestmentPipelineResult(List.of(dividend), List.of(issue));
+                return new SelfDirectedInvestmentPipelineResult(List.of(dividend), List.of(issue));
             }
         };
         Registry registry = new Registry();

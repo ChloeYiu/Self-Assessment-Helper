@@ -5,7 +5,7 @@ import com.helper.income.config.SecurityConfigEnums.DividendCalculationMethodTyp
 import com.helper.income.config.SecurityConfigs;
 import com.helper.income.implementation.Trade;
 import com.helper.issue.Issue;
-import com.helper.pipeline.selfdirectedinvestment.TaxPipelineInput;
+import com.helper.pipeline.selfdirectedinvestment.SelfDirectedInvestmentPipelineInput;
 import com.helper.pipeline.selfdirectedinvestment.consolidation.ConsolidatedSecurityFacts;
 import com.helper.pipeline.selfdirectedinvestment.consolidation.SourceConsolidationResult;
 import com.helper.pipeline.selfdirectedinvestment.consolidation.SourceConsolidator;
@@ -41,7 +41,7 @@ public class InvestmentAssemblyPipelineFlow {
                 Set.of(DividendCalculationMethodType.NON_UK_ACCUMULATING_FUND),
                 new SecuritySupportResolver(),
                 new SourceConsolidator());
-        SourceConsolidationResult result = pipeline.assemble(new TaxPipelineInput(
+        SourceConsolidationResult result = pipeline.assemble(new SelfDirectedInvestmentPipelineInput(
                 taxYear,
                 List.of()));
 

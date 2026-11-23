@@ -8,7 +8,7 @@ import com.helper.income.implementation.dividend.model.SecurityHoldingSnapshot;
 import com.helper.issue.Issue;
 import com.helper.issue.IssueCode;
 import com.helper.issue.IssueSeverity;
-import com.helper.pipeline.selfdirectedinvestment.TaxPipelineInput;
+import com.helper.pipeline.selfdirectedinvestment.SelfDirectedInvestmentPipelineInput;
 import com.helper.pipeline.selfdirectedinvestment.importer.Position;
 import com.helper.pipeline.selfdirectedinvestment.importer.SourceImportResult;
 import com.helper.pipeline.selfdirectedinvestment.support.SecuritySupportResult;
@@ -41,7 +41,7 @@ public class SourceConsolidator {
      */
     public SourceConsolidationResult consolidate(
             List<PreparedSource> preparedSources,
-            TaxPipelineInput taxInput
+            SelfDirectedInvestmentPipelineInput taxInput
     ) {
         Objects.requireNonNull(preparedSources, "preparedSources");
         Objects.requireNonNull(taxInput, "taxInput");

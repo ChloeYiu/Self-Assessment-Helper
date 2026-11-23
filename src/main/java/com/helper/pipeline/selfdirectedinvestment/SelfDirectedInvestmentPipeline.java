@@ -3,7 +3,6 @@ package com.helper.pipeline.selfdirectedinvestment;
 import com.helper.calculations.TaxCalculationRequest;
 import com.helper.issue.Issue;
 import com.helper.pipeline.TaxPipeline;
-import com.helper.pipeline.TaxPipelineResult;
 import com.helper.pipeline.selfdirectedinvestment.assembly.InvestmentAssemblyPipeline;
 import com.helper.pipeline.selfdirectedinvestment.consolidation.SourceConsolidationResult;
 import com.helper.pipeline.selfdirectedinvestment.dividend.InvestmentDividendPipeline;
@@ -32,13 +31,13 @@ public final class SelfDirectedInvestmentPipeline implements TaxPipeline {
     }
 
     @Override
-    public TaxPipelineResult run(TaxCalculationRequest request)
+    public SelfDirectedInvestmentPipelineResult run(TaxCalculationRequest request)
             throws IOException, InterruptedException {
         SourceConsolidationResult sourceResult = assemblyPipeline.assemble(
-                new TaxPipelineInput(request.taxYear(), List.of()));
+                new SelfDirectedInvestmentPipelineInput(request.taxYear(), List.of()));
         InvestmentDividendResult dividendResult = dividendPipeline.prepare(sourceResult);
         List<Issue> issues = new ArrayList<>(sourceResult.issues());
         issues.addAll(dividendResult.issues());
-        return new InvestmentPipelineResult(dividendResult.dividendSources(), issues);
+        return new SelfDirectedInvestmentPipelineResult(dividendResult.dividendSources(), issues);
     }
 }

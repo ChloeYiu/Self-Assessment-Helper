@@ -6,7 +6,7 @@ import com.helper.income.IncomeResult;
 import com.helper.income.IncomeType;
 import com.helper.income.implementation.DividendIncome;
 import com.helper.issue.Issue;
-import com.helper.pipeline.selfdirectedinvestment.InvestmentPipelineResult;
+import com.helper.pipeline.selfdirectedinvestment.SelfDirectedInvestmentPipelineResult;
 import com.helper.pipeline.TaxPipelineResult;
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -23,7 +23,7 @@ import java.util.Objects;
  */
 public final class IncomeAssembler {
     private static final Map<Class<? extends TaxPipelineResult>, ResultHandler> RESULT_HANDLERS = Map.of(
-            InvestmentPipelineResult.class, IncomeAssembler::addInvestmentResult);
+            SelfDirectedInvestmentPipelineResult.class, IncomeAssembler::addInvestmentResult);
 
     private final DividendIncome dividendIncome;
     private final List<Issue> issues = new ArrayList<>();
@@ -53,7 +53,7 @@ public final class IncomeAssembler {
     }
 
     private static void addInvestmentResult(IncomeAssembler assembler, TaxPipelineResult result) {
-        InvestmentPipelineResult investmentResult = (InvestmentPipelineResult) result;
+        SelfDirectedInvestmentPipelineResult investmentResult = (SelfDirectedInvestmentPipelineResult) result;
         investmentResult.dividendSources().forEach(assembler.dividendIncome::addSource);
     }
 

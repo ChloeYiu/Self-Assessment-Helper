@@ -9,12 +9,12 @@ import java.util.Objects;
 /**
  * Shared tax-run input, separate from provider credentials and retrieval settings.
  */
-public class TaxPipelineInput {
+public class SelfDirectedInvestmentPipelineInput {
     private final TaxYear taxYear;
     private final List<CarryForwardSnapshot> openingCapitalGainSnapshots;
 
     /** Creates the shared tax-year input and optional capital-gain carry-forward state. */
-    public TaxPipelineInput(
+    public SelfDirectedInvestmentPipelineInput(
             TaxYear taxYear,
             List<CarryForwardSnapshot> openingCapitalGainSnapshots
     ) {

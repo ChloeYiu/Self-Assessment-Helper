@@ -2,7 +2,7 @@ package com.helper.pipeline.selfdirectedinvestment.assembly;
 
 import com.helper.income.config.SecurityConfigEnums.DividendCalculationMethodType;
 import com.helper.income.config.SecurityConfigs;
-import com.helper.pipeline.selfdirectedinvestment.TaxPipelineInput;
+import com.helper.pipeline.selfdirectedinvestment.SelfDirectedInvestmentPipelineInput;
 import com.helper.pipeline.selfdirectedinvestment.consolidation.PreparedSource;
 import com.helper.pipeline.selfdirectedinvestment.consolidation.SourceConsolidationResult;
 import com.helper.pipeline.selfdirectedinvestment.consolidation.SourceConsolidator;
@@ -77,9 +77,9 @@ public class InvestmentAssemblyPipeline {
      * @throws IOException when a configured provider source cannot be read
      * @throws InterruptedException when provider retrieval is interrupted
      */
-    public SourceConsolidationResult assemble(TaxPipelineInput input)
+    public SourceConsolidationResult assemble(SelfDirectedInvestmentPipelineInput input)
             throws IOException, InterruptedException {
-        TaxPipelineInput taxInput = Objects.requireNonNull(input, "input");
+        SelfDirectedInvestmentPipelineInput taxInput = Objects.requireNonNull(input, "input");
         SourceImportResult importResult = ibkrImporter.importSource(new IbkrImportInput(
                 ibkrConfigPath,
                 taxInput.getTaxYear().getStartDate().minusMonths(6),

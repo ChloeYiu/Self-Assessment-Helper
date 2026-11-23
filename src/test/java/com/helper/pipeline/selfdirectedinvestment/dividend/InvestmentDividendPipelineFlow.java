@@ -6,7 +6,7 @@ import com.helper.income.config.SecurityConfigs;
 import com.helper.income.implementation.dividend.Dividend;
 import com.helper.income.implementation.dividend.model.DividendResult;
 import com.helper.issue.Issue;
-import com.helper.pipeline.selfdirectedinvestment.TaxPipelineInput;
+import com.helper.pipeline.selfdirectedinvestment.SelfDirectedInvestmentPipelineInput;
 import com.helper.pipeline.selfdirectedinvestment.assembly.InvestmentAssemblyPipeline;
 import com.helper.pipeline.selfdirectedinvestment.consolidation.SourceConsolidationResult;
 import com.helper.pipeline.selfdirectedinvestment.consolidation.SourceConsolidator;
@@ -38,7 +38,7 @@ public class InvestmentDividendPipelineFlow {
         requireConfigFiles();
         Registry registry = createRegistry(taxYear);
         SourceConsolidationResult sourceResult = createAssemblyPipeline().assemble(
-                new TaxPipelineInput(taxYear, List.of()));
+                new SelfDirectedInvestmentPipelineInput(taxYear, List.of()));
         InvestmentDividendResult dividendResult = new InvestmentDividendPipeline(registry)
                 .prepare(sourceResult);
 

@@ -9,7 +9,7 @@ import com.helper.income.implementation.dividend.model.DividendResult;
 import com.helper.issue.Issue;
 import com.helper.issue.IssueCode;
 import com.helper.issue.IssueSeverity;
-import com.helper.pipeline.selfdirectedinvestment.InvestmentPipelineResult;
+import com.helper.pipeline.selfdirectedinvestment.SelfDirectedInvestmentPipelineResult;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
@@ -26,7 +26,7 @@ public class IncomeAssemblerTest {
                 Map.of("isin", "IE00B44Z5B48"));
         IncomeAssembler assembler = new IncomeAssembler(taxYear);
 
-        assembler.add(new InvestmentPipelineResult(
+        assembler.add(new SelfDirectedInvestmentPipelineResult(
                 List.of(new FixedDividend(taxYear, new BigDecimal("12.34"))),
                 List.of(issue)));
 
