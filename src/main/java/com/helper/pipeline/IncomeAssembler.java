@@ -23,7 +23,7 @@ import java.util.Objects;
  */
 public final class IncomeAssembler {
     private static final Map<Class<? extends TaxPipelineResult>, ResultHandler> RESULT_HANDLERS = Map.of(
-            SelfDirectedInvestmentPipelineResult.class, IncomeAssembler::addInvestmentResult);
+            SelfDirectedInvestmentPipelineResult.class, IncomeAssembler::addSelfDirectedInvestmentResult);
 
     private final DividendIncome dividendIncome;
     private final List<Issue> issues = new ArrayList<>();
@@ -52,7 +52,7 @@ public final class IncomeAssembler {
         return new TaxCalculationResult(dividendIncome.getTaxYear(), incomeResults, issues);
     }
 
-    private static void addInvestmentResult(IncomeAssembler assembler, TaxPipelineResult result) {
+    private static void addSelfDirectedInvestmentResult(IncomeAssembler assembler, TaxPipelineResult result) {
         SelfDirectedInvestmentPipelineResult investmentResult = (SelfDirectedInvestmentPipelineResult) result;
         investmentResult.dividendSources().forEach(assembler.dividendIncome::addSource);
     }
