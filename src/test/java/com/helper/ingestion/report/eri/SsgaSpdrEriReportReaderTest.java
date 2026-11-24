@@ -8,25 +8,23 @@ import com.helper.income.implementation.dividend.model.AccumulatingFundReport;
 import com.helper.util.api.MockHttpClient;
 import java.math.BigDecimal;
 import java.net.URI;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.io.InputStream;
 import java.time.LocalDate;
 import java.util.Objects;
 import org.junit.Test;
 
-public class SsgaSpdrEriReportExtractorTest {
+public class SsgaSpdrEriReportReaderTest {
     private static final String ACWI_ISIN = "IE00B44Z5B48";
 
     @Test
-    public void extractReport_rejectsYearsOutsideSupportedRangeBeforeFetching() {
+    public void readReport_rejectsYearsOutsideSupportedRangeBeforeFetching() {
         MockHttpClient httpClient = new MockHttpClient();
-        SsgaSpdrEriReportExtractor extractor = new SsgaSpdrEriReportExtractor(httpClient);
+        EriReportReader extractor = ssgaReader(httpClient);
 
         IllegalArgumentException beforeRange = assertThrows(IllegalArgumentException.class,
-                () -> extractor.extractReport(ACWI_ISIN, 2022));
+                () -> extractor.readReport(ACWI_ISIN, 2022));
         IllegalArgumentException afterRange = assertThrows(IllegalArgumentException.class,
-                () -> extractor.extractReport(ACWI_ISIN, 2026));
+                () -> extractor.readReport(ACWI_ISIN, 2026));
 
         assertEquals("SSGA Europe I report year is not supported: 2022", beforeRange.getMessage());
         assertEquals("SSGA Europe I report year is not supported: 2026", afterRange.getMessage());
@@ -34,13 +32,12 @@ public class SsgaSpdrEriReportExtractorTest {
     }
 
     @Test
-    public void extractReport_readsNewSsgaSpdrReportFormatForAcwi() throws Exception {
-        Path pdfPath = resourcePath("ssga-spdr-europe-i-reportable-income-2025.pdf");
+    public void readReport_readsNewSsgaSpdrReportFormatForAcwi() throws Exception {
         MockHttpClient httpClient = new MockHttpClient()
-                .respondWith(200, Files.readAllBytes(pdfPath));
+                .respondWith(200, resourceBytes("ssga-spdr-europe-i-reportable-income-2025.pdf"));
 
-        AccumulatingFundReport report = new SsgaSpdrEriReportExtractor(httpClient)
-                .extractReport(ACWI_ISIN, 2025);
+        AccumulatingFundReport report = ssgaReader(httpClient)
+                .readReport(ACWI_ISIN, 2025);
 
         assertReport(report, 2025, "3.4253", CurrencyCode.USD);
         assertEquals(URI.create("https://www.ssga.com/library-content/announcement/etfs/emea/"
@@ -49,13 +46,12 @@ public class SsgaSpdrEriReportExtractorTest {
     }
 
     @Test
-    public void extractReport_readsLegacyRevisedSsgaSpdrReportFormatForAcwi() throws Exception {
-        Path pdfPath = resourcePath("revised-ssga-spdr-i-excess-reportable-income-2023.pdf");
+    public void readReport_readsLegacyRevisedSsgaSpdrReportFormatForAcwi() throws Exception {
         MockHttpClient httpClient = new MockHttpClient()
-                .respondWith(200, Files.readAllBytes(pdfPath));
+                .respondWith(200, resourceBytes("revised-ssga-spdr-i-excess-reportable-income-2023.pdf"));
 
-        AccumulatingFundReport report = new SsgaSpdrEriReportExtractor(httpClient)
-                .extractReport(ACWI_ISIN, 2023);
+        AccumulatingFundReport report = ssgaReader(httpClient)
+                .readReport(ACWI_ISIN, 2023);
 
         assertReport(report, 2023, "2.7449", CurrencyCode.USD);
         assertEquals(URI.create("https://www.ssga.com/library-content/announcement/etfs/emea/"
@@ -63,9 +59,15 @@ public class SsgaSpdrEriReportExtractorTest {
                 httpClient.getRequestedUris().get(0));
     }
 
-    private static Path resourcePath(String fileName) throws Exception {
-        URL resource = SsgaSpdrEriReportExtractorTest.class.getResource(fileName);
-        return Path.of(Objects.requireNonNull(resource, fileName).toURI());
+    private static byte[] resourceBytes(String fileName) throws Exception {
+        try (InputStream resource = SsgaSpdrEriReportReaderTest.class.getResourceAsStream(fileName)) {
+            return Objects.requireNonNull(resource, fileName).readAllBytes();
+        }
+    }
+
+    private static EriReportReader ssgaReader(MockHttpClient httpClient) {
+        return new EriReportReader(
+                new SsgaSpdrEriReportProvider(httpClient), new SsgaSpdrEriReportExtractor());
     }
 
     private static void assertReport(

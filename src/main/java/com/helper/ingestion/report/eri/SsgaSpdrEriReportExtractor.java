@@ -1,12 +1,13 @@
 package com.helper.ingestion.report.eri;
 
 import com.helper.config.CurrencyCode;
-import com.helper.util.pdf.PdfTextDocument;
-import com.helper.util.pdf.PdfTextFilter;
 import com.helper.income.implementation.dividend.model.AccumulatingFundReport;
+import com.helper.util.pdf.Pdf;
+import com.helper.util.pdf.PdfTextDocument;
+import com.helper.util.pdf.PdfTextExtractor;
+import com.helper.util.pdf.PdfTextFilter;
+import java.io.IOException;
 import java.math.BigDecimal;
-import java.net.URI;
-import java.net.http.HttpClient;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -15,71 +16,33 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/** Extracts SSGA SPDR UK reportable income ERI PDF reports. */
-public class SsgaSpdrEriReportExtractor extends EriReportExtractor {
-    private static final String REPORT_URI_PREFIX = "https://www.ssga.com/library-content/announcement/"
-            + "etfs/emea/uk-reportable-income/";
-    private static final int EARLIEST_SUPPORTED_REPORTING_YEAR = 2023;
-    private static final int LATEST_SUPPORTED_REPORTING_YEAR = 2025;
+/** Extracts SSGA SPDR Europe I reportable-income facts from ERI PDFs. */
+public final class SsgaSpdrEriReportExtractor implements EriReportExtractor {
     private static final DateTimeFormatter REPORT_DATE_FORMATTER = DateTimeFormatter
             .ofPattern("d MMMM uuuu", Locale.ENGLISH);
     private static final Pattern REPORTING_PERIOD_ENDED_PATTERN = Pattern.compile(
-            "(?i).*reporting\\s+period\\s+ended\\s+(\\d{1,2}\\s+[A-Za-z]+\\s+\\d{4}).*"
-    );
+            "(?i).*reporting\\s+period\\s+ended\\s+(\\d{1,2}\\s+[A-Za-z]+\\s+\\d{4}).*");
     private static final Pattern DATE_PATTERN = Pattern.compile("(\\d{1,2}\\s+[A-Za-z]+\\s+\\d{4})");
     private static final Pattern ROW_VALUE_PATTERN = Pattern.compile(
-            "^.*?%s\\s+\\S+\\s+([A-Z]{3})\\s+([0-9]+(?:\\.[0-9]+)?)(?:\\s+|$)(.*)$"
-    );
+            "^.*?%s\\s+\\S+\\s+([A-Z]{3})\\s+([0-9]+(?:\\.[0-9]+)?)(?:\\s+|$)(.*)$");
 
-    /** Creates an extractor for SSGA SPDR Europe I reportable-income reports. */
-    public SsgaSpdrEriReportExtractor() {
-    }
-
-    /** Creates an extractor with an HTTP client supplied for transport or tests. */
-    SsgaSpdrEriReportExtractor(HttpClient httpClient) {
-        super(httpClient);
-    }
-
+    /** Extracts the named fund from one SSGA report PDF. */
     @Override
-    protected URI resolveReportUri(int reportingYear) {
-        if (reportingYear < EARLIEST_SUPPORTED_REPORTING_YEAR
-                || reportingYear > LATEST_SUPPORTED_REPORTING_YEAR) {
-            throw new IllegalArgumentException("SSGA Europe I report year is not supported: " + reportingYear);
-        }
-
-        if (reportingYear == 2023) {
-            return URI.create(REPORT_URI_PREFIX
-                    + "revised-ssga-spdr-i-excess-reportable-income-report-as-at-31-march-2023.pdf");
-        }
-
-        return URI.create(REPORT_URI_PREFIX
-                + "ssga-spdr-etfs-europe-i-plc-reportable-income-report-as-at-31-march-"
-                + reportingYear
-                + ".pdf");
-    }
-
-    @Override
-    protected AccumulatingFundReport parseReport(
-            PdfTextDocument document,
-            String fundIdentifier,
-            int reportingYear
-    ) {
+    public AccumulatingFundReport extract(Pdf pdf, String fundIdentifier, int reportingYear) throws IOException {
+        PdfTextDocument document = PdfTextExtractor.extract(pdf);
         LocalDate reportingPeriodEndDate = extractReportingPeriodEndDate(document, reportingYear);
         EriReportRow row = extractReportRow(document, fundIdentifier);
-
         LocalDate expectedDistributionDate = reportingPeriodEndDate.plusMonths(6);
         if (!row.fundDistributionDate().equals(expectedDistributionDate)) {
             throw new IllegalArgumentException("fund distribution date must be six months after reporting period end date");
         }
-
         return new AccumulatingFundReport(
                 fundIdentifier,
                 reportingPeriodEndDate.minusYears(1).plusDays(1),
                 reportingPeriodEndDate,
                 row.fundDistributionDate(),
                 row.reportedIncomePerUnit(),
-                row.currencyCode()
-        );
+                row.currencyCode());
     }
 
     private LocalDate extractReportingPeriodEndDate(PdfTextDocument document, int reportingYear) {
@@ -89,8 +52,7 @@ public class SsgaSpdrEriReportExtractor extends EriReportExtractor {
                 .filter(date -> date.getYear() == reportingYear)
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException(
-                        "reporting period end date was not found for reporting year " + reportingYear
-                ));
+                        "reporting period end date was not found for reporting year " + reportingYear));
     }
 
     private LocalDate parseReportingPeriodEndDate(String text) {
@@ -108,8 +70,7 @@ public class SsgaSpdrEriReportExtractor extends EriReportExtractor {
                 .flatMap(Optional::stream)
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException(
-                        "ERI row was not found or did not match the expected SSGA report format for ISIN " + isin
-                ));
+                        "ERI row was not found or did not match the expected SSGA report format for ISIN " + isin));
     }
 
     private Optional<EriReportRow> tryParseReportRow(String rowText, String isin) {
@@ -118,12 +79,10 @@ public class SsgaSpdrEriReportExtractor extends EriReportExtractor {
         if (!matcher.matches()) {
             return Optional.empty();
         }
-
-        CurrencyCode currencyCode = CurrencyCode.parse(matcher.group(1), "ERI report");
-        BigDecimal reportedIncomePerUnit = new BigDecimal(matcher.group(2));
-        LocalDate fundDistributionDate = extractFirstDate(matcher.group(3));
-
-        return Optional.of(new EriReportRow(currencyCode, reportedIncomePerUnit, fundDistributionDate));
+        return Optional.of(new EriReportRow(
+                CurrencyCode.parse(matcher.group(1), "ERI report"),
+                new BigDecimal(matcher.group(2)),
+                extractFirstDate(matcher.group(3))));
     }
 
     private LocalDate extractFirstDate(String text) {

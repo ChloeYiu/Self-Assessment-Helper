@@ -9,8 +9,8 @@ import com.helper.income.implementation.dividend.Dividend;
 import com.helper.income.implementation.dividend.NonUkDomicileAccumulatingDividend;
 import com.helper.income.implementation.dividend.model.AccumulatingFundReport;
 import com.helper.income.implementation.dividend.model.SecurityHoldingSnapshot;
-import com.helper.ingestion.report.eri.EriReportExtractor;
-import com.helper.ingestion.report.eri.EriReportExtractorDispatcher;
+import com.helper.ingestion.report.eri.EriReportReader;
+import com.helper.ingestion.report.eri.EriReportReaderDispatcher;
 import com.helper.issue.Issue;
 import com.helper.ingestion.report.eri.EriIssueCode;
 import com.helper.issue.IssueCode;
@@ -41,19 +41,19 @@ import java.util.Optional;
 public class NonUkAccumulatingFundDividendPipeline implements DividendMethodPipeline {
     private static final String ISSUE_SOURCE = "non-uk-accumulating-fund-dividend";
 
-    private final EriReportExtractorDispatcher extractorDispatcher;
+    private final EriReportReaderDispatcher reportReaderDispatcher;
     private final FxRateExtractor fxRateExtractor;
 
     /** Creates the pipeline with the application's ERI extractor and FX-rate routing. */
     public NonUkAccumulatingFundDividendPipeline() {
-        this(new EriReportExtractorDispatcher(), new FxRateExtractor());
+        this(new EriReportReaderDispatcher(), new FxRateExtractor());
     }
 
     NonUkAccumulatingFundDividendPipeline(
-            EriReportExtractorDispatcher extractorDispatcher,
+            EriReportReaderDispatcher reportReaderDispatcher,
             FxRateExtractor fxRateExtractor
     ) {
-        this.extractorDispatcher = Objects.requireNonNull(extractorDispatcher, "extractorDispatcher");
+        this.reportReaderDispatcher = Objects.requireNonNull(reportReaderDispatcher, "reportReaderDispatcher");
         this.fxRateExtractor = Objects.requireNonNull(fxRateExtractor, "fxRateExtractor");
     }
 
@@ -89,7 +89,7 @@ public class NonUkAccumulatingFundDividendPipeline implements DividendMethodPipe
             List<Issue> issues
     ) {
         Objects.requireNonNull(securityFacts, "securityFacts");
-        Optional<AccumulatingFundReport> report = extractReport(taxYear, securityFacts, issues);
+        Optional<AccumulatingFundReport> report = readReport(taxYear, securityFacts, issues);
         Optional<SecurityHoldingSnapshot> snapshot = getOpeningHoldingSnapshot(taxYear, securityFacts, issues);
         if (report.isEmpty() || snapshot.isEmpty()) {
             return;
@@ -113,7 +113,7 @@ public class NonUkAccumulatingFundDividendPipeline implements DividendMethodPipe
         }
     }
 
-    private Optional<AccumulatingFundReport> extractReport(
+    private Optional<AccumulatingFundReport> readReport(
             TaxYear taxYear,
             ConsolidatedSecurityFacts securityFacts,
             List<Issue> issues
@@ -121,15 +121,15 @@ public class NonUkAccumulatingFundDividendPipeline implements DividendMethodPipe
         EriReportFormat reportFormat = securityFacts.config()
                 .getDividendCalculationMethod()
                 .getEriReportFormat();
-        Optional<EriReportExtractor> extractor = extractorDispatcher.findExtractor(reportFormat);
-        if (extractor.isEmpty()) {
+        Optional<EriReportReader> reportReader = reportReaderDispatcher.findReader(reportFormat);
+        if (reportReader.isEmpty()) {
             issues.add(issue(EriIssueCode.UNSUPPORTED_REPORT_FORMAT, securityFacts, Map.of(
                     "eriReportFormat", reportFormat.name())));
             return Optional.empty();
         }
 
         try {
-            return Optional.of(extractor.get().extractReport(
+            return Optional.of(reportReader.get().readReport(
                     securityFacts.security().getIdentifier(), taxYear.getStartYear()));
         } catch (IOException | IllegalArgumentException exception) {
             issues.add(issue(EriIssueCode.REPORT_LOAD_FAILED, securityFacts, Map.of(
