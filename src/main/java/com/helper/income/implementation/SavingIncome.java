@@ -18,10 +18,12 @@ abstract class SavingIncome implements IncomeWithSource<Saving> {
 
     public BigDecimal grossSavingIncome;
     public TaxYear taxYear;
+    private BigDecimal reportedSavingIncome;
     private final List<Saving> savingSources;
 
     protected SavingIncome(TaxYear taxYear) {
         this.grossSavingIncome = BigDecimal.ZERO;
+        this.reportedSavingIncome = BigDecimal.ZERO;
         this.taxYear = Objects.requireNonNull(taxYear, "taxYear");
         this.savingSources = new ArrayList<>();
     }
@@ -31,13 +33,10 @@ abstract class SavingIncome implements IncomeWithSource<Saving> {
 
     @Override
     public IncomeResult calculateResult() {
-        if (savingSources.isEmpty()) {
-            return new IncomeResult(getIncomeType(), grossSavingIncome, grossSavingIncome, List.of());
-        }
-
-        grossSavingIncome = savingSources.stream()
+        BigDecimal calculatedSourceIncome = savingSources.stream()
             .map(Saving::calculateSavingAmount)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
+        grossSavingIncome = reportedSavingIncome.add(calculatedSourceIncome);
         return new IncomeResult(getIncomeType(), grossSavingIncome, grossSavingIncome, List.of());
     }
 
@@ -53,5 +52,10 @@ abstract class SavingIncome implements IncomeWithSource<Saving> {
             throw new IllegalArgumentException("source tax year must match aggregate tax year");
         }
         savingSources.add(value);
+    }
+
+    /** Adds an already-GBP amount reported by a provider tax pack. */
+    public void addReportedAmount(BigDecimal amountGbp) {
+        reportedSavingIncome = reportedSavingIncome.add(Objects.requireNonNull(amountGbp, "amountGbp"));
     }
 }

@@ -1,6 +1,7 @@
 package com.helper.calculations;
 
 import com.helper.pipeline.IncomeAssembler;
+import com.helper.pipeline.managedinvestment.ManagedInvestmentPipeline;
 import com.helper.pipeline.selfdirectedinvestment.SelfDirectedInvestmentPipeline;
 import com.helper.pipeline.TaxPipeline;
 import com.helper.pipeline.TaxPipelineFactory;
@@ -25,7 +26,9 @@ public class TaxCalculator {
     private static final Path DEFAULT_IBKR_CONFIG_PATH = Path.of("config/ibkr-flex.properties");
     private static final Map<TaxPipelineType, TaxPipelineFactory> PIPELINE_FACTORIES_BY_TYPE = Map.of(
             TaxPipelineType.SELF_DIRECTED_INVESTMENT,
-            SelfDirectedInvestmentPipeline::new);
+            SelfDirectedInvestmentPipeline::new,
+            TaxPipelineType.MANAGED_INVESTMENT,
+            ManagedInvestmentPipeline::new);
 
     private final FxRateProvider fxRateProvider;
     private final Map<TaxPipelineType, TaxPipelineFactory> pipelineFactoriesByType;
@@ -77,6 +80,10 @@ public class TaxCalculator {
 
     private void initializeRegistry(TaxCalculationRequest request, Registry registry)
             throws IOException, InterruptedException {
+        if (request.selectedPipelineTypes().contains(TaxPipelineType.SELF_DIRECTED_INVESTMENT)
+                && !registry.contains(RegistryKeys.IBKR_CONFIG_PATH)) {
+            registry.put(RegistryKeys.IBKR_CONFIG_PATH, DEFAULT_IBKR_CONFIG_PATH);
+        }
         if (!registry.contains(RegistryKeys.MONTHLY_FX_RATE_DOCUMENT)) {
             registry.put(
                     RegistryKeys.MONTHLY_FX_RATE_DOCUMENT,

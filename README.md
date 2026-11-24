@@ -4,7 +4,7 @@ A framework-independent Java backend for preparing UK Self Assessment income sum
 
 ## Design and progress
 
-See the active OpenSpec changes for [ACWI dividend validation](openspec/changes/acwi-dividend-validation/proposal.md), [capital gains](openspec/changes/capital-gains-and-multi-year-state/proposal.md), and [other sources/product access](openspec/changes/other-sources-and-product-access/proposal.md). The completed [ACWI delivery](openspec/changes/archive/2026-11-24-acwi-dividend-run/proposal.md) change is archived.
+See the active OpenSpec changes for [ACWI dividend validation](openspec/changes/acwi-dividend-validation/proposal.md), [capital gains](openspec/changes/capital-gains-and-multi-year-state/proposal.md), [other sources/product access](openspec/changes/other-sources-and-product-access/proposal.md), and [managed-investment onboarding](openspec/changes/onboard-managed-investment/proposal.md). The completed [ACWI delivery](openspec/changes/archive/2026-11-24-acwi-dividend-run/proposal.md) change is archived.
 
 The current code includes income calculations, IBKR/ERI parsing, FX services, and shared document models. The complete source-to-summary workflow is still being connected. The task record distinguishes implemented components from partial work and scaffolds.
 
