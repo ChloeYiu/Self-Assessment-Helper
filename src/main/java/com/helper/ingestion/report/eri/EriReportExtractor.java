@@ -2,6 +2,7 @@ package com.helper.ingestion.report.eri;
 
 import com.helper.income.implementation.dividend.model.AccumulatingFundReport;
 import com.helper.util.api.ApiRequest;
+import com.helper.util.pdf.Pdf;
 import com.helper.util.pdf.PdfTextDocument;
 import com.helper.util.pdf.PdfTextExtractor;
 import java.io.IOException;
@@ -56,7 +57,7 @@ public abstract class EriReportExtractor {
                     httpClient,
                     Objects.requireNonNull(reportUri, "reportUri"),
                     "failed to fetch ERI report");
-            return PdfTextExtractor.extract(reportBytes, reportUri.toString());
+            return PdfTextExtractor.extract(new Pdf(reportBytes, reportUri.toString()));
         } catch (InterruptedException exception) {
             Thread.currentThread().interrupt();
             throw new IOException("interrupted while fetching ERI report", exception);
