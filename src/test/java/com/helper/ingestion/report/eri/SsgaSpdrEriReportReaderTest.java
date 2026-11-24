@@ -6,6 +6,7 @@ import static org.junit.Assert.assertThrows;
 import com.helper.config.CurrencyCode;
 import com.helper.income.implementation.dividend.model.AccumulatingFundReport;
 import com.helper.util.api.MockHttpClient;
+import com.helper.util.pdf.Pdf;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.io.InputStream;
@@ -67,7 +68,9 @@ public class SsgaSpdrEriReportReaderTest {
 
     private static EriReportReader ssgaReader(MockHttpClient httpClient) {
         return new EriReportReader(
-                new SsgaSpdrEriReportProvider(httpClient), new SsgaSpdrEriReportExtractor());
+                reportingYear -> new Pdf(
+                        new SsgaSpdrEriReportProvider().resolveReportUri(reportingYear), httpClient),
+                new SsgaSpdrEriReportExtractor());
     }
 
     private static void assertReport(
