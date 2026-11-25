@@ -33,27 +33,24 @@ flowchart TD
             Mapper["JpmpiMapper.java<br/>maps known JPMPI text to reported totals"]
             PdfTextDocument --> Mapper
         end
-        subgraph SourceResults["List<ManagedInvestmentSourceResult><br/>provider-neutral results"]
-            direction TB
-            JpmpiResult(["JpmpiImportResult.java<br/>JPMPI result implementing shared contract"])
-            FutureProviderResult(["Future provider result<br/>implements shared contract"])
-        end
+        JpmpiResult(["JpmpiImportResult.java<br/>JPMPI result implementing shared contract"])
+        FutureProviderResult(["Future provider result<br/>implements shared contract"])
+        SourceResults(["List<ManagedInvestmentSourceResult><br/>provider-neutral results"])
         ResultAssembler["ManagedInvestmentResultAssembler.java (proposed)<br/>combines provider results"]
-        Mapper --> JpmpiResult --> ResultAssembler
-        FutureProviderResult --> ResultAssembler
+        Mapper --> JpmpiResult --> SourceResults --> ResultAssembler
+        FutureProviderResult --> SourceResults
     end
 
-    PipelineInput --> ManagedInvestmentPipeline
-    ManagedInvestmentPipeline --> PipelineResult
+    PipelineInput --> PdfText
+    ResultAssembler --> PipelineResult
 
     classDef worker fill:#334155,stroke:#94a3b8,color:#ffffff
     classDef data fill:#475569,stroke:#cbd5e1,color:#ffffff
     class PdfText,Mapper,ResultAssembler worker
-    class PipelineInput,PipelineResult,PdfTextDocument,JpmpiResult,FutureProviderResult data
+    class PipelineInput,PipelineResult,PdfTextDocument,JpmpiResult,FutureProviderResult,SourceResults data
     style ManagedInvestmentPipeline fill:#111827,stroke:#6b7280,color:#ffffff
     style JpmpiImporterSystem fill:#1f2937,stroke:#94a3b8,color:#ffffff
     style PdfProvider fill:#334155,stroke:#cbd5e1,color:#ffffff
-    style SourceResults fill:#334155,stroke:#cbd5e1,color:#ffffff
 ```
 
 ## Self-directed IBKR extraction boundary
