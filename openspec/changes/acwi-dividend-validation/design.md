@@ -1,8 +1,8 @@
-# Design: ACWI 2025/26 submission validation
+# Design: ACWI dividend validation
 
 ## Context
 
-See [proposal.md](proposal.md). The present flow has run end to end only for 2024/25, an account period with no available IBKR statements or ACWI holdings. The source and dividend pipeline components exist, but no final 2025/26 result has yet been inspected against the actual report and broker activity.
+See [proposal.md](proposal.md). The present flow has run end to end only for 2024/25, an account period with no available IBKR statements or ACWI holdings. The source and dividend pipeline components exist, but no selected tax year's final result has yet been inspected against the actual report and broker activity.
 
 ## Goals / Non-Goals
 
@@ -23,7 +23,7 @@ See [proposal.md](proposal.md). The present flow has run end to end only for 202
 
 ### D001 — Use the existing top-level flow as the validation entry point
 
-The run will use `TaxCalculatorFlow` for tax year 2025 and select `DIVIDENDS`. It exercises the same application boundary intended for later CLI/UI work and keeps the live query read-only.
+The run will use `TaxCalculatorFlow` for the selected tax year and select the self-directed investment pipeline. It exercises the same application boundary intended for later CLI/UI work and keeps the live query read-only.
 
 **Alternative considered:** invoke import, report extraction, and dividend classes separately. This gives more local diagnostics but does not prove that the integrated result is assembled correctly.
 
@@ -43,7 +43,7 @@ IBKR rate-limit, transport, HTTP, parsing, or invalid-report errors prevent a va
 
 | Item | Validation design |
 | --- | --- |
-| Inputs | 2025/26 tax year, local IBKR Flex configuration, fixed ACWI security configuration, live IBKR Activity and Positions statements, SSGA ERI report, and HMRC monthly/yearly FX documents |
+| Inputs | Selected tax year, local IBKR Flex configuration, fixed ACWI security configuration, live IBKR Activity and Positions statements, SSGA ERI report, and HMRC monthly/yearly FX documents |
 | Output | A recorded result containing the GBP dividend figure or a clear review/blocked outcome, with source and artifact evidence |
 | Side effects | Read-only network requests to IBKR, SSGA, and HMRC; no filing, account mutation, or persistent run storage in the current implementation |
 | Errors | Fatal retrieval/parsing/validation errors stop the run; non-fatal issues remain attached to the result and are reviewed before any tax-return use |
@@ -57,7 +57,7 @@ IBKR rate-limit, transport, HTTP, parsing, or invalid-report errors prevent a va
 
 ## Migration Plan
 
-1. Start this change when preparing the 2025/26 return and confirm the final ERI report is available.
+1. Select the tax year to validate when its return is being prepared and confirm the final ERI report is available.
 2. Run the top-level flow under the documented rate-safe procedure.
 3. Inspect and record all evidence listed above.
 4. Resolve or explicitly defer review items through separate OpenSpec changes.
