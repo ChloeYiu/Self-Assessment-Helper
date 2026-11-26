@@ -19,10 +19,12 @@ import java.util.Objects;
 abstract class DividendIncome implements IncomeWithSource<Dividend> {
     private final TaxYear taxYear;
     private final List<Dividend> dividendSources;
+    private BigDecimal reportedDividendIncome;
 
     protected DividendIncome(TaxYear taxYear) {
         this.taxYear = Objects.requireNonNull(taxYear, "taxYear");
         this.dividendSources = new ArrayList<>();
+        this.reportedDividendIncome = BigDecimal.ZERO;
     }
 
     @Override
@@ -39,7 +41,7 @@ abstract class DividendIncome implements IncomeWithSource<Dividend> {
 
     @Override
     public IncomeResult calculateResult() {
-        BigDecimal grossIncome = BigDecimal.ZERO;
+        BigDecimal grossIncome = reportedDividendIncome;
         List<IncomeArtifact> artifacts = new ArrayList<>();
 
         for (Dividend dividendSource : dividendSources) {
@@ -54,5 +56,10 @@ abstract class DividendIncome implements IncomeWithSource<Dividend> {
     @Override
     public TaxYear getTaxYear() {
         return taxYear;
+    }
+
+    /** Adds an already-GBP amount reported by a provider tax pack. */
+    public void addReportedAmount(BigDecimal amountGbp) {
+        reportedDividendIncome = reportedDividendIncome.add(Objects.requireNonNull(amountGbp, "amountGbp"));
     }
 }

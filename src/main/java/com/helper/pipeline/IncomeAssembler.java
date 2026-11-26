@@ -6,9 +6,11 @@ import com.helper.income.IncomeResult;
 import com.helper.income.IncomeType;
 import com.helper.income.implementation.ForeignDividendIncome;
 import com.helper.income.implementation.ForeignSavingsIncome;
+import com.helper.income.implementation.CapitalGainIncome;
 import com.helper.income.implementation.UkDividendIncome;
 import com.helper.income.implementation.UkSavingsIncome;
 import com.helper.issue.Issue;
+import com.helper.pipeline.managedinvestment.ManagedInvestmentPipelineResult;
 import com.helper.pipeline.selfdirectedinvestment.SelfDirectedInvestmentPipelineResult;
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -25,12 +27,14 @@ import java.util.Objects;
  */
 public final class IncomeAssembler {
     private static final Map<Class<? extends TaxPipelineResult>, ResultHandler> RESULT_HANDLERS = Map.of(
-            SelfDirectedInvestmentPipelineResult.class, IncomeAssembler::addSelfDirectedInvestmentResult);
+            SelfDirectedInvestmentPipelineResult.class, IncomeAssembler::addSelfDirectedInvestmentResult,
+            ManagedInvestmentPipelineResult.class, IncomeAssembler::addManagedInvestmentResult);
 
     private final UkDividendIncome ukDividendIncome;
     private final ForeignDividendIncome foreignDividendIncome;
     private final UkSavingsIncome ukSavingIncome;
     private final ForeignSavingsIncome foreignSavingIncome;
+    private final CapitalGainIncome capitalGainIncome;
     private final List<Issue> issues = new ArrayList<>();
 
     /** Creates an assembler and its tax-year-specific income aggregates. */
@@ -40,6 +44,7 @@ public final class IncomeAssembler {
         this.foreignDividendIncome = new ForeignDividendIncome(taxYear);
         this.ukSavingIncome = new UkSavingsIncome(taxYear);
         this.foreignSavingIncome = new ForeignSavingsIncome(taxYear);
+        this.capitalGainIncome = new CapitalGainIncome(taxYear);
     }
 
     /** Adds one registered pipeline result to its matching income aggregates. */
@@ -61,6 +66,7 @@ public final class IncomeAssembler {
         incomeResults.put(IncomeType.FOREIGN_DIVIDENDS, foreignDividendIncome.calculateResult());
         incomeResults.put(IncomeType.UK_SAVINGS, ukSavingIncome.calculateResult());
         incomeResults.put(IncomeType.FOREIGN_SAVINGS, foreignSavingIncome.calculateResult());
+        incomeResults.put(IncomeType.CAPITAL_GAIN, capitalGainIncome.calculateResult());
         return new TaxCalculationResult(ukDividendIncome.getTaxYear(), incomeResults, issues);
     }
 
@@ -68,6 +74,21 @@ public final class IncomeAssembler {
         SelfDirectedInvestmentPipelineResult investmentResult = (SelfDirectedInvestmentPipelineResult) result;
         investmentResult.ukDividendSources().forEach(assembler.ukDividendIncome::addSource);
         investmentResult.foreignDividendSources().forEach(assembler.foreignDividendIncome::addSource);
+    }
+
+    private static void addManagedInvestmentResult(IncomeAssembler assembler, TaxPipelineResult result) {
+        ManagedInvestmentPipelineResult managedResult = (ManagedInvestmentPipelineResult) result;
+        managedResult.reportedAmounts().forEach(assembler::addManagedReportedAmount);
+    }
+
+    private void addManagedReportedAmount(IncomeType incomeType, java.math.BigDecimal amountGbp) {
+        switch (incomeType) {
+            case UK_DIVIDENDS -> ukDividendIncome.addReportedAmount(amountGbp);
+            case FOREIGN_DIVIDENDS -> foreignDividendIncome.addReportedAmount(amountGbp);
+            case UK_SAVINGS -> ukSavingIncome.addReportedAmount(amountGbp);
+            case FOREIGN_SAVINGS -> foreignSavingIncome.addReportedAmount(amountGbp);
+            case CAPITAL_GAIN -> capitalGainIncome.addReportedAmount(amountGbp);
+        }
     }
 
     @FunctionalInterface

@@ -4,20 +4,31 @@ import com.helper.config.TaxYear;
 import com.helper.income.IncomeResult;
 import com.helper.issue.Issue;
 import com.helper.pipeline.TaxPipelineType;
-import java.util.ArrayList;
+import com.helper.pipeline.managedinvestment.ManagedInvestmentPipelineInput;
+import com.helper.support.registry.Registry;
+import com.helper.support.registry.RegistryKeys;
+import com.helper.util.pdf.Pdf;
+import java.nio.file.Path;
+import java.util.EnumSet;
 import java.util.List;
-import java.util.Scanner;
-import java.util.Set;
 
-/** Manual live flow for running one selected top-level pipeline through {@link TaxCalculator}. */
+/** Manual local flow for running the current top-level pipelines through {@link TaxCalculator}. */
 public class TaxCalculatorFlow {
+    private static final Path JPMPI_TAX_PACK_PATH = Path.of("files/jpmci/tax-pack.pdf");
+
     public static void main(String[] args) throws Exception {
         TaxYear taxYear = parseTaxYear(args);
-        TaxCalculator calculator = new TaxCalculator();
-        TaxPipelineType pipelineType = selectPipelineType(calculator.getAvailablePipelineTypes());
-        TaxCalculationResult result = calculator.run(
-                new TaxCalculationRequest(taxYear, Set.of(pipelineType)));
-
+        Registry registry = new Registry();
+        registry.put(
+                RegistryKeys.MANAGED_INVESTMENT_PIPELINE_INPUT,
+                new ManagedInvestmentPipelineInput(List.of(new Pdf(JPMPI_TAX_PACK_PATH))));
+        TaxCalculationResult result = new TaxCalculator().run(
+                new TaxCalculationRequest(
+                        taxYear,
+                        EnumSet.of(
+                                TaxPipelineType.SELF_DIRECTED_INVESTMENT,
+                                TaxPipelineType.MANAGED_INVESTMENT)),
+                registry);
         printResult(result);
     }
 
@@ -26,22 +37,6 @@ public class TaxCalculatorFlow {
             throw new IllegalArgumentException("Usage: TaxCalculatorFlow <tax-year-start-year>");
         }
         return TaxYear.of(Integer.parseInt(args[0]));
-    }
-
-    private static TaxPipelineType selectPipelineType(Set<TaxPipelineType> availablePipelineTypes) {
-        List<TaxPipelineType> pipelineTypes = new ArrayList<>(availablePipelineTypes);
-        pipelineTypes.sort(Enum::compareTo);
-        System.out.println("Select a tax pipeline:");
-        for (int index = 0; index < pipelineTypes.size(); index++) {
-            System.out.println((index + 1) + ". " + pipelineTypes.get(index));
-        }
-
-        Scanner scanner = new Scanner(System.in);
-        int selection = Integer.parseInt(scanner.nextLine());
-        if (selection < 1 || selection > pipelineTypes.size()) {
-            throw new IllegalArgumentException("tax pipeline selection is out of range: " + selection);
-        }
-        return pipelineTypes.get(selection - 1);
     }
 
     private static void printResult(TaxCalculationResult result) {

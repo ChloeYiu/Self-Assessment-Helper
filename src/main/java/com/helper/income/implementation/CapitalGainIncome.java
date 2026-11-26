@@ -18,10 +18,12 @@ import java.util.Objects;
 public class CapitalGainIncome implements IncomeWithSource<CapitalGain> {
     private final TaxYear taxYear;
     private final List<CapitalGain> capitalGainSources;
+    private BigDecimal reportedCapitalGain;
 
     public CapitalGainIncome(TaxYear taxYear) {
         this.taxYear = Objects.requireNonNull(taxYear, "taxYear");
         this.capitalGainSources = new ArrayList<>();
+        this.reportedCapitalGain = BigDecimal.ZERO;
     }
 
     @Override
@@ -40,7 +42,7 @@ public class CapitalGainIncome implements IncomeWithSource<CapitalGain> {
 
     @Override
     public IncomeResult calculateResult() {
-        BigDecimal capitalGainAmount = BigDecimal.ZERO;
+        BigDecimal capitalGainAmount = reportedCapitalGain;
         List<IncomeArtifact> artifacts = new ArrayList<>();
         for (CapitalGain capitalGainSource : capitalGainSources) {
             CapitalGainResult result = capitalGainSource.calculateCapitalGain();
@@ -53,5 +55,10 @@ public class CapitalGainIncome implements IncomeWithSource<CapitalGain> {
     @Override
     public TaxYear getTaxYear() {
         return taxYear;
+    }
+
+    /** Adds an already-GBP gain or loss reported by a provider tax pack. */
+    public void addReportedAmount(BigDecimal amountGbp) {
+        reportedCapitalGain = reportedCapitalGain.add(Objects.requireNonNull(amountGbp, "amountGbp"));
     }
 }
