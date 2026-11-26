@@ -1,11 +1,15 @@
 package com.helper.support.registry;
 
 import com.helper.util.table.TabularDocument;
+import java.nio.file.Path;
 
 /**
  * Shared registry keys used across tax calculation runs.
  */
 public final class RegistryKeys {
+    public static final RegistryKey<Path> IBKR_CONFIG_PATH =
+            RegistryKey.of("ibkrConfigPath", Path.class);
+
     public static final RegistryKey<TabularDocument> MONTHLY_FX_RATE_DOCUMENT =
             RegistryKey.of("monthlyFxRateDocument", TabularDocument.class);
 

@@ -2,28 +2,20 @@ package com.helper.util.pdf;
 
 import static org.junit.Assert.assertEquals;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.List;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 public class PdfTextExtractorTest {
-    @Rule
-    public TemporaryFolder temporaryFolder = new TemporaryFolder();
-
     @Test
     public void extract_returnsTrimmedLinesWithSourceNameAndLocation() throws IOException {
-        Path pdfPath = temporaryFolder.newFile("sample.pdf").toPath();
-        writePdf(pdfPath);
-
-        PdfTextDocument document = PdfTextExtractor.extract(pdfPath);
+        PdfTextDocument document = PdfTextExtractor.extract(samplePdf());
 
         assertEquals("sample.pdf", document.getSourceName().orElseThrow());
         assertEquals(List.of("First page line", "Second page line"), document.getLines()
@@ -36,11 +28,12 @@ public class PdfTextExtractorTest {
         assertEquals(1, document.getLines().get(1).getLocation().orElseThrow().getLineNumber());
     }
 
-    private static void writePdf(Path path) throws IOException {
-        try (PDDocument document = new PDDocument()) {
+    private static Pdf samplePdf() throws IOException {
+        try (PDDocument document = new PDDocument(); ByteArrayOutputStream output = new ByteArrayOutputStream()) {
             addPage(document, "First page line");
             addPage(document, "Second page line");
-            document.save(path.toFile());
+            document.save(output);
+            return new Pdf(output.toByteArray(), "sample.pdf");
         }
     }
 

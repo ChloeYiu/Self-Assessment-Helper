@@ -5,7 +5,9 @@ package com.helper.income;
  */
 public enum IncomeType {
     RENT_A_ROOM,
-    SAVINGS,
-    DIVIDENDS,
+    UK_SAVINGS,
+    FOREIGN_SAVINGS,
+    UK_DIVIDENDS,
+    FOREIGN_DIVIDENDS,
     CAPITAL_GAIN
 }

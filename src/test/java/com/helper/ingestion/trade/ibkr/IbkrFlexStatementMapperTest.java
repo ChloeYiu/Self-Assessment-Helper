@@ -2,12 +2,13 @@ package com.helper.ingestion.trade.ibkr;
 
 import com.helper.util.table.TabularDocument;
 import com.helper.util.table.TabularTable;
+import java.util.List;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class IbkrTradeMapperTest {
+public class IbkrFlexStatementMapperTest {
 
         @Test
         public void extractFlexStatementDocument_mapsFlexTradeAttributesToTabularTable() {
@@ -17,12 +18,12 @@ public class IbkrTradeMapperTest {
                                 + "<Trades>"
                                 + "<Trade accountId=\"U123\" assetCategory=\"STK\" symbol=\"ABC\" description=\"ABC PLC\" conid=\"12345\""
                                 + " isin=\"GB00ABC12345\" securityID=\"GB00ABC12345\" securityIDType=\"ISIN\""
-                                + " figi=\"BBG000ABC123\" listingExchange=\"LSE\" tradeDate=\"2025-04-07\""
+                                + " figi=\"BBG000ABC123\" listingExchange=\"LSE\" transactionID=\"BUY_1\" tradeDate=\"2025-04-07\""
                                 + " buySell=\"BUY\" quantity=\"10\" tradePrice=\"12.34\" proceeds=\"-123.40\""
                                 + " ibCommission=\"-1.00\" currency=\"USD\" fifoPnlRealized=\"0\" />"
                                 + "<Trade accountId=\"U123\" assetCategory=\"STK\" symbol=\"ABC\" description=\"ABC PLC\" conid=\"12345\""
                                 + " isin=\"GB00ABC12345\" securityID=\"GB00ABC12345\" securityIDType=\"ISIN\""
-                                + " figi=\"BBG000ABC123\" listingExchange=\"LSE\" tradeDate=\"2025-05-08\""
+                                + " figi=\"BBG000ABC123\" listingExchange=\"LSE\" transactionID=\"SELL_1\" tradeDate=\"2025-05-08\""
                                 + " buySell=\"SELL\" quantity=\"-5\" tradePrice=\"20.00\" proceeds=\"100.00\""
                                 + " ibCommission=\"-1.00\" currency=\"USD\" fifoPnlRealized=\"37.30\" />"
                                 + "<Trade accountId=\"U123\" assetCategory=\"CASH\" symbol=\"GBP\" description=\"GBP.USD\" conid=\"0\""
@@ -33,12 +34,13 @@ public class IbkrTradeMapperTest {
                                 + "</FlexStatements>"
                                 + "</FlexQueryResponse>";
 
-                TabularDocument document = new IbkrTradeMapper().extractFlexStatementDocument(xml);
+                TabularDocument document = new IbkrFlexStatementMapper().extractFlexStatementDocument(
+                                List.of(xml), List.of());
                 TabularTable tradesTable = document.getTables().get(0);
                 TabularTable securitiesTable = document.getTables().get(1);
 
                 assertEquals("IBKR Flex Query", document.getSourceName().orElseThrow());
-                assertEquals(2, document.getTables().size());
+                assertEquals(3, document.getTables().size());
                 assertEquals("Trades", tradesTable.getName().orElseThrow());
                 assertEquals(3, tradesTable.getRows().size());
                 assertTrue(tradesTable.getColumns().stream()
@@ -48,6 +50,7 @@ public class IbkrTradeMapperTest {
                 assertEquals("GB00ABC12345", tradesTable.getCell(0, "isin").orElseThrow().getRawText());
                 assertEquals("ISIN", tradesTable.getCell(0, "securityIDType").orElseThrow().getRawText());
                 assertEquals("LSE", tradesTable.getCell(0, "listingExchange").orElseThrow().getRawText());
+                assertEquals("BUY_1", tradesTable.getCell(0, "transactionID").orElseThrow().getRawText());
                 assertEquals("BUY", tradesTable.getCell(0, "buySell").orElseThrow().getRawText());
                 assertEquals("-123.40", tradesTable.getCell(0, "proceeds").orElseThrow().getRawText());
                 assertEquals("SELL", tradesTable.getCell(1, "buySell").orElseThrow().getRawText());
@@ -83,5 +86,24 @@ public class IbkrTradeMapperTest {
                 assertEquals("Securities", securitySourceLocation.getSectionName());
                 assertEquals(0, securitySourceLocation.getRowIndex());
                 assertEquals("identifier", securitySourceLocation.getFieldName());
+        }
+
+        @Test
+        public void extractFlexStatementDocument_mapsOpenPositionsToTheirOwnTable() {
+                String positionsXml = "<FlexQueryResponse><FlexStatements count=\"1\"><FlexStatement>"
+                                + "<OpenPositions><OpenPosition accountId=\"U123\" assetCategory=\"STK\""
+                                + " isin=\"IE00B44Z5B48\" position=\"10\" reportDate=\"20251006\""
+                                + " symbol=\"ACWI\" /></OpenPositions>"
+                                + "</FlexStatement></FlexStatements></FlexQueryResponse>";
+
+                TabularDocument document = new IbkrFlexStatementMapper().extractFlexStatementDocument(
+                                List.of(), List.of(positionsXml));
+                TabularTable positionsTable = document.getTable(IbkrNames.Tables.OPEN_POSITIONS).orElseThrow();
+
+                assertEquals(1, positionsTable.getRows().size());
+                assertEquals("IE00B44Z5B48", positionsTable.getCell(0, "isin").orElseThrow().getRawText());
+                assertEquals("20251006", positionsTable.getCell(0, "reportDate").orElseThrow().getRawText());
+                assertEquals("2025-10-06", positionsTable.getCell(0, "reportDate")
+                                .orElseThrow().getNormalizedText().orElseThrow());
         }
 }

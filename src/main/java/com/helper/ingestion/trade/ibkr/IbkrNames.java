@@ -11,6 +11,7 @@ public final class IbkrNames {
     public static final class Tables {
         public static final String TRADES = "Trades";
         public static final String SECURITIES = "Securities";
+        public static final String OPEN_POSITIONS = "OpenPositions";
 
         private Tables() {
         }
@@ -28,6 +29,7 @@ public final class IbkrNames {
         public static final String SECURITY_ID_TYPE = "securityIDType";
         public static final String FIGI = "figi";
         public static final String LISTING_EXCHANGE = "listingExchange";
+        public static final String TRANSACTION_ID = "transactionID";
         public static final String TRADE_DATE = "tradeDate";
         public static final String SETTLE_DATE_TARGET = "settleDateTarget";
         public static final String BUY_SELL = "buySell";
@@ -39,20 +41,6 @@ public final class IbkrNames {
         public static final String FIFO_PNL_REALIZED = "fifoPnlRealized";
 
         private RawTradeColumns() {
-        }
-    }
-
-    /** Column names used by the normalized IBKR Trades table consumed by domain extractors. */
-    public static final class NormalizedTradeColumns {
-        public static final String IDENTIFIER = "identifier";
-        public static final String TRADE_ID = "tradeId";
-        public static final String TRANSACTION_DATE = "transactionDate";
-        public static final String TRADE_TYPE = "tradeType";
-        public static final String QUANTITY = "quantity";
-        public static final String GROSS_AMOUNT_GBP = "grossAmountGbp";
-        public static final String FEE_GBP = "feeGbp";
-
-        private NormalizedTradeColumns() {
         }
     }
 
@@ -72,6 +60,19 @@ public final class IbkrNames {
         public static final String CURRENCY = "currency";
 
         private SecurityColumns() {
+        }
+    }
+
+    /** Raw attribute names copied from IBKR Flex Open Position XML rows. */
+    public static final class OpenPositionColumns {
+        public static final String ACCOUNT_ID = "accountId";
+        public static final String ASSET_CATEGORY = "assetCategory";
+        public static final String ISIN = "isin";
+        public static final String POSITION = "position";
+        public static final String REPORT_DATE = "reportDate";
+        public static final String SYMBOL = "symbol";
+
+        private OpenPositionColumns() {
         }
     }
 }

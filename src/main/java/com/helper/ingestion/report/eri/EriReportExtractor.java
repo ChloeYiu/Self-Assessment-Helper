@@ -1,10 +1,11 @@
 package com.helper.ingestion.report.eri;
 
 import com.helper.income.implementation.dividend.model.AccumulatingFundReport;
+import com.helper.util.pdf.Pdf;
 import java.io.IOException;
 
-/** Extracts accumulating fund report data from one issuer ERI report source. */
+/** Extracts one fund-specific reportable-income result from a retrieved ERI report. */
 public interface EriReportExtractor {
-    /** Extracts one fund report from the supplied ERI report input. */
-    AccumulatingFundReport extractReport(EriReportInput input) throws IOException;
+    /** Extracts the named fund from one issuer report. */
+    AccumulatingFundReport extract(Pdf pdf, String isin, int reportingYear) throws IOException;
 }

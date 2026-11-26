@@ -1,19 +1,22 @@
 package com.helper.ingestion.trade.ibkr;
 
+import com.helper.issue.Issue;
+import com.helper.issue.IssueSeverity;
 import com.helper.util.api.ApiRequest;
 import com.helper.util.api.DateRangeValidator;
 import com.helper.util.api.PropertiesConfig;
 import com.helper.util.api.XmlDocumentParser;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
@@ -29,15 +32,20 @@ public class IbkrApiProvider {
     private static final String GET_STATEMENT_PATH = "/GetStatement";
     private static final DateTimeFormatter FLEX_DATE_FORMATTER = DateTimeFormatter.BASIC_ISO_DATE;
     private static final int MAX_DATE_RANGE_DAYS = 365;
+    private static final long SEND_REQUEST_DELAY_MILLIS = 1_100L;
+    private static final ZoneId IBKR_REPORTING_TIME_ZONE = ZoneId.of("America/New_York");
     private static final String TOKEN_PROPERTY = "ibkr.flex.token";
     private static final String QUERY_ID_PROPERTY = "ibkr.flex.query-id";
+    private static final String POSITIONS_QUERY_ID_PROPERTY = "ibkr.flex.positions-query-id";
     private static final String VERSION_PROPERTY = "ibkr.flex.version";
 
     private final HttpClient httpClient;
     private final XmlDocumentParser xmlDocumentParser;
     private final String token;
-    private final String queryId;
+    private final String activityQueryId;
+    private final String positionsQueryId;
     private final String version;
+    private boolean hasSentFlexRequest;
 
     /**
      * Creates a provider using the default local config file at
@@ -74,35 +82,144 @@ public class IbkrApiProvider {
         this.xmlDocumentParser = new XmlDocumentParser();
         Objects.requireNonNull(properties, "properties");
         this.token = PropertiesConfig.requireProperty(properties, TOKEN_PROPERTY);
-        this.queryId = PropertiesConfig.requireProperty(properties, QUERY_ID_PROPERTY);
+        this.activityQueryId = PropertiesConfig.requireProperty(properties, QUERY_ID_PROPERTY);
+        this.positionsQueryId = PropertiesConfig.requireProperty(properties, POSITIONS_QUERY_ID_PROPERTY);
         this.version = PropertiesConfig.requireProperty(properties, VERSION_PROPERTY);
     }
 
-    public InputStream getFlexStatement(LocalDate fromDate, LocalDate toDate) throws IOException, InterruptedException {
-        return new ByteArrayInputStream(getFlexStatementXml(fromDate, toDate).getBytes(StandardCharsets.UTF_8));
+    /**
+     * Retrieves every Activity Flex statement needed for the requested inclusive date range.
+     *
+     * <p>IBKR limits one Flex request to 365 days. This method hides that transport limit
+     * by issuing adjacent requests and returning their statements in chronological order.</p>
+     */
+    /** Retrieves Activity Flex statement XML for an inclusive date range. */
+    public IbkrApiResult getActivityStatementsXml(
+            LocalDate fromDate,
+            LocalDate toDate
+    ) throws IOException, InterruptedException {
+        return getFlexStatementsXml(activityQueryId, fromDate, toDate);
     }
 
-    public String getFlexStatementXml(LocalDate fromDate, LocalDate toDate) throws IOException, InterruptedException {
-        DateRangeValidator.requireMaxDays(fromDate, toDate, MAX_DATE_RANGE_DAYS);
+    /** Retrieves Open Positions Flex statement XML for one reporting date. */
+    public IbkrApiResult getPositionStatementXml(LocalDate positionDate)
+            throws IOException, InterruptedException {
+        return getFlexStatementsXml(positionsQueryId, positionDate, positionDate);
+    }
 
-        String statementReferenceCode = getRefCodeApi(fromDate, toDate);
+    private IbkrApiResult getFlexStatementsXml(
+            String selectedQueryId,
+            LocalDate fromDate,
+            LocalDate toDate
+    ) throws IOException, InterruptedException {
+        String requestQueryId = requireQueryId(selectedQueryId);
+        LocalDate effectiveToDate = truncateRequestedEndDate(fromDate, toDate);
+        List<String> statements = new ArrayList<>();
+        List<Issue> issues = new ArrayList<>();
+        LocalDate requestStart = fromDate;
+
+        while (!requestStart.isAfter(effectiveToDate)) {
+            LocalDate requestEnd = requestStart.plusDays(MAX_DATE_RANGE_DAYS - 1);
+            if (requestEnd.isAfter(effectiveToDate)) {
+                requestEnd = effectiveToDate;
+            }
+            LocalDate chunkStart = requestStart;
+            LocalDate chunkEnd = requestEnd;
+            try {
+                statements.add(downloadFlexStatementForSplitRange(
+                        requestQueryId,
+                        chunkStart,
+                        chunkEnd));
+            } catch (IbkrFlexApiException exception) {
+                issues.add(handleIbkrFlexApiException(exception, chunkStart, chunkEnd));
+            }
+            requestStart = requestEnd.plusDays(1);
+        }
+
+        return new IbkrApiResult(statements, issues, effectiveToDate);
+    }
+
+    private String downloadFlexStatementForSplitRange(
+            String selectedQueryId,
+            LocalDate fromDate,
+            LocalDate toDate
+    ) throws IOException, InterruptedException {
+        if (hasSentFlexRequest) {
+            waitBeforeNextSendRequest();
+        }
+        hasSentFlexRequest = true;
+        return getFlexStatementXmlForRequest(selectedQueryId, fromDate, toDate);
+    }
+
+    private static void waitBeforeNextSendRequest() throws InterruptedException {
+        Thread.sleep(SEND_REQUEST_DELAY_MILLIS);
+    }
+
+    /** Successful statement XML, non-fatal unavailable ranges, and actual end-date coverage. */
+    public record IbkrApiResult(
+            List<String> statementXmls,
+            List<Issue> issues,
+            LocalDate effectiveEndDate
+    ) {
+        public IbkrApiResult {
+            statementXmls = List.copyOf(Objects.requireNonNull(statementXmls, "statementXmls"));
+            issues = List.copyOf(Objects.requireNonNull(issues, "issues"));
+            effectiveEndDate = Objects.requireNonNull(effectiveEndDate, "effectiveEndDate");
+        }
+    }
+
+    /**
+     * Truncates an end date to the latest completed IBKR reporting business day.
+     *
+     * <p>Activity Flex Query data is available only through the previous business day.
+     * IBKR reporting uses the New York calendar, including daylight-saving changes.</p>
+     *
+     * @throws IllegalArgumentException if the requested range begins after the latest available date
+     */
+    public LocalDate truncateRequestedEndDate(LocalDate fromDate, LocalDate toDate) {
+        DateRangeValidator.requireValidRange(fromDate, toDate);
+        LocalDate latestAvailableDate = getLatestAvailableStatementDate();
+        if (fromDate.isAfter(latestAvailableDate)) {
+            throw new IllegalArgumentException(
+                    "IBKR Flex reports are available only through " + latestAvailableDate);
+        }
+        return toDate.isAfter(latestAvailableDate) ? latestAvailableDate : toDate;
+    }
+
+    /** Returns the previous weekday in IBKR's New York reporting time zone. */
+    public LocalDate getLatestAvailableStatementDate() {
+        LocalDate latestAvailableDate = LocalDate.now(IBKR_REPORTING_TIME_ZONE).minusDays(1);
+        while (latestAvailableDate.getDayOfWeek() == DayOfWeek.SATURDAY
+                || latestAvailableDate.getDayOfWeek() == DayOfWeek.SUNDAY) {
+            latestAvailableDate = latestAvailableDate.minusDays(1);
+        }
+        return latestAvailableDate;
+    }
+
+    private String getFlexStatementXmlForRequest(String selectedQueryId, LocalDate fromDate, LocalDate toDate)
+            throws IOException, InterruptedException {
+        DateRangeValidator.requireMaxDays(fromDate, toDate, MAX_DATE_RANGE_DAYS);
+        String statementReferenceCode = getRefCodeApi(selectedQueryId, fromDate, toDate);
         return getFlexStatementApi(statementReferenceCode);
     }
 
-    private String getRefCodeApi(LocalDate fromDate, LocalDate toDate)
+    private String getRefCodeApi(String selectedQueryId, LocalDate fromDate, LocalDate toDate)
             throws IOException, InterruptedException {
         String responseXml = ApiRequest.sendGet(
                 httpClient,
-                createRefCodeUri(fromDate, toDate),
+                createRefCodeUri(selectedQueryId, fromDate, toDate),
                 "IBKR Flex request failed");
         requireSuccess(responseXml, "IBKR Flex SendRequest failed");
-        return readRequiredXmlText(responseXml, "ReferenceCode", "IBKR Flex response did not include a reference code");
+        Document response = xmlDocumentParser.parse(responseXml);
+        return xmlDocumentParser.findText(response, "ReferenceCode")
+                .filter(referenceCode -> !referenceCode.isBlank())
+                .orElseThrow(() -> missingReferenceCode(response));
     }
 
-    private URI createRefCodeUri(LocalDate fromDate, LocalDate toDate) {
+    private URI createRefCodeUri(String selectedQueryId, LocalDate fromDate, LocalDate toDate) {
         Map<String, String> queryParameters = new LinkedHashMap<>();
         queryParameters.put("t", token);
-        queryParameters.put("q", queryId);
+        queryParameters.put("q", selectedQueryId);
         queryParameters.put("v", version);
         queryParameters.put("fd", ApiRequest.formatDate(fromDate, FLEX_DATE_FORMATTER));
         queryParameters.put("td", ApiRequest.formatDate(toDate, FLEX_DATE_FORMATTER));
@@ -136,9 +253,36 @@ public class IbkrApiProvider {
         if ("Fail".equalsIgnoreCase(status)) {
             String errorCode = xmlDocumentParser.findText(document, "ErrorCode").orElse(null);
             String errorMessage = xmlDocumentParser.findText(document, "ErrorMessage").orElse(null);
-            throw new IllegalStateException(failureMessage
-                    + formatIbkrError(errorCode, errorMessage));
+            throw new IbkrFlexApiException(
+                    failureMessage + formatIbkrError(errorCode, errorMessage),
+                    errorCode,
+                    errorMessage);
         }
+    }
+
+    private static Issue handleIbkrFlexApiException(
+            IbkrFlexApiException exception,
+            LocalDate fromDate,
+            LocalDate toDate
+    ) {
+        String errorCode = exception.errorCode();
+        if (!"1003".equals(errorCode)) {
+            throw exception;
+        }
+        Map<String, String> attributes = new LinkedHashMap<>();
+        attributes.put("fromDate", fromDate.toString());
+        attributes.put("toDate", toDate.toString());
+        if (!isBlank(errorCode)) {
+            attributes.put("providerErrorCode", errorCode);
+        }
+        if (!isBlank(exception.errorMessage())) {
+            attributes.put("providerErrorMessage", exception.errorMessage());
+        }
+        return new Issue(
+                IbkrIssueCode.STATEMENT_UNAVAILABLE,
+                IssueSeverity.INFO,
+                "ibkr-flex",
+                attributes);
     }
 
     private static String formatIbkrError(String errorCode, String errorMessage) {
@@ -157,11 +301,43 @@ public class IbkrApiProvider {
         return ": error code " + errorCode + " - " + errorMessage;
     }
 
-    private String readRequiredXmlText(String xml, String tagName, String errorMessage) {
-        return xmlDocumentParser.requireText(xmlDocumentParser.parse(xml), tagName, errorMessage);
+    private IllegalStateException missingReferenceCode(Document response) {
+        String status = xmlDocumentParser.findText(response, "Status").orElse("missing");
+        String errorCode = xmlDocumentParser.findText(response, "ErrorCode").orElse(null);
+        String errorMessage = xmlDocumentParser.findText(response, "ErrorMessage").orElse(null);
+        return new IllegalStateException("IBKR Flex response did not include a reference code"
+                + " (status=" + status + ")"
+                + formatIbkrError(errorCode, errorMessage));
     }
 
     private static boolean isBlank(String value) {
         return value == null || value.isBlank();
     }
+
+    private static String requireQueryId(String selectedQueryId) {
+        if (isBlank(selectedQueryId)) {
+            throw new IllegalArgumentException("selectedQueryId must not be blank");
+        }
+        return selectedQueryId.trim();
+    }
+
+    private static final class IbkrFlexApiException extends IllegalStateException {
+        private final String errorCode;
+        private final String errorMessage;
+
+        private IbkrFlexApiException(String message, String errorCode, String errorMessage) {
+            super(message);
+            this.errorCode = errorCode;
+            this.errorMessage = errorMessage;
+        }
+
+        private String errorCode() {
+            return errorCode;
+        }
+
+        private String errorMessage() {
+            return errorMessage;
+        }
+    }
+
 }

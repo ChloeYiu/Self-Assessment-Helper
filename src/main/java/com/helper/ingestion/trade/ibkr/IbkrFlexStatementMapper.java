@@ -6,8 +6,10 @@ import com.helper.util.table.TabularTable;
 import com.helper.util.table.TabularTableBuilder;
 import com.helper.util.api.XmlDocumentParser;
 import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -22,9 +24,10 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.NodeList;
 
 /**
- * Maps IBKR Flex trade history payloads into tabular documents.
+ * Maps IBKR Flex Activity and Positions payloads into tabular documents.
  */
-public class IbkrTradeMapper {
+public class IbkrFlexStatementMapper {
+    private static final DateTimeFormatter FLEX_DATE_FORMATTER = DateTimeFormatter.BASIC_ISO_DATE;
     private static final List<String> PREFERRED_TRADE_COLUMNS = List.of(
             IbkrNames.RawTradeColumns.ACCOUNT_ID,
             IbkrNames.RawTradeColumns.ASSET_CATEGORY,
@@ -36,6 +39,7 @@ public class IbkrTradeMapper {
             IbkrNames.RawTradeColumns.SECURITY_ID_TYPE,
             IbkrNames.RawTradeColumns.FIGI,
             IbkrNames.RawTradeColumns.LISTING_EXCHANGE,
+            IbkrNames.RawTradeColumns.TRANSACTION_ID,
             IbkrNames.RawTradeColumns.TRADE_DATE,
             IbkrNames.RawTradeColumns.SETTLE_DATE_TARGET,
             IbkrNames.RawTradeColumns.BUY_SELL,
@@ -58,23 +62,52 @@ public class IbkrTradeMapper {
             IbkrNames.SecurityColumns.FIGI,
             IbkrNames.SecurityColumns.LISTING_EXCHANGE,
             IbkrNames.SecurityColumns.CURRENCY);
+    private static final List<String> OPEN_POSITION_COLUMNS = List.of(
+            IbkrNames.OpenPositionColumns.ACCOUNT_ID,
+            IbkrNames.OpenPositionColumns.ASSET_CATEGORY,
+            IbkrNames.OpenPositionColumns.ISIN,
+            IbkrNames.OpenPositionColumns.POSITION,
+            IbkrNames.OpenPositionColumns.REPORT_DATE,
+            IbkrNames.OpenPositionColumns.SYMBOL);
 
     private final XmlDocumentParser xmlDocumentParser = new XmlDocumentParser();
 
-    public TabularDocument extractFlexStatementDocument(String flexXml) {
-        Objects.requireNonNull(flexXml, "flexXml");
-        return extractFlexStatementDocument(new ByteArrayInputStream(flexXml.getBytes(StandardCharsets.UTF_8)));
+    /** Maps Activity and Positions statement XML into one combined tabular document. */
+    public TabularDocument extractFlexStatementDocument(
+            List<String> activityStatementXmls,
+            List<String> positionStatementXmls
+    ) {
+        List<String> activityStatements = List.copyOf(
+                Objects.requireNonNull(activityStatementXmls, "activityStatementXmls"));
+        List<String> positionStatements = List.copyOf(
+                Objects.requireNonNull(positionStatementXmls, "positionStatementXmls"));
+        List<Element> tradeRows = new ArrayList<>();
+        List<Element> openPositionRows = new ArrayList<>();
+
+        for (String statement : activityStatements) {
+            Document document = xmlDocumentParser.parse(new ByteArrayInputStream(
+                    Objects.requireNonNull(statement, "flexXml").getBytes(StandardCharsets.UTF_8)));
+            tradeRows.addAll(findTradeRows(document));
+        }
+        for (String statement : positionStatements) {
+            Document document = xmlDocumentParser.parse(new ByteArrayInputStream(
+                    Objects.requireNonNull(statement, "flexXml").getBytes(StandardCharsets.UTF_8)));
+            openPositionRows.addAll(findOpenPositionRows(document));
+        }
+
+        return createFlexStatementDocument(tradeRows, openPositionRows);
     }
 
-    public TabularDocument extractFlexStatementDocument(InputStream inputStream) {
-        Objects.requireNonNull(inputStream, "inputStream");
-
-        Document document = xmlDocumentParser.parse(inputStream);
-        List<Element> tradeRows = findTradeRows(document);
+    private TabularDocument createFlexStatementDocument(
+            List<Element> tradeRows,
+            List<Element> openPositionRows
+    ) {
         TabularTable tradesTable = extractTradesTable(tradeRows);
         TabularTable securitiesTable = extractSecuritiesTable(tradeRows);
+        TabularTable openPositionsTable = extractOpenPositionsTable(openPositionRows);
 
-        return new TabularDocument("IBKR Flex Query", List.of(tradesTable, securitiesTable));
+        return new TabularDocument(
+                "IBKR Flex Query", List.of(tradesTable, securitiesTable, openPositionsTable));
     }
 
     private TabularTable extractTradesTable(List<Element> tradeRows) {
@@ -100,6 +133,15 @@ public class IbkrTradeMapper {
                 .buildTable();
     }
 
+    private TabularTable extractOpenPositionsTable(List<Element> openPositionRows) {
+        return new TabularTableBuilder<>(
+                IbkrNames.Tables.OPEN_POSITIONS,
+                OPEN_POSITION_COLUMNS,
+                openPositionRows,
+                this::createOpenPositionCell)
+                .buildTable();
+    }
+
     private List<Element> findTradeRows(Document document) {
         NodeList nodes = document.getElementsByTagName("Trade");
         List<Element> tradeRows = new ArrayList<>();
@@ -109,6 +151,17 @@ public class IbkrTradeMapper {
         }
 
         return tradeRows;
+    }
+
+    private List<Element> findOpenPositionRows(Document document) {
+        NodeList nodes = document.getElementsByTagName("OpenPosition");
+        List<Element> openPositionRows = new ArrayList<>();
+
+        for (int index = 0; index < nodes.getLength(); index++) {
+            openPositionRows.add((Element) nodes.item(index));
+        }
+
+        return openPositionRows;
     }
 
     private List<String> findTradeColumnNames(List<Element> tradeRows) {
@@ -166,6 +219,25 @@ public class IbkrTradeMapper {
         return new TabularCell(
                 getSecurityCellValue(tradeRow, columnName),
                 new IbkrFlexSourceLocation(IbkrNames.Tables.SECURITIES, rowIndex, columnName));
+    }
+
+    private TabularCell createOpenPositionCell(Element positionRow, String columnName, int rowIndex) {
+        String rawValue = positionRow.getAttribute(columnName);
+        return new TabularCell(
+                rawValue,
+                normalizeOpenPositionValue(rawValue, columnName),
+                new IbkrFlexSourceLocation(IbkrNames.Tables.OPEN_POSITIONS, rowIndex, columnName));
+    }
+
+    private static String normalizeOpenPositionValue(String rawValue, String columnName) {
+        if (!IbkrNames.OpenPositionColumns.REPORT_DATE.equals(columnName) || rawValue.isBlank()) {
+            return rawValue.trim();
+        }
+        try {
+            return LocalDate.parse(rawValue.trim(), FLEX_DATE_FORMATTER).toString();
+        } catch (DateTimeParseException exception) {
+            throw new IllegalArgumentException("Invalid IBKR Open Position reportDate: " + rawValue, exception);
+        }
     }
 
     private String getSecurityCellValue(Element tradeRow, String columnName) {
